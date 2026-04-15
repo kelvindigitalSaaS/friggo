@@ -1,4 +1,4 @@
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import { 
   CalendarDays, 
   Trash2, 
@@ -37,7 +37,7 @@ const MEAL_CONFIG: Record<string, { label: string, icon: any, color: string }> =
 };
 
 export function PlannerTab() {
-  const { mealPlan, removeFromMealPlan, addToMealPlan } = useFriggo();
+  const { mealPlan, removeFromMealPlan, addToMealPlan } = useKaza();
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");

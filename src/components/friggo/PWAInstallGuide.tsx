@@ -16,24 +16,24 @@ export default function PWAInstallGuide() {
 
   const labels: Record<string, any> = {
     "pt-BR": {
-      title: "Instalar Friggo",
-      desc: "Tenha a melhor experiência instalando o Friggo na sua tela de início.",
+      title: "Instalar Kaza",
+      desc: "Tenha a melhor experiência instalando o Kaza na sua tela de início.",
       step1: "Toque no ícone de 'Compartilhar' na barra inferior do Safari.",
       step2: "Role para baixo e toque em 'Adicionar à Tela de Início'.",
       step3: "Toque em 'Adicionar' no canto superior direito para confirmar.",
       button: "Entendi",
     },
     en: {
-      title: "Install Friggo",
-      desc: "Get the best experience by installing Friggo to your home screen.",
+      title: "Install Kaza",
+      desc: "Get the best experience by installing Kaza to your home screen.",
       step1: "Tap the 'Share' icon in the bottom bar of Safari.",
       step2: "Scroll down and tap 'Add to Home Screen'.",
       step3: "Tap 'Add' in the top right corner to confirm.",
       button: "Got it",
     },
     es: {
-      title: "Instalar Friggo",
-      desc: "Obtén la mejor experiencia instalando Friggo en tu pantalla de inicio.",
+      title: "Instalar Kaza",
+      desc: "Obtén la mejor experiencia instalando Kaza en tu pantalla de inicio.",
       step1: "Toca el ícone de 'Compartir' en la barra inferior de Safari.",
       step2: "Desliza hacia abajo y toca 'Agregar a la pantalla de inicio'.",
       step3: "Toca 'Agregar' en la esquina superior derecha para confirmar.",

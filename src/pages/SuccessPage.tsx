@@ -50,16 +50,16 @@ const SuccessPage = () => {
   const l = {
     "pt-BR": {
       title: "Tudo pronto!",
-      subtitle: "Sua jornada com a Friggo começou. Agora você tem o controle total da sua cozinha.",
-      installText: "Para a melhor experiência, instale o Friggo no seu celular.",
+      subtitle: "Sua jornada com a Kaza começou. Agora você tem o controle total da sua cozinha.",
+      installText: "Para a melhor experiência, instale o Kaza no seu celular.",
       btnInstall: "Como instalar no meu celular",
       btnStart: "Começar a usar agora",
       benefitsTitle: "O que você vai desfrutar:"
     },
     "en": {
       title: "All set!",
-      subtitle: "Your Friggo journey has begun. You now have full control of your kitchen.",
-      installText: "For the best experience, install Friggo on your phone.",
+      subtitle: "Your Kaza journey has begun. You now have full control of your kitchen.",
+      installText: "For the best experience, install Kaza on your phone.",
       btnInstall: "How to install on my phone",
       btnStart: "Start using now",
       benefitsTitle: "What you will enjoy:"

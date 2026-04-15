@@ -1,7 +1,7 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { useFriggo } from '@/contexts/FriggoContext';
+import { useKaza } from '@/contexts/KazaContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Lightbulb, Plus, Sparkles } from 'lucide-react';
 import { productDatabase, ProductSuggestion } from '@/data/productDatabase';
@@ -42,7 +42,7 @@ const sugLabels = {
 };
 
 export function SuggestionsList({ open, onClose }: SuggestionsListProps) {
- const { addToShoppingList, shoppingList, onboardingData } = useFriggo();
+ const { addToShoppingList, shoppingList, onboardingData } = useKaza();
  const { language } = useLanguage();
  const [selectedItems, setSelectedItems] = useState<string[]>([]);
  const l = sugLabels[language];

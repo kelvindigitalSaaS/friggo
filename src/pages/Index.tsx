@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Navigate } from "react-router-dom";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import { useAuth } from "@/hooks/useAuth";
 import { BottomNav } from "@/components/friggo/BottomNav";
 import { FabAddButton } from "@/components/friggo/FabAddButton";
@@ -16,26 +16,20 @@ import BrandName from '@/components/friggo/BrandName';
 
 function LoadingScreen() {
   return (
-    <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-white dark:bg-[#0a0a0a] animate-fade-in">
+    <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-primary dark:bg-primary/90 animate-fade-in">
       <div className="flex flex-col items-center">
-            <div className="relative mb-5">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-[1.5rem] bg-gradient-to-br from-primary/20 to-primary/5 dark:from-primary/30 dark:to-primary/10 flex items-center justify-center shadow-lg shadow-primary/10 overflow-hidden">
-              <img
-                src="/icon.png"
-                alt="Friggo"
-                width={80}
-                height={80}
-                className="w-full h-full object-cover transform scale-[1.4]"
-                loading="eager"
-                decoding="async"
-              />
-            </div>
-          <div className="absolute inset-0 rounded-[1.5rem] bg-primary/10 blur-2xl -z-10 scale-150" />
+        <div className="relative mb-5">
+          <div className="w-20 h-20 md:w-24 md:h-24 rounded-[1.25rem] bg-white flex items-center justify-center shadow-xl overflow-hidden">
+            <svg className="w-12 h-12 md:w-14 md:h-14 text-primary" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M 50 150 L 100 40 L 150 150"/>
+              <line x1="65" y1="115" x2="135" y2="115"/>
+            </svg>
+          </div>
         </div>
-        <BrandName label="Friggo" sizeClass="text-xl md:text-2xl" />
-        <p className="text-xs text-muted-foreground mb-6">Carregando...</p>
-            <div className="w-24 h-1 rounded-full bg-muted overflow-hidden">
-          <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-primary to-primary/70 animate-[loading-bar_1.5s_ease-in-out_infinite]" />
+        <h1 className="text-2xl font-black tracking-tight text-white mb-1">Kaza</h1>
+        <p className="text-xs text-white/70 mb-5">Carregando...</p>
+        <div className="w-24 h-1.5 rounded-full bg-white/20 overflow-hidden">
+          <div className="h-full w-2/3 rounded-full bg-white animate-[loading-bar_1.5s_ease-in-out_infinite]" />
         </div>
       </div>
     </div>
@@ -48,8 +42,8 @@ const TAB_STORAGE_KEY = "friggo-active-tab";
 
 const tabSpring = { type: "spring" as const, stiffness: 350, damping: 30, mass: 0.8 };
 
-function FriggoApp() {
-  const { loading: friggoLoading, isOnboarded } = useFriggo();
+function KazaApp() {
+  const { loading: friggoLoading, isOnboarded } = useKaza();
   const { user, loading: authLoading, requireAuth } = useAuth();
   const [activeTab, setActiveTab] = useState(() => {
     try {
@@ -170,5 +164,5 @@ export default function Index() {
     return <Navigate to="/auth" replace />;
   }
 
-  return <FriggoApp />;
+  return <KazaApp />;
 }

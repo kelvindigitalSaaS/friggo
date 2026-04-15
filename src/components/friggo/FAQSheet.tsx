@@ -32,7 +32,7 @@ const faqData = {
       {
         question: "Como funciona o alerta de vencimento?",
         answer:
-          "O Friggo monitora as datas de validade de todos os seus itens e envia notificações. Além disso, se você guardar carnes na dispensa em vez da geladeira, o Friggo enviará um alerta de perigo imediato."
+          "O Kaza monitora as datas de validade de todos os seus itens e envia notificações. Além disso, se você guardar carnes na dispensa em vez da geladeira, o Kaza enviará um alerta de perigo imediato."
       },
       {
         question: "O que é o check-up noturno?",
@@ -47,7 +47,7 @@ const faqData = {
       {
         question: "Como funcionam as receitas inteligentes?",
         answer:
-          "Baseado nos itens que você tem, especialmente os que estão próximos de vencer, o Friggo sugere receitas exclusivas para aproveitar tudo sem desperdício."
+          "Baseado nos itens que você tem, especialmente os que estão próximos de vencer, o Kaza sugere receitas exclusivas para aproveitar tudo sem desperdício."
       },
       {
         question: "Como gerenciar minha assinatura?",
@@ -57,12 +57,12 @@ const faqData = {
       {
         question: "Como funciona o lembrete do lixo?",
         answer:
-          "Configure os dias da semana e o horário programado nas Configurações. O Friggo avisa você no mesmo dia (ou antes) para não esquecer de descer ou colocar o lixo para fora."
+          "Configure os dias da semana e o horário programado nas Configurações. O Kaza avisa você no mesmo dia (ou antes) para não esquecer de descer ou colocar o lixo para fora."
       },
       {
-        question: "Como instalar o Friggo no celular?",
+        question: "Como instalar o Kaza no celular?",
         answer:
-          "O Friggo é um PWA. Vá em Configurações > Como Instalar para ver o passo a passo para Android (Chrome) e iPhone (Safari)."
+          "O Kaza é um PWA. Vá em Configurações > Como Instalar para ver o passo a passo para Android (Chrome) e iPhone (Safari)."
       }
     ]
   },
@@ -78,7 +78,7 @@ const faqData = {
       {
         question: "How does the expiration alert work?",
         answer:
-          "Friggo monitors expiration dates of all your items and sends notifications when a product is about to expire. You can configure how many days in advance you want to be alerted in settings."
+          "Kaza monitors expiration dates of all your items and sends notifications when a product is about to expire. You can configure how many days in advance you want to be alerted in settings."
       },
       {
         question: "What is the nightly check-up?",
@@ -93,7 +93,7 @@ const faqData = {
       {
         question: "How do smart recipes work?",
         answer:
-          "Based on items you have in the fridge, especially those close to expiring, Friggo suggests recipes to use everything without waste."
+          "Based on items you have in the fridge, especially those close to expiring, Kaza suggests recipes to use everything without waste."
       },
       {
         question: "Can I share my shopping list?",
@@ -127,12 +127,12 @@ const faqData = {
       {
         question: "What is smart fridge?",
         answer:
-          "If you have a smart refrigerator (Samsung, LG, etc), you can connect it to Friggo to control temperature, receive door-open alerts, and defrost reminders."
-      }
-    ]
-  },
-  es: {
-    title: "Preguntas Frecuentes",
+          "If you have a smart refrigerator (Samsung, LG, etc), you can connect it to Kaza to control temperature, receive door-open alerts, and defrost reminders."
+      {
+        question: "How does the expiration alert work?",
+        answer:
+          "Kaza monitora as datas de validade de todos os seus itens e envia notificações. Além disso, se você guardar carnes na dispensa em vez da geladeira, o Kaza enviará um alerta de perigo imediato."
+      },
     notFound: "¿No encontraste tu respuesta?",
     items: [
       {
@@ -143,7 +143,7 @@ const faqData = {
       {
         question: "¿Cómo funciona la alerta de vencimiento?",
         answer:
-          "Friggo monitorea las fechas de vencimiento de todos tus artículos y envía notificaciones cuando un producto está por caducar. Puedes configurar cuántos días antes quieres ser alertado en ajustes."
+          "Kaza monitorea las fechas de vencimiento de todos tus artículos y envía notificaciones cuando un producto está por caducar. Puedes configurar cuántos días antes quieres ser alertado en ajustes."
       },
       {
         question: "¿Qué es el chequeo nocturno?",
@@ -158,7 +158,7 @@ const faqData = {
       {
         question: "¿Cómo funcionan las recetas inteligentes?",
         answer:
-          "Basándose en los artículos que tienes en la nevera, especialmente los que están por vencer, Friggo sugiere recetas para aprovechar todo sin desperdicios."
+          "Basándose en los artículos que tienes en la nevera, especialmente los que están por vencer, Kaza sugiere recetas para aprovechar todo sin desperdicios."
       },
       {
         question: "¿Puedo compartir mi lista de compras?",
@@ -193,20 +193,20 @@ const faqData = {
       {
         question: "¿Qué es la nevera smart?",
         answer:
-          "Si tienes una nevera inteligente (Samsung, LG, etc), puedes conectarla a Friggo para controlar temperatura, recibir alertas de puerta abierta y recordatorios de descongelación."
-      }
-    ]
-  }
-};
-
+          "Si tienes una nevera inteligente (Samsung, LG, etc), puedes conectarla a Kaza para controlar temperatura, recibir alertas de puerta abierta y recordatorios de descongelación."
+      {
+        question: "How do smart recipes work?",
+        answer:
+          "Baseado nos itens que você tem na geladeira, especialmente os que estão próximos de vencer, o Kaza sugere receitas exclusivas para aproveitar tudo sem desperdício."
+      },
 export function FAQSheet({ open, onClose }: FAQSheetProps) {
   const { language } = useLanguage();
   const data = faqData[language];
-
-  return (
-    <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl p-0">
-        <SheetHeader className="border-b border-gray-200 px-6 py-4">
+      {
+        question: "How do smart recipes work?",
+        answer:
+          "Basándose en los artículos que tienes en la nevera, especialmente los que están por vencer, Kaza sugiere recetas para aprovechar todo sin desperdicios."
+      },
           <SheetTitle className="flex items-center gap-2 text-lg font-bold">
             <HelpCircle className="h-5 w-5 text-primary" />
             {data.title}
@@ -237,7 +237,7 @@ export function FAQSheet({ open, onClose }: FAQSheetProps) {
               <div className="flex items-center justify-center gap-2 mt-2">
                 <Mail className="h-4 w-4 text-primary" />
                 <p className="text-sm font-medium text-primary">
-                  suporte@friggo.app
+                  suporte@kaza.app
                 </p>
               </div>
             </div>

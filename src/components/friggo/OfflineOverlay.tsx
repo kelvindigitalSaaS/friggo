@@ -6,19 +6,19 @@ const offlineMessages = {
   "pt-BR": {
     title: "Você está offline",
     message:
-      "Sua app está offline, e provavelmente não irá salvar. Conecte-se na rede e tenha acesso ao Friggo novamente.",
+      "Sua app está offline, e provavelmente não irá salvar. Conecte-se na rede e tenha acesso ao Kaza novamente.",
     retry: "Tentar reconectar"
   },
   en: {
     title: "You're offline",
     message:
-      "Your app is offline and probably won't save. Connect to a network to access Friggo again.",
+      "Your app is offline and probably won't save. Connect to a network to access Kaza again.",
     retry: "Try to reconnect"
   },
   es: {
     title: "Estás sin conexión",
     message:
-      "Tu app está sin conexión y probablemente no guardará. Conéctate a la red para acceder a Friggo nuevamente.",
+      "Tu app está sin conexión y probablemente no guardará. Conéctate a la red para acceder a Kaza nuevamente.",
     retry: "Intentar reconectar"
   }
 };

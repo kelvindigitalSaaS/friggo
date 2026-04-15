@@ -1,86 +1,26 @@
 {
-  "name": "Friggo",
-  "short_name": "Friggo",
+  "name": "Kaza",
+  "short_name": "Kaza",
   "description": "Tudo o que sua casa precisa, antes de acabar. Geladeira, receitas, lista de compras e mais.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#22c55e",
-  "background_color": "#22c55e",
+  "theme_color": "#22C55E",
+  "background_color": "#22C55E",
   "categories": ["food", "lifestyle", "utilities"],
   "icons": [
     {
-      "src": "/icon.png",
-      "type": "image/png",
+      "src": "/favicon-kaza-light.svg",
+      "type": "image/svg+xml",
       "sizes": "512x512",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-48.png",
-      "type": "image/png",
-      "sizes": "48x48",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-72.png",
-      "type": "image/png",
-      "sizes": "72x72",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-96.png",
-      "type": "image/png",
-      "sizes": "96x96",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-128.png",
-      "type": "image/png",
-      "sizes": "128x128",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-152.png",
-      "type": "image/png",
-      "sizes": "152x152",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-192.png",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-256.png",
-      "type": "image/png",
-      "sizes": "256x256",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-384.png",
-      "type": "image/png",
-      "sizes": "384x384",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "type": "image/png",
+      "src": "/favicon-kaza-dark.svg",
+      "type": "image/svg+xml",
       "sizes": "512x512",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-192.png",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ]
 }

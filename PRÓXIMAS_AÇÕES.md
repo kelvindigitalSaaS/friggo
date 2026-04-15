@@ -1,4 +1,4 @@
-# 🎯 PRÓXIMAS AÇÕES - FRIGGO (Abril 2026)
+# 🎯 PRÓXIMAS AÇÕES - KAZA (Abril 2026)
 
 ---
 
@@ -138,9 +138,9 @@ npm run build
 
 ## 🎉 Sucesso!
 
-Seu sistema Friggo agora suporta:
+Seu sistema Kaza agora suporta:
 
-- ✅ **PIX** - Pagamento instantâneo Brasil
+-- ✅ **PIX** - Pagamento instantâneo Brasil
 - ✅ **Apple Pay** - Para usuários Mac/iPhone
 - ✅ **Google Pay** - Para usuários Android
 - ✅ **Notificações de Coleta de Lixo** - Funciona perfeitamente

@@ -133,7 +133,7 @@ const handleSave = () => {
     garbageLocation,
     buildingFloor
   };
-  localStorage.setItem("friggo-garbage-reminder", JSON.stringify(data));
+  localStorage.setItem("kaza-garbage-reminder", JSON.stringify(data));
 
   // Inicializa monitoramento se habilitado
   if (enabled && selectedDays.length > 0) {

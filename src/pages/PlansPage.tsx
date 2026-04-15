@@ -70,7 +70,7 @@ export default function PlansPage() {
   const labels = {
     "pt-BR": {
       title: "Escolha seu Plano",
-      subtitle: "Desbloqueie todo o potencial do Friggo",
+      subtitle: "Desbloqueie todo o potencial do Kaza",
       popular: "Mais Popular",
       current: "Seu plano atual",
       upgrade: "Assinar Agora",
@@ -95,7 +95,7 @@ export default function PlansPage() {
     },
     en: {
       title: "Choose your Plan",
-      subtitle: "Unlock the full potential of Friggo",
+      subtitle: "Unlock the full potential of Kaza",
       popular: "Most Popular",
       current: "Your current plan",
       upgrade: "Subscribe Now",
@@ -174,7 +174,7 @@ export default function PlansPage() {
                   <Crown className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-black text-lg text-foreground tracking-tight">Friggo Premium</h3>
+                  <h3 className="font-black text-lg text-foreground tracking-tight">Kaza Premium</h3>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">{l.active}</span>
@@ -298,7 +298,7 @@ export default function PlansPage() {
                 </div>
                 <div>
                   <p className="font-black text-xl text-foreground tracking-tight">
-                    Friggo Premium
+                    Kaza Premium
                   </p>
                   <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide opacity-70">
                     Acesso Vitalício

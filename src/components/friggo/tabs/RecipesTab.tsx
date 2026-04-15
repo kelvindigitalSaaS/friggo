@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import { RecipeCard } from "../RecipeCard";
 import { allRecipes, findRecipesByIngredients } from "@/data/recipeDatabase";
 import { Sparkles, Heart, Filter, ChefHat, Search, ShoppingCart, BookOpen } from "lucide-react";
@@ -12,7 +12,7 @@ import { PlannerTab } from "./PlannerTab";
 import { CalendarDays } from "lucide-react";
 
 export function RecipesTab() {
-  const { shoppingList, addToShoppingList, items, favoriteRecipes } = useFriggo();
+  const { shoppingList, addToShoppingList, items, favoriteRecipes } = useKaza();
   const navigate = useNavigate();
   const [subTab, setSubTab] = useState<"recipes" | "planner">("recipes");
   const [searchQuery, setSearchQuery] = useState("");

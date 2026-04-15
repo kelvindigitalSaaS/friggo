@@ -5,7 +5,7 @@ import {
   SheetTitle
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   BarChart3,
@@ -26,7 +26,7 @@ interface MonthlyReportProps {
 }
 
 export function MonthlyReport({ open, onClose }: MonthlyReportProps) {
-  const { itemHistory, items } = useFriggo();
+  const { itemHistory, items } = useKaza();
   const { language } = useLanguage();
 
   const dateLocale = language === "en" ? enUS : language === "es" ? es : ptBR;

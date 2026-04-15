@@ -168,7 +168,7 @@ npm run dev
 ```javascript
 // No console do navegador (DevTools → F12)
 localStorage.setItem(
-  "friggo-garbage-reminder",
+   "kaza-garbage-reminder",
   JSON.stringify({
     enabled: true,
     selectedDays: [1], // Segunda
@@ -232,7 +232,7 @@ Abra DevTools (F12) e procure por:
 
 - Permita notificações no navegador/app
 - Verifique se o day-of-week está correto (0 = Domingo, 1 = Segunda, etc)
-- Verifique localStorage: `console.log(localStorage.getItem('friggo-garbage-reminder'))`
+ - Verifique localStorage: `console.log(localStorage.getItem('kaza-garbage-reminder'))`
 
 ### "Erro: Session not authenticated"
 
@@ -254,7 +254,7 @@ Abra DevTools (F12) e procure por:
 
    - Notificações push (push notification API)
    - Agendarnotificações via Background Tasks
-   - Integração com assistentes de voz
+   - Integração com automações (opcional)
 
 3. **Analytics:**
    - Rastrear tentativas de pagamento

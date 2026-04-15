@@ -16,7 +16,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   ShoppingCart,
@@ -260,7 +260,7 @@ export function ConsumableTracker({ open, onClose }: ConsumableTrackerProps) {
     addToShoppingList,
     clearConsumables,
     setConsumablesBulk
-  } = useFriggo();
+  } = useKaza();
   const { language } = useLanguage();
   const l = labels[language];
 

@@ -1,4 +1,4 @@
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AlertCard } from "./AlertCard";
 import {
@@ -48,7 +48,7 @@ const labels = {
 };
 
 export function NotificationsMenu({ children }: NotificationsMenuProps) {
-  const { alerts, dismissAlert } = useFriggo();
+  const { alerts, dismissAlert } = useKaza();
   const { language } = useLanguage();
   const l = labels[language];
 

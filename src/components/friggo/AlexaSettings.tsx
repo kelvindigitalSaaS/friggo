@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import { Mic, ExternalLink, Copy, CheckCircle2, Info } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,7 @@ interface AlexaSettingsProps {
 }
 
 export function AlexaSettings({ open, onClose }: AlexaSettingsProps) {
-  const { onboardingData, updateProfile } = useFriggo();
+  const { onboardingData, updateProfile } = useKaza();
   const [alexaEnabled, setAlexaEnabled] = useState(
     onboardingData?.hasAlexa || false
   );
@@ -58,19 +58,19 @@ export function AlexaSettings({ open, onClose }: AlexaSettingsProps) {
 
   const commands = [
     {
-      cmd: '"Friggo, o que está vencendo?"',
+      cmd: '"Kaza, o que está vencendo?"',
       desc: "Lista itens próximos do vencimento"
     },
     {
-      cmd: '"Friggo, adicionar leite na lista"',
+      cmd: '"Kaza, adicionar leite na lista"',
       desc: "Adiciona itens à lista de compras"
     },
     {
-      cmd: '"Friggo, o que posso cozinhar?"',
+      cmd: '"Kaza, o que posso cozinhar?"',
       desc: "Sugere receitas disponíveis"
     },
     {
-      cmd: '"Friggo, fazer check-up da geladeira"',
+      cmd: '"Kaza, fazer check-up da geladeira"',
       desc: "Inicia o check-up por voz"
     }
   ];
@@ -111,7 +111,7 @@ export function AlexaSettings({ open, onClose }: AlexaSettingsProps) {
                 <div>
                   <p className="font-semibold">Amazon Alexa</p>
                   <p className="text-xs text-muted-foreground">
-                    {alexaEnabled ? "Skill ativa" : "Ativar skill Friggo"}
+                    {alexaEnabled ? "Skill ativa" : "Ativar skill Kaza"}
                   </p>
                 </div>
               </div>
@@ -173,7 +173,7 @@ export function AlexaSettings({ open, onClose }: AlexaSettingsProps) {
                 <div>
                   <p className="font-semibold">Google Assistant</p>
                   <p className="text-xs text-muted-foreground">
-                    {googleEnabled ? "Action ativa" : "Ativar Action Friggo"}
+                    {googleEnabled ? "Action ativa" : "Ativar Action Kaza"}
                   </p>
                 </div>
               </div>
@@ -234,10 +234,10 @@ export function AlexaSettings({ open, onClose }: AlexaSettingsProps) {
           <div className="flex items-start gap-3 rounded-xl bg-muted/40 p-4">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Deeplink do app:{" "}
-              <span className="font-mono text-primary">friggo://</span>
+              Deeplink do app: {" "}
+              <span className="font-mono text-primary">kaza://</span>
               <br />
-              Ative a skill "Friggo" no app Amazon Alexa ou a Action no Google
+              Ative a skill "Kaza" no app Amazon Alexa ou a Action no Google
               Assistant para usar comandos de voz com sua conta.
             </p>
           </div>

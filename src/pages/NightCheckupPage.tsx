@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useFriggo } from '@/contexts/FriggoContext';
+import { useKaza } from '@/contexts/KazaContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Moon, Minus, Trash2, UtensilsCrossed, Check, Camera, ArrowLeft, Apple, ChefHat, ThumbsUp, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -21,7 +21,7 @@ type DayAnswer = 'consumed' | 'discarded' | 'both' | null;
 
 export default function NightCheckupPage() {
     const navigate = useNavigate();
-    const { items, updateItem, removeItem, addItemHistory } = useFriggo();
+    const { items, updateItem, removeItem, addItemHistory } = useKaza();
     const { language } = useLanguage();
     const [actions, setActions] = useState<CheckupAction[]>([]);
     const [customQuantities, setCustomQuantities] = useState<Record<string, string>>({});

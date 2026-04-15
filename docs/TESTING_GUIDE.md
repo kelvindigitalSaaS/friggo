@@ -4,7 +4,7 @@
 
 ### Na Web/PWA:
 
-1. **Acesse:** `https://friggo.app/plans` (ou localmente em desenvolvimento)
+1. **Acesse:** `https://kaza.app/plans` (ou localmente em desenvolvimento)
 2. **Clique em:** "Assinar Agora" em qualquer plano
 3. **Verifique:**
    - ✅ Você é redirecionado para o Stripe Checkout
@@ -20,7 +20,7 @@
 
 ### No App Android:
 
-1. **Abra o app Friggo de teste**
+1. **Abra o app Kaza de teste**
 2. **Navegue para:** Perfil → Planos
 3. **Clique em:** "Assinar Agora"
 4. **Verifique:**
@@ -96,7 +96,7 @@
 
 ### ✅ Passo 1: Crie uma Conta
 
-- Registre-se em `https://friggo.app` (ou local em desenvolvimento)
+- Registre-se em `https://kaza.app` (ou local em desenvolvimento)
 - Confirme o email (verifique spam)
 
 ### ✅ Passo 2: Escolha um Plano
@@ -115,7 +115,7 @@
 ### ✅ Passo 4: Verificar Webhook
 
 - O webhook do Stripe será chamado automaticamente
-- Você será redirecionado de volta para `https://friggo.app/?subscription=success`
+- Você será redirecionado de volta para `https://kaza.app/?subscription=success`
 - A assinatura deve ser ativada no Supabase
 
 ### ✅ Passo 5: Validar Assinatura
@@ -202,7 +202,7 @@ stripe trigger payment_intent.succeeded
 
 ```javascript
 // No console do navegador:
-localStorage.removeItem("friggo-garbage-reminder");
+localStorage.removeItem("kaza-garbage-reminder");
 location.reload();
 ```
 

@@ -40,7 +40,7 @@ export function TrialBanner() {
 
   const percentage = user ? Math.max(0, Math.min(100, (trialDaysRemaining / 7) * 100)) : 100;
   const bannerText = user 
-    ? `Friggo Premium liberado (${trialDaysRemaining} ${trialDaysRemaining === 1 ? 'dia' : 'dias'})`
+    ? `Kaza Premium liberado (${trialDaysRemaining} ${trialDaysRemaining === 1 ? 'dia' : 'dias'})`
     : 'Aproveitar avaliação 7 dias';
   const targetPath = user ? "/settings/subscription" : "/auth";
 

@@ -1,9 +1,9 @@
-import { useFriggo } from '@/contexts/FriggoContext';
+import { useKaza } from '@/contexts/KazaContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Package, AlertTriangle, ShoppingCart, Leaf } from 'lucide-react';
 
 export function QuickStats() {
- const { items, alerts, shoppingList } = useFriggo();
+ const { items, alerts, shoppingList } = useKaza();
  const { language } = useLanguage();
  
  const labels = {

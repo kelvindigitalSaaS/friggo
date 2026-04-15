@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Sparkles, ArrowLeft, AlertTriangle, Lightbulb } from 'lucide-react';
-import { useFriggo } from '@/contexts/FriggoContext';
+import { useKaza } from '@/contexts/KazaContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ItemCategory, ItemLocation, MaturationLevel } from '@/types/friggo';
 import { toast } from 'sonner';
@@ -93,7 +93,7 @@ const foodRules: Record<string, Record<ItemCategory, string>> = {
 
 export default function AddItemPage() {
     const navigate = useNavigate();
-    const { addItem, onboardingData } = useFriggo();
+    const { addItem, onboardingData } = useKaza();
     const { language } = useLanguage();
     const [name, setName] = useState('');
     const [category, setCategory] = useState<ItemCategory>('fruit');

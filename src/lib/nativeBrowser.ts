@@ -56,8 +56,8 @@ export function parseStripeRedirect(
   try {
     // Mobile deep links may use custom scheme
     const normalized = url
-      .replace("com.friggo.app://", "https://friggo.app/")
-      .replace("friggo://", "https://friggo.app/");
+        .replace("com.friggo.app://", "https://kaza.app/")
+        .replace("friggo://", "https://kaza.app/");
     const parsed = new URL(normalized);
     const result = parsed.searchParams.get("subscription");
     if (result === "success" || result === "canceled") return result;

@@ -16,7 +16,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Camera, X, Keyboard, Loader2 } from "lucide-react";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import { ItemCategory, ItemLocation } from "@/types/friggo";
 import { toast } from "sonner";
 import { isNative } from "@/lib/capacitor";
@@ -142,7 +142,7 @@ function mapOFFProduct(p: any): ProductInfo {
 }
 
 export function BarcodeScanner({ open, onClose }: BarcodeScannerProps) {
-  const { addItem } = useFriggo();
+  const { addItem } = useKaza();
   const [mode, setMode] = useState<"camera" | "manual">("manual");
   const [barcode, setBarcode] = useState("");
   const [isScanning, setIsScanning] = useState(false);

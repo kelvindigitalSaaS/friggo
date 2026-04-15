@@ -14,7 +14,7 @@ export type MaturationLevel = "green" | "ripe" | "very-ripe" | "overripe";
 
 export type ItemLocation = "fridge" | "freezer" | "pantry" | "cleaning";
 
-export interface FriggoItem {
+export interface KazaItem {
   id: string;
   name: string;
   category: ItemCategory;

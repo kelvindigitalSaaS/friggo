@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   ShoppingCart,
@@ -49,7 +49,7 @@ export function ShoppingTab() {
     onboardingData,
     markAllShoppingComplete,
     clearAllShoppingList
-  } = useFriggo();
+  } = useKaza();
   const { language } = useLanguage();
   const [activeFilter, setActiveFilter] = useState("all");
   const [newItem, setNewItem] = useState("");

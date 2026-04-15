@@ -1,4 +1,4 @@
-import { FriggoItem } from "@/types/friggo";
+import { KazaItem } from "@/types/friggo";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import {
@@ -15,13 +15,13 @@ import {
   Refrigerator
 } from "lucide-react";
 
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 
 interface ItemCardProps {
-  item: FriggoItem;
-  onConsume?: (item: FriggoItem) => void;
-  onEdit?: (item: FriggoItem) => void;
-  onRefreeze?: (item: FriggoItem) => void;
+  item: KazaItem;
+  onConsume?: (item: KazaItem) => void;
+  onEdit?: (item: KazaItem) => void;
+  onRefreeze?: (item: KazaItem) => void;
 }
 
 const categoryIcons: Record<string, React.ElementType> = {
@@ -73,7 +73,7 @@ const statusLabels = {
 
 export function ItemCard({ item, onConsume, onEdit, onRefreeze }: ItemCardProps) {
   const { language } = useLanguage();
-  const { defrostItem } = useFriggo();
+  const { defrostItem } = useKaza();
   const Icon = categoryIcons[item.category] || Package;
   const matLabels = maturationLabelsMap[language];
   const sLabels = statusLabels[language];

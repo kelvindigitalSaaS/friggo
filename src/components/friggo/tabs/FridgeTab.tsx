@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useFriggo } from '@/contexts/FriggoContext';
+import { useKaza } from '@/contexts/KazaContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ItemCard } from '../ItemCard';
 import { BarcodeScanner } from '../BarcodeScanner';
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { ItemLocation, FriggoItem } from '@/types/friggo';
+import { ItemLocation, KazaItem } from '@/types/friggo';
 import { toast } from 'sonner';
 
 const locationFilters: { id: ItemLocation | 'all'; label: string; labelEn: string; labelEs: string; icon: React.ElementType }[] = [
@@ -21,7 +21,7 @@ const locationFilters: { id: ItemLocation | 'all'; label: string; labelEn: strin
 ];
 
 export function FridgeTab() {
-    const { items, removeItem, updateItem, consumables, onboardingData, toggleSection: toggleContextSection } = useFriggo();
+    const { items, removeItem, updateItem, consumables, onboardingData, toggleSection: toggleContextSection } = useKaza();
     const { language, t } = useLanguage();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'items' | 'consumables'>('items');
@@ -31,7 +31,7 @@ export function FridgeTab() {
     const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
     const [selectionMode, setSelectionMode] = useState(false);
     const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-    const [editingItem, setEditingItem] = useState<FriggoItem | null>(null);
+    const [editingItem, setEditingItem] = useState<KazaItem | null>(null);
     const [editQty, setEditQty] = useState('');
     const [editLocation, setEditLocation] = useState<ItemLocation>('fridge');
 
@@ -140,7 +140,7 @@ export function FridgeTab() {
     };
 
     // Edit handlers
-    const startEdit = (item: FriggoItem) => {
+    const startEdit = (item: KazaItem) => {
         setEditingItem(item);
         setEditQty(String(item.quantity));
         setEditLocation(item.location);
@@ -156,7 +156,7 @@ export function FridgeTab() {
     };
 
     // Re-freeze handler
-    const refreezeItem = (item: FriggoItem) => {
+    const refreezeItem = (item: KazaItem) => {
         updateItem(item.id, { location: 'freezer' });
         toast.success(`${item.name} ${l.refrozen}`);
     };

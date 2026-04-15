@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useFriggo } from '@/contexts/FriggoContext';
+import { useKaza } from '@/contexts/KazaContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { History, Plus, Minus, Trash2, UtensilsCrossed, User, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function HistoryPage() {
     const navigate = useNavigate();
-    const { itemHistory } = useFriggo();
+    const { itemHistory } = useKaza();
     const { language } = useLanguage();
 
     const dateLocale = language === 'en' ? enUS : language === 'es' ? es : ptBR;

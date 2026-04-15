@@ -19,7 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import {
   Trash2,
   Bell,
@@ -61,7 +61,7 @@ const WEEKDAYS = {
 
 export function GarbageReminder({ open, onClose }: GarbageReminderProps) {
   const { language } = useLanguage();
-  const { onboardingData } = useFriggo();
+  const { onboardingData } = useKaza();
 
   const [enabled, setEnabled] = useState(false);
   const [selectedDays, setSelectedDays] = useState<number[]>([1, 4]); // Monday and Thursday

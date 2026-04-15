@@ -34,7 +34,7 @@ export default function CheckoutSuccessPage() {
       exploreApp: "Explorar o App",
       goHome: "Voltar para Home",
       backPlans: "Ver Meus Planos",
-      contact: "Dúvidas? Entre em contato com suporte@friggo.app"
+      contact: "Dúvidas? Entre em contato com suporte@kaza.app"
     },
     en: {
       success: "✨ Payment Confirmed!",
@@ -47,7 +47,7 @@ export default function CheckoutSuccessPage() {
       exploreApp: "Explore the App",
       goHome: "Go to Home",
       backPlans: "View My Subscriptions",
-      contact: "Questions? Contact support@friggo.app"
+      contact: "Questions? Contact support@kaza.app"
     },
     es: {
       success: "✨ ¡Pago Confirmado!",
@@ -60,7 +60,7 @@ export default function CheckoutSuccessPage() {
       exploreApp: "Explorar la App",
       goHome: "Ir a Inicio",
       backPlans: "Ver Mis Suscripciones",
-      contact: "¿Preguntas? Contacta con support@friggo.app"
+      contact: "¿Preguntas? Contacta con support@kaza.app"
     }
   };
 
@@ -168,7 +168,7 @@ export default function CheckoutSuccessPage() {
                     <Monitor className="h-4 w-4" /> Instalação Recomendada
                   </div>
                   <p className="text-[13px] text-muted-foreground font-medium px-2">
-                    Instale o Friggo no seu dispositivo para ter uma experiência de app real e notificações em tempo real.
+                    Instale o Kaza no seu dispositivo para ter uma experiência de app real e notificações em tempo real.
                   </p>
                   {canInstall ? (
                     <Button 
@@ -176,7 +176,7 @@ export default function CheckoutSuccessPage() {
                       className="w-full h-11 rounded-xl bg-primary text-white font-black text-sm gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-all"
                     >
                       <Download className="h-4 w-4" />
-                      Instalar Friggo
+                      Instalar Kaza
                     </Button>
                   ) : (
                     <div className="bg-muted/30 p-3 rounded-lg">

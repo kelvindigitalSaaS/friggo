@@ -8,7 +8,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Moon,
@@ -18,7 +18,7 @@ import {
   Check,
   Camera
 } from "lucide-react";
-import { FriggoItem } from "@/types/friggo";
+import { KazaItem } from "@/types/friggo";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -34,7 +34,7 @@ interface CheckupAction {
 }
 
 export function NightCheckup({ open, onClose }: NightCheckupProps) {
-  const { items, updateItem, removeItem, addItemHistory } = useFriggo();
+  const { items, updateItem, removeItem, addItemHistory } = useKaza();
   const { language } = useLanguage();
   const [actions, setActions] = useState<CheckupAction[]>([]);
   const [customQuantities, setCustomQuantities] = useState<

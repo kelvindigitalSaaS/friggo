@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import { Camera, Loader2, User, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,7 @@ interface AvatarUploadProps {
 
 export default function AvatarUpload({ currentUrl, size = 100, className }: AvatarUploadProps) {
   const { user } = useAuth();
-  const { updateProfile } = useFriggo();
+  const { updateProfile } = useKaza();
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 

@@ -22,7 +22,7 @@ import {
   ShoppingCart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface RecipeDetailProps {
@@ -35,7 +35,7 @@ export function RecipeDetail({ recipe, open, onClose }: RecipeDetailProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [cookingMode, setCookingMode] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const { items, addToShoppingList } = useFriggo();
+  const { items, addToShoppingList } = useKaza();
   const { language } = useLanguage();
 
   if (!recipe) return null;

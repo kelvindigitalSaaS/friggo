@@ -5,7 +5,7 @@ import {
   SheetTitle
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   History,
@@ -25,7 +25,7 @@ interface ItemHistoryProps {
 }
 
 export function ItemHistory({ open, onClose }: ItemHistoryProps) {
-  const { itemHistory } = useFriggo();
+  const { itemHistory } = useKaza();
   const { language } = useLanguage();
 
   const dateLocale = language === "en" ? enUS : language === "es" ? es : ptBR;

@@ -18,7 +18,7 @@ export default function CheckoutCancelPage() {
       goHome: "Voltar para Home",
       explore: "Continuar com Plano Grátis",
       support: "Precisa de ajuda?",
-      supportText: "Entre em contato com suporte@friggo.app se tiver dúvidas",
+      supportText: "Entre em contato com suporte@kaza.app se tiver dúvidas",
       freeFeatures: "Continue desfrutando do plano grátis:",
       features: [
         "5 itens na geladeira",
@@ -36,7 +36,7 @@ export default function CheckoutCancelPage() {
       goHome: "Go to Home",
       explore: "Continue with Free Plan",
       support: "Need help?",
-      supportText: "Contact support@friggo.app if you have any questions",
+      supportText: "Contact support@kaza.app if you have any questions",
       freeFeatures: "Continue enjoying the free plan:",
       features: [
         "5 items in the fridge",
@@ -55,7 +55,7 @@ export default function CheckoutCancelPage() {
       goHome: "Ir a Inicio",
       explore: "Continuar con Plan Gratis",
       support: "¿Necesitas ayuda?",
-      supportText: "Contacta con support@friggo.app si tienes dudas",
+      supportText: "Contacta con support@kaza.app si tienes dudas",
       freeFeatures: "Continúa disfrutando del plan gratuito:",
       features: [
         "5 artículos en la nevera",

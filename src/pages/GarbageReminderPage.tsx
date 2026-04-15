@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import {
   Trash2,
   Bell,
@@ -48,7 +48,7 @@ const WEEKDAYS = {
 export default function GarbageReminderPage() {
   const navigate = useNavigate();
   const { language } = useLanguage();
-  const { onboardingData } = useFriggo();
+  const { onboardingData } = useKaza();
 
   const [enabled, setEnabled] = useState(false);
   const [selectedDays, setSelectedDays] = useState<number[]>([1, 4]); // Monday and Thursday

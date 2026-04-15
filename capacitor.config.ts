@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "com.friggo.app",
-  appName: "Friggo",
+  appId: "com.kaza.app",
+  appName: "Kaza",
   webDir: "dist",
   server: {
     // During development you can point to your Vite dev server.
@@ -33,7 +33,7 @@ const config: CapacitorConfig = {
     LocalNotifications: {
       smallIcon: "ic_stat_icon",
       iconColor: "#22c55e",
-      sound: "friggo_notification.wav"
+      sound: "kaza_notification.wav"
     },
     Keyboard: {
       resize: "body",
@@ -47,7 +47,7 @@ const config: CapacitorConfig = {
   ios: {
     contentInset: "automatic",
     backgroundColor: "#22c55e",
-    scheme: "friggo"
+    scheme: "kaza"
   }
 };
 

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useFriggo } from '@/contexts/FriggoContext';
+import { useKaza } from '@/contexts/KazaContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
     ArrowLeft,
@@ -48,7 +48,7 @@ const fadeUp = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } }
 export default function MonthlyReportPage() {
     const navigate = useNavigate();
     const { language } = useLanguage();
-    const { items, itemHistory } = useFriggo();
+    const { items, itemHistory } = useKaza();
 
     const labels = {
         'pt-BR': {

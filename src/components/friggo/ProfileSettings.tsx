@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useFriggo } from '@/contexts/FriggoContext';
+import { useKaza } from '@/contexts/KazaContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,7 +19,7 @@ interface ProfileSettingsProps {
 }
 
 export function ProfileSettings({ open, onClose }: ProfileSettingsProps) {
- const { onboardingData, updateProfile } = useFriggo();
+ const { onboardingData, updateProfile } = useKaza();
  const { t, language } = useLanguage();
  const { user } = useAuth();
  

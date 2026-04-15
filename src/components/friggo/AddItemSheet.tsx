@@ -16,8 +16,8 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { Plus, Sparkles, Mic, MicOff } from "lucide-react";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { Plus, Sparkles } from "lucide-react";
+import { useKaza } from "@/contexts/FriggoContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ItemCategory, ItemLocation, MaturationLevel } from "@/types/friggo";
 import { toast } from "sonner";
@@ -28,11 +28,11 @@ import {
 } from "@/data/brazilianRecipes";
 
 export function AddItemSheet() {
-  const { addItem, onboardingData } = useFriggo();
+  const { addItem, onboardingData } = useKaza();
   const { language } = useLanguage();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [isListening, setIsListening] = useState(false);
+  
   const [category, setCategory] = useState<ItemCategory>("fruit");
   const [location, setLocation] = useState<ItemLocation>("fridge");
   const [quantity, setQuantity] = useState("1");
@@ -43,38 +43,7 @@ export function AddItemSheet() {
   const [dailyConsumption, setDailyConsumption] = useState("");
   const [isCooked, setIsCooked] = useState(false);
 
-  const startVoice = () => {
-    const SR =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
-    if (!SR) {
-      toast.error(
-        language === "pt-BR"
-          ? "Microfone não suportado no seu navegador"
-          : "Microphone not supported in your browser"
-      );
-      return;
-    }
-    const recognition = new SR();
-    recognition.lang =
-      language === "en" ? "en-US" : language === "es" ? "es-ES" : "pt-BR";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    setIsListening(true);
-    recognition.onresult = (e: any) => {
-      const transcript: string = e.results[0][0].transcript;
-      setName(transcript.trim());
-      setIsListening(false);
-    };
-    recognition.onerror = () => {
-      setIsListening(false);
-      toast.error(
-        language === "pt-BR" ? "Erro ao capturar voz" : "Voice capture error"
-      );
-    };
-    recognition.onend = () => setIsListening(false);
-    recognition.start();
-  };
+  // voice input removed per design: hide assistant features
 
   const labels = {
     "pt-BR": {
@@ -330,22 +299,6 @@ export function AddItemSheet() {
                 onChange={(e) => setName(e.target.value)}
                 className="h-12 flex-1 rounded-md border-border bg-card text-base"
               />
-              <button
-                type="button"
-                onClick={startVoice}
-                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-md border transition-colors ${
-                  isListening
-                    ? "border-red-400 bg-red-50 text-red-500 dark:bg-red-950/30 animate-pulse"
-                    : "border-border bg-card text-muted-foreground hover:text-primary hover:border-primary"
-                }`}
-                aria-label="Usar microfone"
-              >
-                {isListening ? (
-                  <MicOff className="h-5 w-5" />
-                ) : (
-                  <Mic className="h-5 w-5" />
-                )}
-              </button>
             </div>
           </div>
 
@@ -431,7 +384,7 @@ export function AddItemSheet() {
               {l.expiresIn}
               <div className="flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary uppercase">
                 <Sparkles className="h-2.5 w-2.5" />
-                IA FRIGGO
+                IA KAZA
               </div>
             </Label>
             <Input

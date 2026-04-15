@@ -38,13 +38,13 @@ const STORAGE_KEY = "friggo-voice-assistants";
 
 /** Deep links disponíveis no app para configurar nos assistentes */
 const APP_DEEPLINKS = [
-  { label: "Abrir Início", url: "friggo://home" },
-  { label: "Ver Geladeira", url: "friggo://home?tab=fridge" },
-  { label: "Gerar Receitas", url: "friggo://home?tab=recipes" },
-  { label: "Lista de Compras", url: "friggo://home?tab=shopping" },
-  { label: "Adicionar Item", url: "friggo://add-item" },
-  { label: "Notificações", url: "friggo://notifications" },
-  { label: "Relatório Mensal", url: "friggo://monthly-report" }
+  { label: "Abrir Início", url: "kaza://home" },
+  { label: "Ver Geladeira", url: "kaza://home?tab=fridge" },
+  { label: "Gerar Receitas", url: "kaza://home?tab=recipes" },
+  { label: "Lista de Compras", url: "kaza://home?tab=shopping" },
+  { label: "Adicionar Item", url: "kaza://add-item" },
+  { label: "Notificações", url: "kaza://notifications" },
+  { label: "Relatório Mensal", url: "kaza://monthly-report" }
 ];
 
 const assistants = [
@@ -59,7 +59,7 @@ const assistants = [
     fieldPlaceholder: "Ex: amzn1.ask.skill.xxx-xxx",
     fieldHint: "Encontre no Alexa Developer Console → Your Skills → Skill ID",
     commands: [
-      '"Alexa, abrir Friggo"',
+      '"Alexa, abrir Kaza"',
       '"Alexa, o que tem na geladeira?"',
       '"Alexa, adicione leite na lista de compras"',
       '"Alexa, o que está vencendo?"'
@@ -67,9 +67,9 @@ const assistants = [
     setupSteps: [
       "1. Acesse developer.amazon.com/alexa/console/ask",
       "2. Clique em 'Create Skill' → Custom → Start from scratch",
-      "3. Nome da Skill: 'Friggo'",
+      "3. Nome da Skill: 'Kaza'",
       "4. Adicione intents: CheckFridgeIntent, AddItemIntent, CheckExpiringIntent",
-      "5. No endpoint, use a URL da sua API: https://friggo.app/api/alexa",
+      "5. No endpoint, use uma URL da sua API: https://kaza.app/api/alexa",
       "6. Copie o Skill ID e cole no campo acima",
       "7. Publique a Skill para uso pessoal ou na Alexa Skills Store"
     ]
@@ -82,23 +82,23 @@ const assistants = [
     color: "bg-red-50 dark:bg-red-950/30",
     fieldLabel: "Google Action / Deeplink",
     fieldKey: "deeplink" as const,
-    fieldPlaceholder: "Ex: friggo://home",
+    fieldPlaceholder: "Ex: kaza://home",
     fieldHint:
       "Configure no Google Actions Console ou use os deep links abaixo",
     commands: [
-      '"Ok Google, abrir Friggo"',
+      '"Ok Google, abrir Kaza"',
       '"Ok Google, adicionar item na geladeira"',
       '"Ok Google, sugerir receita"',
-      '"Ok Google, minha lista de compras no Friggo"'
+      '"Ok Google, minha lista de compras no Kaza"'
     ],
     setupSteps: [
       "1. Acesse console.actions.google.com",
-      "2. Crie um novo projeto com nome 'Friggo'",
+      "2. Crie um novo projeto com nome 'Kaza'",
       "3. Em App Actions, adicione o actions.xml (já incluído no projeto Android)",
       "4. Configure os Built-in Intents: GET_THING, CREATE_THING",
-      "5. Vincule os deep links: friggo://home, friggo://add-item",
+      "5. Vincule os deep links: kaza://home, kaza://add-item",
       "6. Teste com 'gactions test' no terminal",
-      "7. O app já responde a 'Ok Google, abrir Friggo' automaticamente"
+      "7. O app já responde a 'Ok Google, abrir Kaza' automaticamente"
     ]
   },
   {
@@ -109,19 +109,19 @@ const assistants = [
     color: "bg-purple-50 dark:bg-purple-950/30",
     fieldLabel: "Nome do Atalho Siri",
     fieldKey: "shortcutName" as const,
-    fieldPlaceholder: "Ex: Abrir Friggo",
-    fieldHint: "Diga 'E aí Siri, abrir Friggo' ou crie atalhos personalizados",
+    fieldPlaceholder: "Ex: Abrir Kaza",
+    fieldHint: "Diga 'E aí Siri, abrir Kaza' ou crie atalhos personalizados",
     commands: [
-      '"E aí Siri, abrir Friggo"',
+      '"E aí Siri, abrir Kaza"',
       '"E aí Siri, [nome do atalho criado]"'
     ],
     setupSteps: [
-      "1. A Siri já reconhece 'Abrir Friggo' automaticamente pelo nome do app",
+      "1. A Siri já reconhece 'Abrir Kaza' automaticamente pelo nome do app",
       "2. Para comandos personalizados, abra o app 'Atalhos' (Shortcuts)",
       "3. Toque em '+' → Adicionar Ação → Abrir URL",
-      "4. Cole um deep link (ex: friggo://home?tab=recipes)",
-      "5. Dê um nome ao atalho (ex: 'Receitas do Friggo')",
-      "6. Agora diga 'E aí Siri, Receitas do Friggo'"
+      "4. Cole um deep link (ex: kaza://home?tab=recipes)",
+      "5. Dê um nome ao atalho (ex: 'Receitas do Kaza')",
+      "6. Agora diga 'E aí Siri, Receitas do Kaza'"
     ]
   }
 ];
@@ -230,7 +230,7 @@ export function VoiceAssistantSettings({
                 </p>
                 <p className="mt-0.5 text-xs text-gray-500">
                   Ative o assistente desejado, insira o ID/atalho e use comandos
-                  de voz para controlar o Friggo.
+                  de voz para controlar o Kaza.
                 </p>
               </div>
             </div>
@@ -393,7 +393,7 @@ export function VoiceAssistantSettings({
           <div className="flex items-start gap-3 rounded-2xl bg-muted/30 p-4">
             <Smartphone className="h-5 w-5 text-gray-400 shrink-0 mt-0.5" />
             <p className="text-xs text-gray-500">
-              A integração completa estará disponível quando o Friggo for
+              A integração completa estará disponível quando o Kaza for
               publicado na Play Store e App Store.
             </p>
           </div>
@@ -412,7 +412,7 @@ export function VoiceAssistantSettings({
                   <li>1. Ative o assistente desejado acima</li>
                   <li>2. Preencha o ID/atalho no campo de configuração</li>
                   <li>3. Abra o app do assistente no seu celular</li>
-                  <li>4. Vincule sua conta Friggo</li>
+                  <li>4. Vincule sua conta Kaza</li>
                   <li>5. Pronto! Use os comandos de voz</li>
                 </ol>
               </div>

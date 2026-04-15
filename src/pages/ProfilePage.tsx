@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useFriggo } from '@/contexts/FriggoContext';
+import { useKaza } from '@/contexts/KazaContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +17,7 @@ import { PageTransition } from '@/components/PageTransition';
 
 export default function ProfilePage() {
     const navigate = useNavigate();
-    const { onboardingData, updateProfile, onboarding_completed } = useFriggo();
+    const { onboardingData, updateProfile, onboarding_completed } = useKaza();
     const { language } = useLanguage();
     const { user } = useAuth();
 
@@ -105,7 +105,7 @@ export default function ProfilePage() {
 
     const l = labels[language];
 
-    // AvatarUpload component handle upload and calls updateProfile via FriggoContext
+    // AvatarUpload component handle upload and calls updateProfile via KazaContext
 
     const handleSave = async () => {
         if (cpf && !isValidCPF(cpf)) {

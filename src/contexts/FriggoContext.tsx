@@ -8,7 +8,7 @@ import React, {
   useCallback
 } from "react";
 import {
-  FriggoItem,
+  KazaItem,
   ShoppingItem,
   OnboardingData,
   Alert,
@@ -26,8 +26,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { scheduleLocalNotification } from "@/lib/pushNotifications";
 
-interface FriggoContextType {
-  items: FriggoItem[];
+interface KazaContextType {
+  items: KazaItem[];
   shoppingList: ShoppingItem[];
   consumables: ConsumableItem[];
   defrostTimers: DefrostTimer[];
@@ -37,8 +37,8 @@ interface FriggoContextType {
   onboarding_completed: boolean;
   itemHistory: ItemHistoryEntry[];
   loading: boolean;
-  addItem: (item: Omit<FriggoItem, "id">) => Promise<void>;
-  updateItem: (id: string, item: Partial<FriggoItem>) => Promise<void>;
+  addItem: (item: Omit<KazaItem, "id">) => Promise<void>;
+  updateItem: (id: string, item: Partial<KazaItem>) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   addToShoppingList: (
     item: Omit<ShoppingItem, "id" | "isCompleted">
@@ -77,7 +77,7 @@ interface FriggoContextType {
   removeFromMealPlan: (id: string) => Promise<void>;
 }
 
-const FriggoContext = createContext<FriggoContextType | undefined>(undefined);
+const KazaContext = createContext<KazaContextType | undefined>(undefined);
 
 const VALID_CATEGORIES: ItemCategory[] = [
   "fruit",
@@ -107,7 +107,7 @@ const ALERT_NOTIFICATION_PREF_MAP: Record<Alert["type"], string> = {
   "low-stock": "shopping"
 };
 
-const DEMO_ITEMS: FriggoItem[] = [
+const DEMO_ITEMS: KazaItem[] = [
   {
     id: "demo-1",
     name: "Maçã",
@@ -132,11 +132,11 @@ const DEMO_ITEMS: FriggoItem[] = [
   }
 ];
 
-export function FriggoProvider({ children }: { children: ReactNode }) {
+export function KazaProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { language } = useLanguage();
-  const [items, setItems] = useState<FriggoItem[]>([]);
+  const [items, setItems] = useState<KazaItem[]>([]);
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
   const [consumables, setConsumables] = useState<ConsumableItem[]>(() => {
     const saved = localStorage.getItem("friggo_consumables");
@@ -254,8 +254,8 @@ export function FriggoProvider({ children }: { children: ReactNode }) {
 
       if (itemsError) throw itemsError;
 
-      // Transform DB items to FriggoItem format
-      const transformedItems: FriggoItem[] = (itemsData || []).map((item) => {
+      // Transform DB items to KazaItem format
+      const transformedItems: KazaItem[] = (itemsData || []).map((item) => {
         const category = VALID_CATEGORIES.includes(
           item.category as ItemCategory
         )
@@ -563,12 +563,12 @@ export function FriggoProvider({ children }: { children: ReactNode }) {
 
       const title =
         alert.type === "consume-today"
-          ? "⏰ Friggo — Consumir Hoje!"
+          ? "⏰ Kaza — Consumir Hoje!"
           : alert.type === "expiring"
-            ? "🕰️ Friggo — Atenção ao Prazo"
+            ? "🕰️ Kaza — Atenção ao Prazo"
             : alert.type === "overripe"
-              ? "🍌 Friggo — Hora de Usar"
-              : "📦 Friggo — Reposição Necessária";
+              ? "🍌 Kaza — Hora de Usar"
+              : "📦 Kaza — Reposição Necessária";
 
       scheduleLocalNotification(title, alert.message, 0, alert.id, category);
     });
@@ -782,7 +782,7 @@ export function FriggoProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addItem = async (item: Omit<FriggoItem, "id">) => {
+  const addItem = async (item: Omit<KazaItem, "id">) => {
     if (!user) {
       // For demo mode, add locally
       const newItem = { ...item, id: crypto.randomUUID() };
@@ -832,7 +832,7 @@ export function FriggoProvider({ children }: { children: ReactNode }) {
         ? (data.location as ItemLocation)
         : "fridge";
 
-      const newItem: FriggoItem = {
+      const newItem: KazaItem = {
         id: data.id,
         name: data.name,
         category: newCategory,
@@ -878,7 +878,7 @@ export function FriggoProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateItem = async (id: string, updates: Partial<FriggoItem>) => {
+  const updateItem = async (id: string, updates: Partial<KazaItem>) => {
     if (!user || id.startsWith("demo-")) {
       setItems((prev) =>
         prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
@@ -1413,7 +1413,7 @@ export function FriggoProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <FriggoContext.Provider
+    <KazaContext.Provider
       value={{
         items,
         shoppingList,
@@ -1518,14 +1518,14 @@ export function FriggoProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-    </FriggoContext.Provider>
+    </KazaContext.Provider>
   );
 }
 
-export function useFriggo() {
-  const context = useContext(FriggoContext);
+export function useKaza() {
+  const context = useContext(KazaContext);
   if (!context) {
-    throw new Error("useFriggo must be used within a FriggoProvider");
+    throw new Error("useKaza must be used within a KazaProvider");
   }
   return context;
 }

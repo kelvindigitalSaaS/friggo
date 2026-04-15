@@ -1,4 +1,4 @@
-import { useFriggo } from '@/contexts/FriggoContext';
+import { useKaza } from '@/contexts/KazaContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AlertCard } from '@/components/friggo/AlertCard';
 import { useNavigate } from 'react-router-dom';
@@ -38,7 +38,7 @@ const labels = {
 
 export default function NotificationsPage() {
     const navigate = useNavigate();
-    const { alerts, dismissAlert } = useFriggo();
+    const { alerts, dismissAlert } = useKaza();
     const { language } = useLanguage();
     const l = labels[language];
 

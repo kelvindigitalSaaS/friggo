@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useFriggo } from '@/contexts/FriggoContext';
+import { useKaza } from '@/contexts/KazaContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Minus, Plus, Utensils, Trash2, ChefHat, Scale, Check, ArrowLeft, Snowflake, Flame } from 'lucide-react';
 import { toast } from 'sonner';
@@ -23,7 +23,7 @@ function getDefaultUnit(itemUnit: string | undefined): string {
 export default function ConsumePage() {
     const { itemId } = useParams<{ itemId: string }>();
     const navigate = useNavigate();
-    const { items, updateItem, removeItem, addItemHistory, defrostItem } = useFriggo();
+    const { items, updateItem, removeItem, addItemHistory, defrostItem } = useKaza();
     const { language } = useLanguage();
 
     const labels = {

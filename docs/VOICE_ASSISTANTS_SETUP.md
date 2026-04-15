@@ -1,4 +1,4 @@
-# Guia de Configuração dos Assistentes de Voz — Friggo
+# Guia de Configuração dos Assistentes de Voz — Kaza
 
 ## 1. Google Assistant (Android)
 
@@ -6,12 +6,12 @@
 
 - `android/app/src/main/res/xml/actions.xml` — Define as App Actions (intents) do Google
 - `AndroidManifest.xml` — Meta-data `com.google.android.actions` referenciando o `actions.xml`
-- Deep links registrados: `friggo://home`, `friggo://add-item`, `friggo://notifications`, etc.
+-- Deep links registrados: `kaza://home`, `kaza://add-item`, `kaza://notifications`, etc.
 
 ### 1.2 Google Actions Console
 
 1. Acesse [console.actions.google.com](https://console.actions.google.com)
-2. Clique **New Project** → Nome: `Friggo`
+2. Clique **New Project** → Nome: `Kaza`
 3. Selecione **App Actions** como categoria
 4. Vá em **Develop → App Actions → Configure**
 5. Faça upload ou aponte para o arquivo `actions.xml` do projeto
@@ -21,16 +21,16 @@
    - `actions.intent.GET_THING` → Abre a geladeira
    - `actions.intent.GET_FOOD_OBSERVATION` → Abre receitas
 7. Em **Deploy → App info**, preencha:
-   - Nome: Friggo
+  - Nome: Kaza
    - Descrição: Geladeira inteligente com controle por voz
    - Idioma: Português (Brasil)
 8. **Testar**: No terminal, rode:
-   ```bash
-   gactions test --action-package android/app/src/main/res/xml/actions.xml --project friggo-7dfdd
-   ```
+  ```bash
+  gactions test --action-package android/app/src/main/res/xml/actions.xml --project kaza-7dfdd
+  ```
 9. No celular Android com Google Assistant, diga:
-   - "Ok Google, abrir Friggo"
-   - "Ok Google, adicionar leite no Friggo"
+  - "Ok Google, abrir Kaza"
+  - "Ok Google, adicionar leite no Kaza"
 
 ### 1.3 Comandos que já funcionam automaticamente
 
@@ -44,7 +44,7 @@
 ### 2.1 Alexa Developer Console
 
 1. Acesse [developer.amazon.com/alexa/console/ask](https://developer.amazon.com/alexa/console/ask)
-2. Clique **Create Skill** → Nome: `Friggo` → Idioma: Portuguese (BR)
+2. Clique **Create Skill** → Nome: `Kaza` → Idioma: Portuguese (BR)
 3. Tipo: **Custom** → Host: **Alexa-hosted (Node.js)**
 4. No **Interaction Model → Intents**, adicione:
    - `CheckFridgeIntent` — "o que tem na geladeira", "mostrar minha geladeira"
@@ -58,20 +58,20 @@
    ```
    (Você precisará criar esta Edge Function no Supabase)
 6. **Copie o Skill ID** (formato: `amzn1.ask.skill.xxx-xxx-xxx`)
-7. Cole o Skill ID no app Friggo → Ajustes → Assistentes de Voz → Alexa
-8. **Teste**: No Alexa Simulator ou app Alexa, diga "Alexa, abrir Friggo"
+7. Cole o Skill ID no app Kaza → Ajustes → Assistentes de Voz → Alexa
+8. **Teste**: No Alexa Simulator ou app Alexa, diga "Alexa, abrir Kaza"
 
 ### 2.2 Exemplo de Intent Handler (Lambda/Node.js)
 
 ```javascript
-const OpenFriggoHandler = {
+const OpenKazaHandler = {
   canHandle(handlerInput) {
     return handlerInput.requestEnvelope.request.type === "LaunchRequest";
   },
   handle(handlerInput) {
     return handlerInput.responseBuilder
-      .speak("Bem-vindo ao Friggo! Sua geladeira inteligente.")
-      .withSimpleCard("Friggo", "Geladeira Inteligente")
+      .speak("Bem-vindo ao Kaza! Sua geladeira inteligente.")
+      .withSimpleCard("Kaza", "Geladeira Inteligente")
       .getResponse();
   }
 };
@@ -110,8 +110,8 @@ const CheckFridgeHandler = {
 
 ### 3.1 O que já funciona
 
-- **"E aí Siri, abrir Friggo"** — Funciona automaticamente! A Siri reconhece o nome do app instalado e abre ele.
-- Registrado `NSUserActivityTypes` no `Info.plist` com intents: `OpenFriggoIntent`, `CheckFridgeIntent`, `AddItemIntent`, `ViewRecipesIntent`, `ShoppingListIntent`
+-- **"E aí Siri, abrir Kaza"** — Funciona automaticamente! A Siri reconhece o nome do app instalado e abre ele.
+ - Registrado `NSUserActivityTypes` no `Info.plist` com intents: `OpenKazaIntent`, `CheckFridgeIntent`, `AddItemIntent`, `ViewRecipesIntent`, `ShoppingListIntent`
 
 ### 3.2 Atalhos Siri (Shortcuts)
 
@@ -121,13 +121,13 @@ Para comandos personalizados, o usuário cria atalhos no app **Atalhos** (Shortc
 2. Tocar **+** → **Adicionar Ação**
 3. Buscar **Abrir URLs** (Open URLs)
 4. Colar um deep link:
-   - `friggo://home?tab=fridge` — Ver geladeira
-   - `friggo://home?tab=recipes` — Ver receitas
-   - `friggo://home?tab=shopping` — Lista de compras
-   - `friggo://add-item` — Adicionar item
-   - `friggo://notifications` — Notificações
-5. Dar nome ao atalho (ex: "Receitas do Friggo")
-6. Pronto! Agora basta dizer: **"E aí Siri, Receitas do Friggo"**
+  - `kaza://home?tab=fridge` — Ver geladeira
+  - `kaza://home?tab=recipes` — Ver receitas
+  - `kaza://home?tab=shopping` — Lista de compras
+  - `kaza://add-item` — Adicionar item
+  - `kaza://notifications` — Notificações
+5. Dar nome ao atalho (ex: "Receitas do Kaza")
+6. Pronto! Agora basta dizer: **"E aí Siri, Receitas do Kaza"**
 
 ### 3.3 Siri Intents (Avançado - futura implementação)
 
@@ -145,8 +145,8 @@ Isso é opcional e pode ser adicionado em uma versão futura.
 
 | Assistente | Comando Básico            | Funciona Já?        | Console Necessário                                              |
 | ---------- | ------------------------- | ------------------- | --------------------------------------------------------------- |
-| Google     | "Ok Google, abrir Friggo" | ✅ Sim              | [Actions Console](https://console.actions.google.com)           |
-| Alexa      | "Alexa, abrir Friggo"     | ⚠️ Precisa da Skill | [Alexa Console](https://developer.amazon.com/alexa/console/ask) |
-| Siri       | "E aí Siri, abrir Friggo" | ✅ Sim              | Nenhum (automático)                                             |
+| Google     | "Ok Google, abrir Kaza" | ✅ Sim              | [Actions Console](https://console.actions.google.com)           |
+| Alexa      | "Alexa, abrir Kaza"     | ⚠️ Precisa da Skill | [Alexa Console](https://developer.amazon.com/alexa/console/ask) |
+| Siri       | "E aí Siri, abrir Kaza" | ✅ Sim              | Nenhum (automático)                                             |
 
 **Nota**: Comandos avançados (adicionar item, ver receitas, lista de compras) requerem configuração nos respectivos consoles.

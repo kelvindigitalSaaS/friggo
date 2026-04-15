@@ -21,7 +21,7 @@ export default function InstallGuidePage() {
   const labels: Record<string, any> = {
     "pt-BR": {
       title: "Como Instalar",
-      subtitle: "Adicione o Friggo à sua tela inicial",
+      subtitle: "Adicione o Kaza à sua tela inicial",
       iosTitle: "iPhone / iPad (Safari)",
       androidTitle: "Android / PC (Chrome/Edge)",
       pcDesc: "Instale diretamente para uma melhor experiência.",
@@ -33,7 +33,7 @@ export default function InstallGuidePage() {
     },
     en: {
       title: "How to Install",
-      subtitle: "Add Friggo to your home screen",
+      subtitle: "Add Kaza to your home screen",
       iosTitle: "iPhone / iPad (Safari)",
       androidTitle: "Android / PC (Chrome/Edge)",
       pcDesc: "Install directly for a better experience.",
@@ -45,7 +45,7 @@ export default function InstallGuidePage() {
     },
     es: {
       title: "Cómo Instalar",
-      subtitle: "Añade Friggo a tu pantalla de inicio",
+      subtitle: "Añade Kaza a tu pantalla de inicio",
       iosTitle: "iPhone / iPad (Safari)",
       androidTitle: "Android / PC (Chrome/Edge)",
       pcDesc: "Instala directamente para una mejor experiencia.",

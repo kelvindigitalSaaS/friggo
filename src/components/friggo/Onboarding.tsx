@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { OnboardingData, ConsumableCategory } from "@/types/friggo";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { isValidCPF, formatCPF } from "@/lib/utils/validation";
@@ -40,7 +40,7 @@ import { cn } from "@/lib/utils";
 const onboardingLabels = {
   "pt-BR": {
     welcome: "Bem-vindo ao",
-    brandName: "Friggo",
+    brandName: "Kaza",
     tagline: "Tudo o que sua casa precisa, antes de acabar.",
     setupSteps: "Vamos configurar sua casa em poucos passos",
     features: ["Alertas de vencimento", "Receitas IA", "Lista inteligente"],
@@ -134,7 +134,7 @@ const onboardingLabels = {
   },
   en: {
     welcome: "Welcome to",
-    brandName: "Friggo",
+    brandName: "Kaza",
     tagline: "Everything your home needs, before it runs out.",
     setupSteps: "Let's set up your home in a few steps",
     features: ["Expiry alerts", "AI Recipes", "Smart list"],
@@ -228,7 +228,7 @@ const onboardingLabels = {
   },
   es: {
     welcome: "Bienvenido a",
-    brandName: "Friggo",
+    brandName: "Kaza",
     tagline: "Todo lo que tu hogar necesita, antes de que se acabe.",
     setupSteps: "Configuremos tu hogar en pocos pasos",
     features: ["Alertas de vencimiento", "Recetas IA", "Lista inteligente"],
@@ -413,7 +413,7 @@ const staggerItem = {
 };
 
 export function Onboarding() {
-  const { completeOnboarding, setConsumablesBulk } = useFriggo();
+  const { completeOnboarding, setConsumablesBulk } = useKaza();
   const { language } = useLanguage();
   const { theme, setTheme } = useTheme();
   const l = onboardingLabels[language];
@@ -1318,7 +1318,7 @@ export function Onboarding() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="flex min-h-screen flex-col bg-background"
+      className="flex min-h-screen flex-col bg-primary/5"
     >
       {currentStep > 0 && currentStep < steps.length - 1 && (
         <div className="px-6 pt-safe">

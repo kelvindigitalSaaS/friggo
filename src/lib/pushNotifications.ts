@@ -88,7 +88,7 @@ const CATEGORY_CONFIGS: Record<NotifCategory, NotifCategoryConfig> = {
     vibrate: VIBRATE_DEFAULT,
     requireInteraction: false,
     actions: [
-      { action: "open", title: "🧊 Abrir Friggo" }
+      { action: "open", title: "🧊 Abrir Kaza" }
     ]
   }
 };
@@ -234,7 +234,7 @@ const CATEGORY_SUMMARY: Record<NotifCategory, string> = {
   overripe: "Use antes de perder",
   "low-stock": "Reposição sugerida",
   garbage: "Lembrete importante da casa",
-  general: "Atualização do Friggo",
+  general: "Atualização do Kaza",
   test: "Teste do sistema"
 };
 
@@ -275,7 +275,7 @@ function buildNativeNotification(
   return {
     title,
     body,
-    largeBody: `${body}\n\nAbra o Friggo para ver os detalhes.`,
+    largeBody: `${body}\n\nAbra o Kaza para ver os detalhes.`,
     summaryText: CATEGORY_SUMMARY[category],
     channelId: isUrgent ? CHANNEL_URGENT : CHANNEL_ID,
     sound: FRIGGO_SOUND,
@@ -351,7 +351,7 @@ async function ensureNotificationChannels() {
 
     await LocalNotifications.createChannel({
       id: CHANNEL_ID,
-      name: "Friggo",
+      name: "Kaza",
       description: "Atualizações da sua geladeira e despensa",
       importance: 4, // HIGH
       sound: FRIGGO_SOUND,
@@ -361,7 +361,7 @@ async function ensureNotificationChannels() {
     });
     await LocalNotifications.createChannel({
       id: CHANNEL_URGENT,
-      name: "Friggo — Urgente",
+      name: "Kaza — Urgente",
       description: "Itens vencendo hoje ou com urgência",
       importance: 5, // MAX
       sound: FRIGGO_SOUND,
@@ -408,7 +408,7 @@ export async function initPushNotifications() {
       notifications: [
         {
           ...buildNativeNotification(
-            notification.title ?? "Friggo 🧊",
+            notification.title ?? "Kaza 🧊",
             notification.body ?? "",
             "general",
             { source: "push-foreground", url: "/" }

@@ -108,7 +108,7 @@ https://pylruhvqjyvbninduzod.supabase.co/functions/v1/smart-fridge
 ### PASSO 2: Testar Pagamento com PIX
 
 ```
-1. Vá para: https://friggo.app/plans (ou localhost:5173/plans)
+1. Vá para: https://kaza.app/plans (ou localhost:5173/plans)
 2. Clique em "Assinar Agora"
 3. Procure pela opção "PIX"
 4. Use cartão de teste: 4242 4242 4242 4242
@@ -239,7 +239,7 @@ supabase functions logs stripe-webhook --tail
 ### "Notificações não aparecem"
 
 - Permita notificações no navegador/app
-- Verifique localStorage: `localStorage.getItem('friggo-garbage-reminder')`
+ - Verifique localStorage: `localStorage.getItem('kaza-garbage-reminder')`
 - Confirme que o dia da semana está correto (0=Domingo, 1=Segunda, etc)
 
 ---
@@ -292,7 +292,7 @@ supabase functions logs stripe-webhook --tail
 
 ## 🎉 Conclusão
 
-🚀 **Sistema Friggo está totalmente configurado para:**
+🚀 **Sistema Kaza está totalmente configurado para:**
 
 - ✅ Pagamentos com PIX
 - ✅ Pagamentos com Apple Pay

@@ -52,7 +52,7 @@ const session = await stripe.checkout.sessions.create({
 ## 🧪 Como Testar Agora
 
 ```
-1. Vá para: https://friggo.app/plans
+1. Vá para: https://kaza.app/plans
 2. Clique: "Assinar Agora"
 3. Procure: PIX, Apple Pay, etc
 4. Deverá funcionar SEM erro 500

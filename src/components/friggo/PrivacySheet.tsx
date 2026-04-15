@@ -82,7 +82,7 @@ export function PrivacySheet({ open, onClose }: PrivacySheetProps) {
  {[l.right1, l.right2, l.right3, l.right4, l.right5].map((right, i) => <li key={i} className="flex items-center gap-2"><span className="text-primary">•</span>{right}</li>)}
  </ul>
  </div>
- <div className="rounded-md bg-muted/50 p-4 text-center"><p className="text-sm text-gray-500">{l.questionsAbout}</p><p className="text-sm font-medium text-primary mt-1">privacidade@friggo.app</p></div>
+ <div className="rounded-md bg-muted/50 p-4 text-center"><p className="text-sm text-gray-500">{l.questionsAbout}</p><p className="text-sm font-medium text-primary mt-1">suporte@kaza.app</p></div>
  <p className="text-xs text-center text-gray-500">{l.lastUpdate}</p>
  </div>
  </ScrollArea>

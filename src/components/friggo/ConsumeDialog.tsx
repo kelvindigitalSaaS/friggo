@@ -2,15 +2,15 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FriggoItem } from '@/types/friggo';
-import { useFriggo } from '@/contexts/FriggoContext';
+import { KazaItem } from '@/types/friggo';
+import { useKaza } from '@/contexts/KazaContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Minus, Plus, Utensils, Trash2, ChefHat, Scale, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 interface ConsumeDialogProps {
- item: FriggoItem | null;
+ item: KazaItem | null;
  open: boolean;
  onClose: () => void;
 }
@@ -106,7 +106,7 @@ type ActionType = 'consumed' | 'cooked' | 'discarded';
 const quickQuantities = [0.5, 1, 2, 3, 5];
 
 export function ConsumeDialog({ item, open, onClose }: ConsumeDialogProps) {
- const { updateItem, removeItem, addItemHistory } = useFriggo();
+ const { updateItem, removeItem, addItemHistory } = useKaza();
  const { language } = useLanguage();
  const l = labels[language];
 

@@ -1,10 +1,10 @@
-# Friggo - Metadados para Lojas de Aplicativos
+# Kaza - Metadados para Lojas de Aplicativos
 
 ## Google Play Store
 
 ### Título (30 chars max)
 
-Friggo - Geladeira Inteligente
+Kaza - Geladeira Inteligente
 
 ### Descrição Curta (80 chars max)
 
@@ -12,9 +12,9 @@ Controle sua geladeira com IA. Receitas, lista de compras e zero desperdício! �
 
 ### Descrição Completa (4000 chars max)
 
-🧊 FRIGGO - Sua Geladeira Inteligente no Bolso
+🧊 KAZA - Sua Geladeira Inteligente no Bolso
 
-Chega de desperdiçar comida! O Friggo é o app que transforma a gestão da sua geladeira com inteligência artificial.
+Chega de desperdiçar comida! O Kaza é o app que transforma a gestão da sua geladeira com inteligência artificial.
 
 📦 CONTROLE DE ESTOQUE INTELIGENTE
 • Adicione itens escaneando o código de barras ou digitando manualmente
@@ -55,9 +55,8 @@ Chega de desperdiçar comida! O Friggo é o app que transforma a gestão da sua 
 • Consumíveis acabando (papel higiênico, sabonete, etc.)
 
 🔗 INTEGRAÇÕES
-• Assistentes de voz: Alexa, Google, Siri
-• Geladeiras inteligentes: Samsung, LG
-• Sincronização na nuvem
+- Geladeiras inteligentes: Samsung, LG
+- Sincronização na nuvem
 
 PLANOS:
 • Gratuito: 5 itens, 1 receita/dia
@@ -85,7 +84,7 @@ Todos (E - Everyone)
 
 ### Nome (30 chars max)
 
-Friggo - Geladeira Smart
+Kaza - Geladeira Smart
 
 ### Subtítulo (30 chars max)
 

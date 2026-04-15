@@ -46,7 +46,7 @@ export function IOSInstallPrompt() {
             <div className="flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 shrink-0 overflow-hidden">
               <img
                 src="/icon.png"
-                alt="Friggo"
+                alt="Kaza"
                 className="w-full h-full object-cover transform scale-[1.4]"
                 loading="lazy"
                 decoding="async"
@@ -54,7 +54,7 @@ export function IOSInstallPrompt() {
             </div>
             <div className="flex-1 min-w-0 pt-0.5">
               <p className="font-bold text-foreground text-[16px] leading-tight">
-                Instalar Friggo
+                Instalar Kaza
               </p>
               <p className="mt-1 text-[13px] text-muted-foreground leading-relaxed">
                 Adicione o app à sua tela de início para uma experiência completa, rápida e sem navegador.

@@ -56,7 +56,7 @@ export function PlansScreen({ onClose }: PlansScreenProps) {
   const labels = {
     "pt-BR": {
       title: "Escolha seu Plano",
-      subtitle: "Desbloqueie todo o potencial do Friggo",
+      subtitle: "Desbloqueie todo o potencial do Kaza",
       currentPlan: "Plano atual",
       free: "Grátis",
       active: "Ativo",
@@ -75,7 +75,7 @@ export function PlansScreen({ onClose }: PlansScreenProps) {
     },
     en: {
       title: "Choose Your Plan",
-      subtitle: "Unlock the full potential of Friggo",
+      subtitle: "Unlock the full potential of Kaza",
       currentPlan: "Current plan",
       free: "Free",
       active: "Active",
@@ -93,7 +93,7 @@ export function PlansScreen({ onClose }: PlansScreenProps) {
     },
     es: {
       title: "Elige tu Plan",
-      subtitle: "Desbloquea todo el potencial de Friggo",
+      subtitle: "Desbloquea todo el potencial de Kaza",
       currentPlan: "Plan actual",
       free: "Gratis",
       active: "Activo",

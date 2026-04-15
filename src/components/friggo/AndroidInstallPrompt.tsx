@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Download, Mic } from "lucide-react";
+import { X, Download } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -9,25 +9,22 @@ interface BeforeInstallPromptEvent extends Event {
 
 const labels = {
   "pt-BR": {
-    title: "Instalar Friggo",
-    desc: "Adicione à tela inicial para acesso rápido e integração com Google Assistente.",
+    title: "Instalar Kaza",
+    desc: "Adicione à tela inicial para acesso rápido.",
     install: "Instalar app",
-    installing: "Instalando...",
-    hint: 'Após instalar: "Ok Google, abrir Friggo"'
+    installing: "Instalando..."
   },
   en: {
-    title: "Install Friggo",
-    desc: "Add to home screen for quick access and Google Assistant integration.",
+    title: "Install Kaza",
+    desc: "Add to home screen for quick access.",
     install: "Install app",
-    installing: "Installing...",
-    hint: 'After installing: "Ok Google, open Friggo"'
+    installing: "Installing..."
   },
   es: {
-    title: "Instalar Friggo",
-    desc: "Agrega a la pantalla de inicio para acceso rápido e integración con Google Asistente.",
+    title: "Instalar Kaza",
+    desc: "Agrega a la pantalla de inicio para acceso rápido.",
     install: "Instalar app",
-    installing: "Instalando...",
-    hint: 'Luego de instalar: "Ok Google, abrir Friggo"'
+    installing: "Instalando..."
   }
 };
 
@@ -65,9 +62,9 @@ export function AndroidInstallPrompt() {
         setDeferredPrompt(null);
       } else {
         localStorage.setItem(
-          "friggo-android-install-dismissed",
-          Date.now().toString()
-        );
+            "friggo-android-install-dismissed",
+            Date.now().toString()
+          );
       }
     } catch {
       // ignore prompt errors
@@ -121,11 +118,7 @@ export function AndroidInstallPrompt() {
           {installing ? l.installing : l.install}
         </button>
 
-        {/* Google Assistant hint */}
-        <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <Mic className="h-3 w-3 text-primary shrink-0" />
-          <span>{l.hint}</span>
-        </div>
+        {/* hint removed (voice assistants hidden) */}
       </div>
     </div>
   );

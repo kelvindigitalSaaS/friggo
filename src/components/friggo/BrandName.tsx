@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+const logoLight = '/logo-completa-site-preto.svg';
+const logoDark = '/logo-completa-site-branca.svg';
 
 type Props = {
   label?: string;
@@ -9,7 +11,7 @@ type Props = {
 };
 
 export default function BrandName({
-  label = "Frigo",
+  label = "Kaza",
   sizeClass = "text-xl sm:text-2xl md:text-2xl",
   animateOnFirstLoad = true,
   forceAnimate = false,
@@ -18,7 +20,7 @@ export default function BrandName({
   const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
-    const key = "friggo:brand-animated:v1";
+    const key = "kaza:brand-animated:v1";
     if (forceAnimate) {
       setAnimate(true);
       const id = setTimeout(() => setAnimate(false), 1200);
@@ -34,16 +36,23 @@ export default function BrandName({
     }
   }, [animateOnFirstLoad, forceAnimate]);
 
-  const brandLabel = label === "Frigo" ? "Friggo" : label;
+  const brandLabel = label || 'Kaza';
 
   return (
     <div className="brand-inline">
       {showIcon && (
         <div className="brand-icon bg-white/0 dark:bg-black/0">
           <img
-            src="/icon.png"
-            alt={label}
-            className="w-full h-full object-cover transform scale-[1.15]"
+            src={logoLight}
+            alt={brandLabel}
+            className="w-full h-full object-contain block dark:hidden"
+            loading="lazy"
+            decoding="async"
+          />
+          <img
+            src={logoDark}
+            alt={brandLabel}
+            className="w-full h-full object-contain hidden dark:block"
             loading="lazy"
             decoding="async"
           />

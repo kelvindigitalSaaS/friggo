@@ -16,20 +16,14 @@ export default defineConfig(({ mode }: { mode: string }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: [
+includeAssets: [
         "favicon.ico",
-        "icons/icon-512.png",
-        "icons/icon-48.png",
-        "icons/icon-72.png",
-        "icons/icon-96.png",
-        "icons/icon-128.png",
-        "icons/icon-152.png",
-        "icons/icon-180.png",
-        "icons/icon-192.png",
-        "icons/icon-256.png",
-        "icons/icon-384.png",
-        "icons/icon-512.png",
-        "icons/badge-96.svg",
+        "favicon-kaza-light.svg",
+        "favicon-kaza-dark.svg",
+        "icons/100.png",
+        "icons/152.png",
+        "icons/192.png",
+        "icons/512.png",
         "sw-custom.js"
       ],
       workbox: {
@@ -59,8 +53,8 @@ export default defineConfig(({ mode }: { mode: string }) => ({
         navigateFallbackDenylist: [/^\/api/]
       },
       manifest: {
-        name: "Friggo",
-        short_name: "Friggo",
+        name: "Kaza",
+        short_name: "Kaza",
         description:
           "Tudo o que sua casa precisa, antes de acabar. Geladeira, receitas, lista de compras e mais.",
         theme_color: "#22c55e",
@@ -72,76 +66,28 @@ export default defineConfig(({ mode }: { mode: string }) => ({
         categories: ["food", "lifestyle", "utilities"],
         icons: [
           {
-            src: "icons/icon-48.png",
-            sizes: "48x48",
+            src: "icons/100.png",
+            sizes: "100x100",
             type: "image/png",
             purpose: "any"
           },
           {
-            src: "icons/icon-72.png",
-            sizes: "72x72",
-            type: "image/png",
-            purpose: "any"
-          },
-          {
-            src: "icons/icon-96.png",
-            sizes: "96x96",
-            type: "image/png",
-            purpose: "any"
-          },
-          {
-            src: "icons/icon-128.png",
-            sizes: "128x128",
-            type: "image/png",
-            purpose: "any"
-          },
-          {
-            src: "icons/icon-152.png",
+            src: "icons/152.png",
             sizes: "152x152",
             type: "image/png",
             purpose: "any"
           },
           {
-            src: "icons/icon-192.png",
+            src: "icons/192.png",
             sizes: "192x192",
             type: "image/png",
             purpose: "any"
           },
           {
-            src: "icons/icon-256.png",
-            sizes: "256x256",
-            type: "image/png",
-            purpose: "any"
-          },
-          {
-            src: "icons/icon-384.png",
-            sizes: "384x384",
-            type: "image/png",
-            purpose: "any"
-          },
-          {
-            src: "icons/icon-512.png",
+            src: "icons/512.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "any"
-          },
-          {
-            src: "icons/icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "any"
-          },
-          {
-            src: "icons/icon-192.png",
-            sizes: "192x192",
-            type: "image/png",
-            purpose: "maskable"
-          },
-          {
-            src: "icons/icon-512.png",
-            sizes: "512x512",
-            type: "image/png",
-            purpose: "maskable"
           }
         ]
       }

@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { useFriggo } from '@/contexts/FriggoContext';
+import { useKaza } from '@/contexts/FriggoContext';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AlertCard } from '../AlertCard';
@@ -163,7 +163,7 @@ const labels = {
 const cardSpring = { type: 'spring' as const, stiffness: 300, damping: 28, mass: 0.8 };
 
 export function HomeTab() {
-    const { items, alerts, dismissAlert, onboardingData, shoppingList, consumables, addToShoppingList, toggleShoppingItem, itemHistory, markAllShoppingComplete, toggleSection: toggleContextSection } = useFriggo();
+    const { items, alerts, dismissAlert, onboardingData, shoppingList, consumables, addToShoppingList, toggleShoppingItem, itemHistory, markAllShoppingComplete, toggleSection: toggleContextSection } = useKaza();
     const { subscription } = useSubscription();
     const { language } = useLanguage();
     const navigate = useNavigate();

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useFriggo } from '@/contexts/FriggoContext';
+import { useKaza } from '@/contexts/KazaContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ShoppingCart, TrendingDown, Calendar, Package, Bell, Plus, Minus, Settings2, ArrowLeft, Users, EyeOff, Eye } from 'lucide-react';
 import { toast } from 'sonner';
@@ -44,7 +44,7 @@ export default function ConsumableTrackerPage() {
         addConsumable, 
         updateConsumable, 
         removeConsumable 
-    } = useFriggo();
+    } = useKaza();
     const { language } = useLanguage();
     const residents = onboardingData?.residents || 2;
 

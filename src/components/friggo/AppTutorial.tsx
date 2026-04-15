@@ -33,7 +33,7 @@ export function AppTutorial({ open, onClose }: AppTutorialProps) {
 
   const labels = {
     "pt-BR": {
-      title: "Como usar o Friggo",
+    title: "Como usar o Kaza",
       subtitle: "Guia completo do aplicativo",
       next: "Próximo",
       previous: "Anterior",
@@ -94,21 +94,11 @@ export function AppTutorial({ open, onClose }: AppTutorialProps) {
             "Ative o check-up noturno"
           ]
         },
-        {
-          icon: Mic,
-          title: "Assistentes de Voz",
-          description:
-            "Integre com Alexa, Google Assistant ou Siri para controlar o estoque por voz.",
-          tips: [
-            "Pergunte o que tem na geladeira",
-            "Adicione itens à lista de compras",
-            "Consulte receitas disponíveis"
-          ]
-        }
+        
       ]
     },
     en: {
-      title: "How to use Friggo",
+      title: "How to use Kaza",
       subtitle: "Complete app guide",
       next: "Next",
       previous: "Previous",
@@ -169,21 +159,11 @@ export function AppTutorial({ open, onClose }: AppTutorialProps) {
             "Enable nightly check-up"
           ]
         },
-        {
-          icon: Mic,
-          title: "Voice Assistants",
-          description:
-            "Integrate with Alexa, Google Assistant, or Siri to control inventory by voice.",
-          tips: [
-            "Ask what's in the fridge",
-            "Add items to shopping list",
-            "Check available recipes"
-          ]
-        }
+        
       ]
     },
     es: {
-      title: "Cómo usar Friggo",
+      title: "Cómo usar Kaza",
       subtitle: "Guía completa de la aplicación",
       next: "Siguiente",
       previous: "Anterior",
@@ -244,17 +224,7 @@ export function AppTutorial({ open, onClose }: AppTutorialProps) {
             "Activa el chequeo nocturno"
           ]
         },
-        {
-          icon: Mic,
-          title: "Asistentes de Voz",
-          description:
-            "Integra con Alexa, Google Assistant o Siri para controlar el inventario por voz.",
-          tips: [
-            "Pregunta qué hay en la nevera",
-            "Agrega artículos a la lista de compras",
-            "Consulta recetas disponibles"
-          ]
-        }
+        
       ]
     }
   };

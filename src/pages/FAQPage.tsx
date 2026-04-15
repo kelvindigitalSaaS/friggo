@@ -23,7 +23,7 @@ const faqData = {
       },
       {
         question: "Como funciona o alerta de vencimento?",
-        answer: "O Friggo monitora as datas de validade de todos os seus itens e envia notificações. Além disso, se você guardar carnes na dispensa em vez da geladeira, o Friggo enviará um alerta de perigo imediato."
+        answer: "O Kaza monitora as datas de validade de todos os seus itens e envia notificações. Além disso, se você guardar carnes na dispensa em vez da geladeira, o Kaza enviará um alerta de perigo imediato."
       },
       {
         question: "O que é o check-up noturno?",
@@ -35,7 +35,7 @@ const faqData = {
       },
       {
         question: "Como funcionam as receitas inteligentes?",
-        answer: "Baseado nos itens que você tem, especialmente os que estão próximos de vencer, o Friggo sugere receitas exclusivas para aproveitar tudo sem desperdício."
+        answer: "Baseado nos itens que você tem, especialmente os que estão próximos de vencer, o Kaza sugere receitas exclusivas para aproveitar tudo sem desperdício."
       },
       {
         question: "Como gerenciar minha assinatura?",
@@ -43,11 +43,11 @@ const faqData = {
       },
       {
         question: "Como funciona o lembrete do lixo?",
-        answer: "Configure os dias da semana e o horário programado nas Configurações. O Friggo avisa você no mesmo dia (ou antes) para não esquecer de descer ou colocar o lixo para fora."
+        answer: "Configure os dias da semana e o horário programado nas Configurações. O Kaza avisa você no mesmo dia (ou antes) para não esquecer de descer ou colocar o lixo para fora."
       },
       {
-        question: "Como instalar o Friggo no celular?",
-        answer: "O Friggo é um PWA. Vá em Configurações > Como Instalar para ver o passo a passo para Android (Chrome) e iPhone (Safari)."
+        question: "Como instalar o Kaza no celular?",
+        answer: "O Kaza é um PWA. Vá em Configurações > Como Instalar para ver o passo a passo para Android (Chrome) e iPhone (Safari)."
       }
     ]
   },
@@ -63,7 +63,7 @@ const faqData = {
       },
       {
         question: "How does the expiration alert work?",
-        answer: "Friggo monitors expiration dates of all your items and sends notifications when a product is about to expire."
+        answer: "Kaza monitors expiration dates of all your items and sends notifications when a product is about to expire."
       },
       {
         question: "What is the nightly check-up?",
@@ -75,7 +75,7 @@ const faqData = {
       },
       {
         question: "How do smart recipes work?",
-        answer: "Based on items you have, especially those close to expiring, Friggo suggests recipes to use everything without waste."
+        answer: "Based on items you have, especially those close to expiring, Kaza suggests recipes to use everything without waste."
       }
     ]
   },
@@ -91,7 +91,7 @@ const faqData = {
       },
       {
         question: "¿Cómo funciona la alerta de vencimiento?",
-        answer: "Friggo monitorea las fechas de vencimiento de todos tus artículos y envía notificaciones."
+        answer: "Kaza monitorea las fechas de vencimiento de todos tus artículos y envía notificaciones."
       }
     ]
   }

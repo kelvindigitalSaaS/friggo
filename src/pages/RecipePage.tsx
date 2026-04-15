@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Recipe } from '@/types/friggo';
 import { Clock, Users, Check, ArrowLeft, ArrowRight, Leaf, Play, Pause, ShoppingCart, Timer, TimerOff, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useFriggo } from '@/contexts/FriggoContext';
+import { useKaza } from '@/contexts/KazaContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Heart, CalendarDays, Minus, Plus } from 'lucide-react';
 import { 
@@ -128,7 +128,7 @@ export default function RecipePage() {
       favoriteRecipes, 
       toggleFavoriteRecipe,
       addToMealPlan 
-    } = useFriggo();
+    } = useKaza();
 
     const [servings, setServings] = useState(recipe.servings || 2);
     const [plannerOpen, setPlannerOpen] = useState(false);

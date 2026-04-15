@@ -1,4 +1,4 @@
-# Friggo - Guia de Configuração para Lançamento
+# Kaza - Guia de Configuração para Lançamento
 
 ## 1. Variáveis de Ambiente Necessárias
 
@@ -85,7 +85,7 @@ Use estes cartões de teste do Stripe:
 1. Dashboard → Authentication → Providers → Google
 2. Redirect URLs deve incluir:
    - `https://pylruhvqjyvbninduzod.supabase.co/auth/v1/callback`
-   - `friggo://auth/callback`
+   - `kaza://auth/callback`
 3. Client ID e Secret: Obtidos do Google Cloud Console → Credentials
 
 ## 5. Deep Links (Produção)
@@ -97,14 +97,14 @@ Use estes cartões de teste do Stripe:
    keytool -list -v -keystore your-release.keystore
    ```
 2. Edite `public/.well-known/assetlinks.json` com o fingerprint SHA-256
-3. Hospede o arquivo em `https://friggo.app/.well-known/assetlinks.json`
+3. Hospede o arquivo em `https://kaza.app/.well-known/assetlinks.json`
 
 ### iOS Universal Links
 
 1. Edite `public/.well-known/apple-app-site-association` com seu Team ID
 2. Hospede em `https://friggo.app/.well-known/apple-app-site-association`
 3. Em Xcode → Signing & Capabilities → adicione "Associated Domains":
-   - `applinks:friggo.app`
+   - `applinks:kaza.app`
 
 ## 6. Build de Produção
 
@@ -141,7 +141,7 @@ npx cap sync ios
 - [ ] Google Sign-In com SHA-1 de release adicionada no Firebase
 - [ ] `google-services.json` atualizado com oauth_client preenchido
 - [ ] `VITE_SENTRY_DSN` configurado
-- [ ] Deep links testados (friggo://auth/callback, friggo://checkout)
+ - [ ] Deep links testados (kaza://auth/callback, kaza://checkout)
 - [ ] App Links (assetlinks.json) hospedado no domínio
 - [ ] Screenshots e descrição prontos para a loja (ver docs/STORE_LISTING.md)
 - [ ] Política de privacidade publicada em URL acessível

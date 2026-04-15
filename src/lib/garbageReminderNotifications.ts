@@ -41,8 +41,8 @@ export async function initGarbageReminderNotifications() {
 
     const title =
       config.garbageLocation === "building"
-        ? "🗑️ Friggo — Hora de Descer o Lixo!"
-        : "🗑️ Friggo — Coleta de Lixo";
+        ? "🗑️ Kaza — Hora de Descer o Lixo!"
+        : "🗑️ Kaza — Coleta de Lixo";
 
     let body: string;
     if (hoursUntil <= 1) {

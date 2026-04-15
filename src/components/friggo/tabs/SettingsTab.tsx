@@ -38,7 +38,7 @@ import {
   MonitorDown
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useFriggo } from "@/contexts/FriggoContext";
+import { useKaza } from "@/contexts/FriggoContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useSubscription, PLAN_DETAILS } from "@/contexts/SubscriptionContext";
@@ -68,7 +68,7 @@ import { sendWebNotification } from "@/lib/pushNotifications";
 
 export function SettingsTab() {
   const { user, signOut } = useAuth();
-  const { onboardingData, resetOnboarding, updateOnboardingData } = useFriggo();
+  const { onboardingData, resetOnboarding, updateOnboardingData } = useKaza();
   const { language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { canInstall, install } = usePWA();
@@ -444,24 +444,6 @@ export function SettingsTab() {
                 </p>
               </div>
             </button>
-            {canInstall && (
-              <button
-                onClick={() => install()}
-                className="flex flex-col items-start gap-2.5 rounded-2xl bg-primary/10 p-4 border border-primary/20 transition-all active:scale-[0.97] text-left shadow-sm hover:bg-primary/15"
-              >
-                <div className="rounded-xl bg-white dark:bg-card p-2.5 shadow-sm border border-primary/10">
-                  <Download className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-semibold text-primary text-sm leading-tight">
-                    {l.install || "Instalar App"}
-                  </p>
-                  <p className="text-[10px] font-medium text-primary/60">
-                    {l.installDesc || "Acesse mais rápido"}
-                  </p>
-                </div>
-              </button>
-            )}
           </div>
         </section>
 
@@ -622,7 +604,7 @@ export function SettingsTab() {
                       if (permission === "granted") {
                         setTimeout(() => {
                           sendWebNotification(
-                            "🧊 Friggo — Tudo Pronto!",
+                            "🧊 Kaza — Tudo Pronto!",
                             language === "pt-BR"
                               ? "Notificações ativadas! Você será avisado sobre prazos, estoque e coleta de lixo."
                               : language === "es"
@@ -772,7 +754,7 @@ export function SettingsTab() {
 
         <div className="text-center py-6 pb-12">
           <p className="text-[16px] font-cursive italic text-muted-foreground">
-            Friggo v2.0.0
+            Kaza v2.0.0
           </p>
           <p className="text-xs text-muted-foreground mt-2">{l.madeWith}</p>
         </div>

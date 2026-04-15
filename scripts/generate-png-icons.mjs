@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
-const SVG_PATH = resolve(ROOT, "public/friggo-icon.svg");
+const SVG_PATH = resolve(ROOT, "public/kaza-icon.svg");
 const OUT_DIR = resolve(ROOT, "public/icons");
 
 const SIZES = [48, 72, 96, 128, 152, 180, 192, 256, 384, 512];

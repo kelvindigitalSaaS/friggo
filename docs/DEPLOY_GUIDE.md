@@ -1,4 +1,4 @@
-# 🚀 Guia Completo de Deploy - Friggo
+# 🚀 Guia Completo de Deploy - Kaza
 
 ## ⚡ RESUMO DAS MUDANÇAS
 
@@ -196,7 +196,7 @@ console.log(data);
 
 ### Teste na Plataforma:
 
-1. **Web:** `https://friggo.app/plans` → Clique em "Assinar"
+1. **Web:** `https://kaza.app/plans` → Clique em "Assinar"
 2. **PWA:** Salve como app → Mesmo teste
 3. **Android:** Abra o app → Navegue para Planos → Clique em "Assinar"
 

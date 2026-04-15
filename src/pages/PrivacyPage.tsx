@@ -22,11 +22,11 @@ const privacyData = {
       },
       {
         title: "Uso de Informações",
-        content: "Seus dados nunca são vendidos ou compartilhados com terceiros. O algoritmo do Friggo processa suas preferências localmente para oferecer a melhor experiência sem vazar informações.",
+        content: "Seus dados nunca são vendidos ou compartilhados com terceiros. O algoritmo do Kaza processa suas preferências localmente para oferecer a melhor experiência sem vazar informações.",
         icon: Shield
       }
     ],
-    footer: "Ao usar o Friggo, você concorda com nossos termos de uso."
+    footer: "Ao usar o Kaza, você concorda com nossos termos de uso."
   },
   en: {
     title: "Privacy",
@@ -45,7 +45,7 @@ const privacyData = {
         icon: Lock
       }
     ],
-    footer: "By using Friggo, you agree to our terms of use."
+    footer: "By using Kaza, you agree to our terms of use."
   },
   es: {
     title: "Privacidad",
@@ -59,7 +59,7 @@ const privacyData = {
         icon: Eye
       }
     ],
-    footer: "Al usar Friggo, aceptas nuestros términos de uso."
+    footer: "Al usar Kaza, aceptas nuestros términos de uso."
   }
 };
 
@@ -133,7 +133,7 @@ export default function PrivacyPage() {
             <FileText className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{data.footer}</span>
           </div>
-          <p className="mt-4 text-[14px] font-cursive italic text-muted-foreground/60">Friggo Privacy Standard v1.2</p>
+          <p className="mt-4 text-[14px] font-cursive italic text-muted-foreground/60">Kaza Privacy Standard v1.2</p>
         </footer>
       </main>
     </div>
