@@ -1,0 +1,836 @@
+import { useState, useRef, useEffect } from "react";
+import { useFriggo } from "@/contexts/FriggoContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import {
+  ShoppingCart,
+  Plus,
+  Check,
+  Trash2,
+  Store,
+  Flower,
+  Pill,
+  Loader2,
+  Wand2,
+  Minus,
+  ChevronDown,
+  ChevronUp,
+  LayoutList,
+  LayoutGrid,
+  CreditCard,
+  CheckCircle2,
+  CheckSquare,
+  AlertTriangle,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { searchProducts, ProductSuggestion } from "@/data/productDatabase";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+export function ShoppingTab() {
+  const {
+    items,
+    shoppingList,
+    consumables,
+    addToShoppingList,
+    toggleShoppingItem,
+    removeFromShoppingList,
+    updateShoppingItemQuantity,
+    onboardingData,
+    markAllShoppingComplete,
+    clearAllShoppingList
+  } = useFriggo();
+  const { language } = useLanguage();
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [newItem, setNewItem] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [suggestions, setSuggestions] = useState<ProductSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [groupByCategory, setGroupByCategory] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<
+    Record<string, boolean>
+  >({});
+  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const labels = {
+    "pt-BR": {
+      title: "Lista de Compras",
+      pending: "pendentes",
+      bought: "comprados",
+      generateAI: "Gerar lista com IA",
+      generating: "Gerando lista...",
+      lowStockCount: "itens em estoque baixo",
+      analyzeStock: "Analisa seu estoque e sugere compras",
+      addPlaceholder: "Adicionar item...",
+      emptyList: "Lista vazia",
+      emptyDesc: "Adicione itens ou gere com IA",
+      itemAdded: "Item adicionado à lista",
+      tooManyReq: "Muitas requisições. Tente novamente em alguns segundos.",
+      aiSuggested: "itens sugeridos pela IA!",
+      listUpdated: "Lista atualizada com itens em falta",
+      all: "Todos",
+      market: "Mercado",
+      fair: "Feira",
+      pharmacy: "Farmácia",
+      marketEmoji: "🛒 Mercado",
+      fairEmoji: "🌿 Feira",
+      pharmacyEmoji: "💊 Farmácia",
+      groupBy: "Agrupar",
+      flat: "Lista",
+      selectAll: "Selecionar todos",
+      payList: "Pagar lista",
+      allBought: "Todos comprados!",
+      deleteAll: "Apagar tudo",
+      confirmDeleteAll: "Tem certeza? Todos os itens serão removidos.",
+      allDeleted: "Todos os itens foram removidos!"
+    },
+    en: {
+      title: "Shopping List",
+      pending: "pending",
+      bought: "bought",
+      generateAI: "Generate list with AI",
+      generating: "Generating list...",
+      lowStockCount: "low stock items",
+      analyzeStock: "Analyzes your stock and suggests purchases",
+      addPlaceholder: "Add item...",
+      emptyList: "Empty list",
+      emptyDesc: "Add items or generate with AI",
+      itemAdded: "Item added to list",
+      tooManyReq: "Too many requests. Try again in a few seconds.",
+      aiSuggested: "items suggested by AI!",
+      listUpdated: "List updated with missing items",
+      all: "All",
+      market: "Market",
+      fair: "Fair",
+      pharmacy: "Pharmacy",
+      marketEmoji: "🛒 Market",
+      fairEmoji: "🌿 Fair",
+      pharmacyEmoji: "💊 Pharmacy",
+      groupBy: "Group",
+      flat: "List",
+      selectAll: "Select all",
+      payList: "Pay list",
+      allBought: "All bought!",
+      deleteAll: "Delete all",
+      confirmDeleteAll: "Are you sure? All items will be removed.",
+      allDeleted: "All items removed!"
+    },
+    es: {
+      title: "Lista de Compras",
+      pending: "pendientes",
+      bought: "comprados",
+      generateAI: "Generar lista con IA",
+      generating: "Generando lista...",
+      lowStockCount: "artículos con stock bajo",
+      analyzeStock: "Analiza tu stock y sugiere compras",
+      addPlaceholder: "Agregar artículo...",
+      emptyList: "Lista vacía",
+      emptyDesc: "Agrega artículos o genera con IA",
+      itemAdded: "Artículo agregado a la lista",
+      tooManyReq: "Demasiadas solicitudes. Intenta de nuevo en unos segundos.",
+      aiSuggested: "artículos sugeridos por IA!",
+      listUpdated: "Lista actualizada con artículos faltantes",
+      all: "Todos",
+      market: "Mercado",
+      fair: "Feria",
+      pharmacy: "Farmacia",
+      marketEmoji: "🛒 Mercado",
+      fairEmoji: "🌿 Feria",
+      pharmacyEmoji: "💊 Farmacia",
+      groupBy: "Agrupar",
+      flat: "Lista",
+      selectAll: "Seleccionar todos",
+      payList: "Pagar lista",
+      allBought: "¡Todos comprados!",
+      deleteAll: "Eliminar todo",
+      confirmDeleteAll: "¿Estás seguro? Todos los artículos serán eliminados.",
+      allDeleted: "¡Todos los artículos eliminados!"
+    }
+  };
+
+  const l = labels[language];
+
+  const storeFilters = [
+    { id: "all", label: l.all, icon: ShoppingCart },
+    { id: "market", label: l.market, icon: Store },
+    { id: "fair", label: l.fair, icon: Flower },
+    { id: "pharmacy", label: l.pharmacy, icon: Pill }
+  ];
+
+  const storeCategoryLabels: Record<string, Record<string, string>> = {
+    market: { "pt-BR": "🛒 Mercado", en: "🛒 Market", es: "🛒 Mercado" },
+    fair: { "pt-BR": "🌿 Feira", en: "🌿 Fair", es: "🌿 Feria" },
+    pharmacy: { "pt-BR": "💊 Farmácia", en: "💊 Pharmacy", es: "💊 Farmacia" },
+    other: { "pt-BR": "📦 Outros", en: "📦 Other", es: "📦 Otros" }
+  };
+
+  useEffect(() => {
+    const results = searchProducts(newItem);
+    setSuggestions(results);
+    setShowSuggestions(results.length > 0 && newItem.length > 0);
+  }, [newItem]);
+
+  const lowStockItems = items.filter(
+    (item) => item.minStock && item.quantity <= item.minStock
+  );
+  const filteredList = shoppingList.filter(
+    (item) => activeFilter === "all" || item.store === activeFilter
+  );
+  const completedCount = shoppingList.filter((i) => i.isCompleted).length;
+  const pendingCount = shoppingList.filter((i) => !i.isCompleted).length;
+
+  // Group items by store category
+  const groupedList = filteredList.reduce((acc, item) => {
+    const key = item.store || "other";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {} as Record<string, typeof filteredList>);
+
+  const toggleGroup = (key: string) => {
+    setCollapsedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleAddItem = (product?: ProductSuggestion) => {
+    const itemName = product?.name || newItem.trim();
+    if (!itemName) return;
+    addToShoppingList({
+      name: itemName,
+      category: "pantry",
+      quantity: product?.defaultQuantity || 1,
+      unit: product?.unit || "un",
+      store: product?.category || "market"
+    });
+    setNewItem("");
+    setShowSuggestions(false);
+    toast.success(l.itemAdded);
+  };
+
+  const handleGenerateSmartList = async () => {
+    // Rate limit check
+    const rl = checkRateLimit(
+      "shoppingList",
+      RATE_LIMITS.shoppingList.maxRequests,
+      RATE_LIMITS.shoppingList.windowMs
+    );
+    if (!rl.allowed) {
+      toast.error(l.tooManyReq);
+      return;
+    }
+
+    setIsGenerating(true);
+
+    // Artificial delay to make it feel like AI is working
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // Local analysis — instant, offline, no AI cost
+    const suggestedItems: any[] = [];
+    const residents = onboardingData?.residents ?? 1;
+    const habits = onboardingData?.habits ?? [];
+    const homeType = onboardingData?.homeType ?? "apartment";
+
+    // Scale factor for quantity: 1 person = 1x, 2 = 1.5x, 3+ = residents factor
+    const scaleFactor = residents <= 1 ? 1 : residents <= 2 ? 1.5 : residents;
+
+    lowStockItems.forEach((item) => {
+      suggestedItems.push({
+        name: item.name,
+        quantity: Math.ceil((item.minStock || 1) * 2 * scaleFactor),
+        unit: item.unit,
+        store:
+          item.category === "fruit" || item.category === "vegetable"
+            ? "fair"
+            : "market"
+      });
+    });
+
+    const itemsToRestock = Array.isArray(consumables)
+      ? consumables.filter((c) => {
+          const daysLeft =
+            c.dailyConsumption > 0 ? c.currentStock / c.dailyConsumption : 100;
+          return daysLeft <= 3;
+        })
+      : [];
+
+    itemsToRestock.forEach((item) => {
+      suggestedItems.push({
+        name: item.name,
+        quantity: Math.ceil(item.minStock * 3 * scaleFactor),
+        unit: item.unit,
+        store: item.category === "hygiene" ? "pharmacy" : "market"
+      });
+    });
+
+    const expiringItems = items.filter((item) => {
+      if (!item.expirationDate) return false;
+      const daysLeft = Math.ceil(
+        (new Date(item.expirationDate).getTime() - Date.now()) /
+          (1000 * 60 * 60 * 24)
+      );
+      return daysLeft <= 2 && daysLeft >= 0;
+    });
+    expiringItems.forEach((item) => {
+      const exists = suggestedItems.some(
+        (s) => s.name.toLowerCase() === item.name.toLowerCase()
+      );
+      if (!exists) {
+        suggestedItems.push({
+          name: item.name,
+          quantity: Math.max(1, Math.ceil(scaleFactor)),
+          unit: item.unit,
+          store:
+            item.category === "fruit" || item.category === "vegetable"
+              ? "fair"
+              : "market"
+        });
+      }
+    });
+
+    // ── Lifestyle staples based on habits ──────────────────────────────────
+    type SuggestedItem = {
+      name: string;
+      quantity: number;
+      unit: string;
+      store: string;
+    };
+    const lifestyleItems: SuggestedItem[] = [];
+
+    // Everyone cooking daily or feeding a family → pantry essentials
+    if (
+      habits.includes("cook-daily") ||
+      habits.includes("family") ||
+      residents >= 2
+    ) {
+      lifestyleItems.push(
+        {
+          name: language === "pt-BR" ? "Arroz" : "Rice",
+          quantity: Math.ceil(residents * 0.5),
+          unit: "kg",
+          store: "market"
+        },
+        {
+          name: language === "pt-BR" ? "Feijão" : "Beans",
+          quantity: Math.ceil(residents * 0.3),
+          unit: "kg",
+          store: "market"
+        },
+        {
+          name: language === "pt-BR" ? "Óleo de soja" : "Cooking oil",
+          quantity: 1,
+          unit: language === "pt-BR" ? "un" : "btl",
+          store: "market"
+        },
+        {
+          name: language === "pt-BR" ? "Cebola" : "Onion",
+          quantity: Math.ceil(residents * 2),
+          unit: language === "pt-BR" ? "un" : "un",
+          store: "fair"
+        },
+        {
+          name: language === "pt-BR" ? "Alho" : "Garlic",
+          quantity: 1,
+          unit: language === "pt-BR" ? "cabeça" : "head",
+          store: "fair"
+        }
+      );
+    }
+
+    // Diet or healthy lifestyle → fresh produce and proteins
+    if (habits.includes("diet") || habits.includes("healthy")) {
+      lifestyleItems.push(
+        {
+          name: language === "pt-BR" ? "Peito de frango" : "Chicken breast",
+          quantity: Math.ceil(residents * 0.5),
+          unit: "kg",
+          store: "market"
+        },
+        {
+          name: language === "pt-BR" ? "Brócolis" : "Broccoli",
+          quantity: Math.ceil(residents * 0.5),
+          unit: "kg",
+          store: "fair"
+        },
+        {
+          name: language === "pt-BR" ? "Iogurte natural" : "Plain yogurt",
+          quantity: residents,
+          unit: language === "pt-BR" ? "un" : "un",
+          store: "market"
+        },
+        {
+          name: language === "pt-BR" ? "Frutas variadas" : "Mixed fruits",
+          quantity: Math.ceil(residents * 3),
+          unit: language === "pt-BR" ? "un" : "un",
+          store: "fair"
+        },
+        {
+          name: language === "pt-BR" ? "Aveia" : "Oats",
+          quantity: 1,
+          unit: language === "pt-BR" ? "pct" : "pkg",
+          store: "market"
+        }
+      );
+    }
+
+    // Meal prep → bulk cooking ingredients
+    if (habits.includes("meal-prep")) {
+      lifestyleItems.push(
+        {
+          name: language === "pt-BR" ? "Batata-doce" : "Sweet potato",
+          quantity: Math.ceil(residents * 3),
+          unit: language === "pt-BR" ? "un" : "un",
+          store: "fair"
+        },
+        {
+          name: language === "pt-BR" ? "Ovo" : "Eggs",
+          quantity: Math.ceil(residents * 6),
+          unit: language === "pt-BR" ? "un" : "un",
+          store: "market"
+        },
+        {
+          name: language === "pt-BR" ? "Cenoura" : "Carrot",
+          quantity: Math.ceil(residents * 3),
+          unit: language === "pt-BR" ? "un" : "un",
+          store: "fair"
+        }
+      );
+    }
+
+    // Quick meals → easy-to-use items
+    if (habits.includes("quick-meals")) {
+      lifestyleItems.push(
+        {
+          name: language === "pt-BR" ? "Ovos" : "Eggs",
+          quantity: Math.ceil(residents * 4),
+          unit: language === "pt-BR" ? "un" : "un",
+          store: "market"
+        },
+        {
+          name: language === "pt-BR" ? "Queijo prato" : "Sliced cheese",
+          quantity: 1,
+          unit: language === "pt-BR" ? "pct" : "pkg",
+          store: "market"
+        },
+        {
+          name: language === "pt-BR" ? "Pão de forma" : "Bread loaf",
+          quantity: 1,
+          unit: language === "pt-BR" ? "un" : "un",
+          store: "market"
+        }
+      );
+    }
+
+    // Large household (3+) → extra staples
+    if (residents >= 3) {
+      lifestyleItems.push(
+        {
+          name: language === "pt-BR" ? "Leite integral" : "Whole milk",
+          quantity: residents,
+          unit: language === "pt-BR" ? "L" : "L",
+          store: "market"
+        },
+        {
+          name: language === "pt-BR" ? "Macarrão" : "Pasta",
+          quantity: Math.ceil(residents * 0.25),
+          unit: "kg",
+          store: "market"
+        }
+      );
+    }
+
+    // House (not apartment) → cleaning supplies
+    if (homeType === "house") {
+      lifestyleItems.push(
+        {
+          name: language === "pt-BR" ? "Detergente" : "Dish soap",
+          quantity: 2,
+          unit: language === "pt-BR" ? "un" : "un",
+          store: "market"
+        },
+        {
+          name: language === "pt-BR" ? "Esponja de limpeza" : "Cleaning sponge",
+          quantity: 2,
+          unit: language === "pt-BR" ? "un" : "un",
+          store: "market"
+        }
+      );
+    }
+
+    // Add lifestyle items that aren't already in the list or suggested
+    lifestyleItems.forEach((item) => {
+      const alreadySuggested = suggestedItems.some(
+        (s) => s.name.toLowerCase() === item.name.toLowerCase()
+      );
+      const alreadyInList = shoppingList.some(
+        (s) => s.name.toLowerCase() === item.name.toLowerCase()
+      );
+      if (!alreadySuggested && !alreadyInList) {
+        suggestedItems.push(item);
+      }
+    });
+    // ──────────────────────────────────────────────────────────────────────
+
+    let addedCount = 0;
+    suggestedItems.forEach((item) => {
+      const exists = shoppingList.some(
+        (s) => s.name.toLowerCase() === item.name.toLowerCase()
+      );
+      if (!exists) {
+        addToShoppingList({
+          name: item.name,
+          quantity: item.quantity,
+          unit: item.unit,
+          category: item.store === "pharmacy" ? "hygiene" : "pantry",
+          store: item.store
+        });
+        addedCount++;
+      }
+    });
+
+    if (addedCount > 0) {
+      toast.success(`${addedCount} ${l.aiSuggested}`);
+    } else {
+      toast.info(
+        language === "pt-BR"
+          ? "Seu estoque está em dia!"
+          : "Your stock is up to date!"
+      );
+    }
+    setIsGenerating(false);
+  };
+
+  const getStoreLabel = (store: string) => {
+    if (store === "market") return l.marketEmoji;
+    if (store === "fair") return l.fairEmoji;
+    return l.pharmacyEmoji;
+  };
+
+  const renderItem = (item: (typeof filteredList)[0], index: number) => (
+    <div
+      key={item.id}
+      className={cn(
+        "flex items-center gap-2.5 rounded-2xl border bg-white/80 dark:bg-white/5 backdrop-blur-xl border-black/[0.04] dark:border-white/[0.06] p-3 transition-all duration-300 shadow-sm",
+        item.isCompleted && "opacity-60"
+      )}
+    >
+      <button
+        onClick={() => toggleShoppingItem(item.id)}
+        className={cn(
+          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-90",
+          item.isCompleted
+            ? "border-fresh bg-fresh text-primary-foreground shadow-sm"
+            : "border-muted-foreground/30"
+        )}
+      >
+        {item.isCompleted && <Check className="h-3.5 w-3.5" />}
+      </button>
+      <div className="min-w-0 flex-1">
+        <p
+          className={cn(
+            "text-sm font-semibold text-foreground transition-all",
+            item.isCompleted && "line-through text-muted-foreground"
+          )}
+        >
+          {item.name}
+        </p>
+        <p className="text-[10px] text-muted-foreground">{item.unit}</p>
+      </div>
+      <div className="flex items-center gap-0.5">
+        <button
+          onClick={() => {
+            const currentQty = item.quantity || 1;
+            if (currentQty > 1)
+              updateShoppingItemQuantity(item.id, currentQty - 1);
+          }}
+          className="flex h-7 w-7 items-center justify-center rounded-xl bg-muted/50 text-muted-foreground transition-all active:scale-90"
+        >
+          <Minus className="h-3 w-3" />
+        </button>
+        <div className="w-8 text-center">
+          <span className="text-xs font-bold text-foreground">
+            {item.quantity || 1}
+          </span>
+        </div>
+        <button
+          onClick={() =>
+            updateShoppingItemQuantity(item.id, (item.quantity || 1) + 1)
+          }
+          className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all active:scale-90"
+        >
+          <Plus className="h-3 w-3" />
+        </button>
+      </div>
+      <button
+        onClick={() => removeFromShoppingList(item.id)}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-all active:bg-destructive/10 active:text-destructive active:scale-90"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4 pb-24">
+      <div className="flex items-center justify-between pt-2">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            {l.title}
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10">
+              <ShoppingCart className="h-4 w-4 text-primary" />
+            </div>
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            <span className="text-primary font-semibold">{pendingCount}</span>{" "}
+            {l.pending} ·{" "}
+            <span className="text-emerald-500 font-semibold">
+              {completedCount}
+            </span>{" "}
+            {l.bought}
+          </p>
+        </div>
+        <button
+          onClick={() => setGroupByCategory(!groupByCategory)}
+          className={cn(
+            "flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all active:scale-[0.97]",
+            groupByCategory
+              ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+              : "bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/[0.04] dark:border-white/[0.06] text-foreground"
+          )}
+        >
+          {groupByCategory ? (
+            <LayoutGrid className="h-3.5 w-3.5" />
+          ) : (
+            <LayoutList className="h-3.5 w-3.5" />
+          )}
+          {groupByCategory ? l.groupBy : l.flat}
+        </button>
+      </div>
+
+      <button
+        onClick={handleGenerateSmartList}
+        disabled={isGenerating}
+        className="flex w-full items-center gap-3 rounded-2xl border border-primary/15 bg-primary/5 dark:bg-primary/10 p-4 text-left transition-all active:scale-[0.97] disabled:opacity-50"
+      >
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15">
+          {isGenerating ? (
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          ) : (
+            <Wand2 className="h-5 w-5 text-primary" />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-foreground truncate">
+            {isGenerating ? l.generating : l.generateAI}
+          </p>
+          <p className="text-xs text-muted-foreground truncate">
+            {lowStockItems.length > 0
+              ? `${lowStockItems.length} ${l.lowStockCount}`
+              : l.analyzeStock}
+          </p>
+        </div>
+      </button>
+
+      {/* ── SELECT ALL + PAY LIST ── */}
+      {pendingCount > 0 && (
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              const pending = shoppingList.filter(i => !i.isCompleted);
+              pending.forEach(i => toggleShoppingItem(i.id));
+            }}
+            className="flex-1 flex items-center justify-center gap-2 h-11 rounded-2xl bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/[0.04] dark:border-white/[0.06] text-sm font-semibold text-foreground transition-all active:scale-[0.97]"
+          >
+            <CheckSquare className="h-4 w-4 text-primary" />
+            {l.selectAll}
+          </button>
+          <button
+            onClick={() => markAllShoppingComplete()}
+            className="flex-1 flex items-center justify-center gap-2 h-11 rounded-2xl bg-emerald-500 text-white text-sm font-semibold shadow-sm shadow-emerald-500/25 transition-all active:scale-[0.97]"
+          >
+            <CreditCard className="h-4 w-4" />
+            {l.payList}
+          </button>
+        </div>
+      )}
+
+      {/* ── DELETE ALL ── */}
+      {shoppingList.length > 0 && (
+        <button
+          onClick={() => setShowDeleteDialog(true)}
+          className="w-full flex items-center justify-center gap-2 h-10 rounded-2xl bg-destructive/10 text-destructive text-sm font-semibold transition-all active:scale-[0.97]"
+        >
+          <Trash2 className="h-4 w-4" />
+          {l.deleteAll}
+        </button>
+      )}
+
+      {/* Delete All Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="rounded-2xl max-w-sm mx-auto">
+          <DialogHeader>
+            <div className="flex justify-center mb-2">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                <AlertTriangle className="h-6 w-6 text-destructive" />
+              </div>
+            </div>
+            <DialogTitle className="text-center">{l.deleteAll}</DialogTitle>
+            <DialogDescription className="text-center">
+              {l.confirmDeleteAll}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-3 sm:flex-row">
+            <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setShowDeleteDialog(false)}>
+              {language === 'en' ? 'Cancel' : language === 'es' ? 'Cancelar' : 'Cancelar'}
+            </Button>
+            <Button variant="destructive" className="flex-1 rounded-xl" onClick={() => {
+              clearAllShoppingList();
+              toast.success(l.allDeleted);
+              setShowDeleteDialog(false);
+            }}>
+              <Trash2 className="h-4 w-4 mr-1.5" />
+              {l.deleteAll}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <div className="relative">
+        <div className="flex gap-2">
+          <Input
+            ref={inputRef}
+            placeholder={l.addPlaceholder}
+            value={newItem}
+            onChange={(e) => setNewItem(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAddItem()}
+            onFocus={() => setShowSuggestions(suggestions.length > 0)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+            className="flex-1 h-11 rounded-2xl border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 backdrop-blur-xl text-sm transition-all focus:shadow-sm"
+          />
+          <Button
+            onClick={() => handleAddItem()}
+            size="icon"
+            className="h-11 w-11 rounded-2xl shadow-sm shadow-primary/25 transition-all active:scale-[0.97]"
+          >
+            <Plus className="h-5 w-5" />
+          </Button>
+        </div>
+        {showSuggestions && (
+          <div className="absolute left-0 right-12 z-50 mt-2 max-h-48 overflow-y-auto rounded-2xl border border-black/[0.04] dark:border-white/[0.06] bg-white/90 dark:bg-card/90 backdrop-blur-2xl shadow-lg animate-fade-in">
+            {suggestions.map((product, index) => (
+              <button
+                key={index}
+                onClick={() => handleAddItem(product)}
+                className="flex w-full items-center justify-between px-3.5 py-2.5 text-left transition-colors active:bg-black/[0.03] dark:active:bg-white/[0.03] first:rounded-t-2xl last:rounded-b-2xl"
+              >
+                <span className="text-sm font-medium text-foreground">
+                  {product.name}
+                </span>
+                <span className="text-[10px] font-medium text-muted-foreground rounded-full bg-muted/50 px-2 py-0.5">
+                  {getStoreLabel(product.category)}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {!groupByCategory && (
+        <div className="flex flex-wrap gap-2">
+          {storeFilters.map((filter) => {
+            const Icon = filter.icon;
+            const count =
+              filter.id === "all"
+                ? shoppingList.length
+                : shoppingList.filter((i) => i.store === filter.id).length;
+            return (
+              <button
+                key={filter.id}
+                onClick={() => setActiveFilter(filter.id)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 active:scale-[0.97]",
+                  activeFilter === filter.id
+                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/25"
+                    : "bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/[0.04] dark:border-white/[0.06] text-foreground"
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {filter.label}
+                {count > 0 && (
+                  <span
+                    className={cn(
+                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                      activeFilter === filter.id
+                        ? "bg-white/20"
+                        : "bg-black/[0.04] dark:bg-white/10 text-muted-foreground"
+                    )}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {filteredList.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in">
+          <div className="mb-4 rounded-2xl bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/[0.04] dark:border-white/[0.06] p-5">
+            <ShoppingCart className="h-12 w-12 text-muted-foreground" />
+          </div>
+          <p className="text-lg font-bold text-foreground">{l.emptyList}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{l.emptyDesc}</p>
+        </div>
+      ) : groupByCategory ? (
+        <div className="space-y-3">
+          {Object.entries(groupedList).map(([storeKey, storeItems]) => (
+            <section
+              key={storeKey}
+              className="rounded-2xl border border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 backdrop-blur-xl overflow-hidden shadow-sm"
+            >
+              <button
+                onClick={() => toggleGroup(storeKey)}
+                className="flex w-full items-center justify-between px-4 py-3.5 text-left transition-all active:bg-black/[0.03] dark:active:bg-white/[0.03]"
+              >
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-foreground">
+                    {storeCategoryLabels[storeKey]?.[language] ||
+                      storeCategoryLabels.other[language]}
+                  </h2>
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                    {storeItems.length}
+                  </span>
+                </div>
+                {collapsedGroups[storeKey] ? (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+              {!collapsedGroups[storeKey] && (
+                <div className="space-y-1.5 px-3 pb-3 pt-1">
+                  {storeItems.map((item, index) => renderItem(item, index))}
+                </div>
+              )}
+            </section>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {filteredList.map((item, index) => renderItem(item, index))}
+        </div>
+      )}
+    </div>
+  );
+}

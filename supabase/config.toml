@@ -1,0 +1,37 @@
+project_id = "nrfketkwajzkmrlkvoyd"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+
+[functions.generate-recipes]
+verify_jwt = false
+
+[functions.generate-shopping-list]
+verify_jwt = false
+
+
+entrypoint = "./functions/stripe-webhook/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/stripe-webhook/*.html" ]
+
+[functions.cakto-webhook]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/cakto-webhook/index.ts"

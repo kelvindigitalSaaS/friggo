@@ -1,0 +1,55 @@
+﻿src/components/friggo/ConsumableTracker.tsx(340,7): error TS2322: Type '"cleaning" | "hygiene" | "pantry"' is not assignable to type 'ConsumableCategory'.
+  Type '"pantry"' is not assignable to type 'ConsumableCategory'.
+src/components/friggo/ConsumableTracker.tsx(353,26): error TS2339: Property 'category' does not exist on type 'ConsumableItem'.
+src/components/friggo/ConsumableTracker.tsx(362,22): error TS2339: Property 'category' does not exist on type 'ConsumableItem'.
+src/components/friggo/ConsumableTracker.tsx(363,19): error TS2339: Property 'category' does not exist on type 'ConsumableItem'.
+src/components/friggo/ConsumableTracker.tsx(369,19): error TS2345: Argument of type '{ name: string; icon: string; currentStock: number; unit: string; dailyConsumption: number; minStock: number; category: any; }' is not assignable to parameter of type 'Omit<ConsumableItem, "id">'.
+  Property 'usageInterval' is missing in type '{ name: string; icon: string; currentStock: number; unit: string; dailyConsumption: number; minStock: number; category: any; }' but required in type 'Omit<ConsumableItem, "id">'.
+src/components/friggo/ConsumableTracker.tsx(935,26): error TS2345: Argument of type 'Omit<ConsumableItem, "id">[]' is not assignable to parameter of type 'Omit<import("C:/Users/CAIO/Pictures/apps/friggo/src/types/friggo").ConsumableItem, "id">[]'.
+  Type 'Omit<ConsumableItem, "id">' is missing the following properties from type 'Omit<ConsumableItem, "id">': category, usageInterval
+src/components/friggo/Onboarding.tsx(491,26): error TS2345: Argument of type '{ name: string; icon: string; category: ConsumableCategory; unit: string; currentStock: number; minStock: number; dailyConsumption: number; usageType: "daily" | "weekly"; }[]' is not assignable to parameter of type 'Omit<ConsumableItem, "id">[]'.
+  Property 'usageInterval' is missing in type '{ name: string; icon: string; category: ConsumableCategory; unit: string; currentStock: number; minStock: number; dailyConsumption: number; usageType: "daily" | "weekly"; }' but required in type 'Omit<ConsumableItem, "id">'.
+src/components/friggo/tabs/HomeTab.tsx(238,62): error TS2304: Cannot find name 'residents'.
+src/components/friggo/tabs/HomeTab.tsx(243,62): error TS2304: Cannot find name 'residents'.
+src/components/friggo/tabs/HomeTab.tsx(249,22): error TS2304: Cannot find name 'residents'.
+src/components/PageTransition.tsx(64,7): error TS2322: Type '{ initial: (direction: string) => { x: number; opacity: number; y?: undefined; scale?: undefined; } | { y: number; opacity: number; x?: undefined; scale?: undefined; } | { opacity: number; scale: number; x?: undefined; y?: undefined; }; animate: { ...; }; exit: (direction: string) => { ...; } | ... 1 more ... | { .....' is not assignable to type 'Variants'.
+  Property 'exit' is incompatible with index signature.
+    Type '(direction: string) => { x: number; opacity: number; transition: { duration: number; ease: number[]; }; y?: undefined; scale?: undefined; } | { y: number; opacity: number; transition: { duration: number; ease: number[]; }; x?: undefined; scale?: undefined; } | { ...; }' is not assignable to type 'Variant'.
+      Type '(direction: string) => { x: number; opacity: number; transition: { duration: number; ease: number[]; }; y?: undefined; scale?: undefined; } | { y: number; opacity: number; transition: { duration: number; ease: number[]; }; x?: undefined; scale?: undefined; } | { ...; }' is not assignable to type 'TargetResolver'.
+        Type '{ x: number; opacity: number; transition: { duration: number; ease: number[]; }; y?: undefined; scale?: undefined; } | { y: number; opacity: number; transition: { duration: number; ease: number[]; }; x?: undefined; scale?: undefined; } | { ...; }' is not assignable to type 'string | TargetAndTransition'.
+          Type '{ x: number; opacity: number; transition: { duration: number; ease: number[]; }; y?: undefined; scale?: undefined; }' is not assignable to type 'string | TargetAndTransition'.
+            Type '{ x: number; opacity: number; transition: { duration: number; ease: number[]; }; y?: undefined; scale?: undefined; }' is not assignable to type 'TargetAndTransition'.
+              Type '{ x: number; opacity: number; transition: { duration: number; ease: number[]; }; y?: undefined; scale?: undefined; }' is not assignable to type '{ transition?: Transition<any>; transitionEnd?: ResolvedValues$1; }'.
+                Types of property 'transition' are incompatible.
+                  Type '{ duration: number; ease: number[]; }' is not assignable to type 'Transition<any>'.
+                    Type '{ duration: number; ease: number[]; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                      Type '{ duration: number; ease: number[]; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                        Types of property 'ease' are incompatible.
+                          Type 'number[]' is not assignable to type 'Easing | Easing[]'.
+                            Type 'number[]' is not assignable to type 'EasingFunction | Easing[]'.
+                              Type 'number[]' is not assignable to type 'Easing[]'.
+                                Type 'number' is not assignable to type 'Easing'.
+src/components/StripeCheckout.tsx(70,65): error TS2322: Type '"family"' is not assignable to type 'SubscriptionPlan'.
+src/components/StripeCheckout.tsx(144,7): error TS2304: Cannot find name 'setClientSecret'.
+src/integrations/supabase/client.ts(3,15): error TS2305: Module '"./types"' has no exported member 'Database'.
+src/lib/pushNotifications.ts(28,12): error TS2552: Cannot find name 'NotificationAction'. Did you mean 'NotificationOptions'?
+src/lib/pushNotifications.ts(130,5): error TS2353: Object literal may only specify known properties, and 'renotify' does not exist in type 'NotificationOptions'.
+src/pages/ConsumableTrackerPage.tsx(31,120): error TS2353: Object literal may only specify known properties, and 'hidden' does not exist in type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(32,118): error TS2353: Object literal may only specify known properties, and 'hidden' does not exist in type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(33,119): error TS2353: Object literal may only specify known properties, and 'hidden' does not exist in type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(34,118): error TS2353: Object literal may only specify known properties, and 'hidden' does not exist in type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(35,121): error TS2353: Object literal may only specify known properties, and 'hidden' does not exist in type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(86,9): error TS2353: Object literal may only specify known properties, and 'hidden' does not exist in type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(242,55): error TS2339: Property 'hidden' does not exist on type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(255,13): error TS2353: Object literal may only specify known properties, and 'hidden' does not exist in type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(509,55): error TS2339: Property 'hidden' does not exist on type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(510,79): error TS2339: Property 'hidden' does not exist on type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(548,38): error TS2339: Property 'hidden' does not exist on type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(549,66): error TS2339: Property 'hidden' does not exist on type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(550,67): error TS2339: Property 'hidden' does not exist on type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(551,62): error TS2339: Property 'hidden' does not exist on type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(563,46): error TS2304: Cannot find name 'Badge'.
+src/pages/ConsumableTrackerPage.tsx(565,47): error TS2304: Cannot find name 'Badge'.
+src/pages/ConsumableTrackerPage.tsx(643,118): error TS2339: Property 'hidden' does not exist on type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(646,47): error TS2339: Property 'hidden' does not exist on type 'ConsumableItem'.
+src/pages/ConsumableTrackerPage.tsx(649,67): error TS2339: Property 'hidden' does not exist on type 'ConsumableItem'.
