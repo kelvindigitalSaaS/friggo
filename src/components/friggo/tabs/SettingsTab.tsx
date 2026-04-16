@@ -444,6 +444,24 @@ export function SettingsTab() {
                 </p>
               </div>
             </button>
+            {canInstall && (
+              <button
+                onClick={() => install()}
+                className="flex flex-col items-start gap-2.5 rounded-2xl bg-primary/10 border border-primary/20 p-4 transition-all active:scale-[0.97] text-left shadow-sm hover:bg-primary/15"
+              >
+                <div className="rounded-xl bg-white dark:bg-card p-2.5 shadow-sm border border-primary/10">
+                  <Download className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-primary text-sm leading-tight">
+                    {l.install}
+                  </p>
+                  <p className="text-[10px] font-medium text-primary/60">
+                    {l.installDesc}
+                  </p>
+                </div>
+              </button>
+            )}
           </div>
         </section>
 

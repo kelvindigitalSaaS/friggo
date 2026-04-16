@@ -28,9 +28,11 @@ import {
   Calendar,
   Check,
   Building2,
-  Home
+  Home,
+  Save
 } from "lucide-react";
 import { toast } from "sonner";
+import { startGarbageReminderMonitoring } from "@/lib/garbageReminderNotifications";
 
 interface GarbageReminderProps {
   open: boolean;
@@ -204,10 +206,15 @@ export function GarbageReminder({ open, onClose }: GarbageReminderProps) {
     };
     localStorage.setItem("friggo-garbage-reminder", JSON.stringify(data));
 
+    // Start monitoring if enabled
+    if (enabled && selectedDays.length > 0) {
+      startGarbageReminderMonitoring();
+    }
+
     const successMsg = {
-      "pt-BR": "Lembrete configurado!",
-      en: "Reminder configured!",
-      es: "¡Recordatorio configurado!"
+      "pt-BR": "Lembrete configurado! Você receberá notificações nas datas selecionadas.",
+      en: "Reminder configured! You'll get notifications on the selected days.",
+      es: "¡Recordatorio configurado! Recibirás notificaciones en los días seleccionados."
     };
     toast.success(successMsg[language]);
     onClose();
@@ -215,9 +222,9 @@ export function GarbageReminder({ open, onClose }: GarbageReminderProps) {
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl p-0">
-        <SheetHeader className="border-b border-gray-200 px-6 py-4">
-          <SheetTitle className="flex items-center gap-2 text-lg font-bold">
+      <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl p-0 bg-[#fafafa] dark:bg-[#0a0a0a]">
+        <SheetHeader className="border-b border-primary/10 px-6 py-4">
+          <SheetTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
             <Trash2 className="h-5 w-5 text-primary" />
             {l.title}
           </SheetTitle>
@@ -226,15 +233,15 @@ export function GarbageReminder({ open, onClose }: GarbageReminderProps) {
         <ScrollArea className="h-[calc(90vh-80px)]">
           <div className="space-y-4 px-4 py-5 pb-10">
             {/* Enable/Disable */}
-            <Card>
+            <Card className="border-primary/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm">
               <CardContent className="flex items-center justify-between py-4">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-md bg-primary/10 p-2">
+                  <div className="rounded-xl bg-primary/10 p-2.5">
                     <Bell className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <Label className="font-medium">{l.enableReminder}</Label>
-                    <p className="text-xs text-gray-500">{l.enableDesc}</p>
+                    <Label className="font-semibold text-foreground">{l.enableReminder}</Label>
+                    <p className="text-xs text-muted-foreground">{l.enableDesc}</p>
                   </div>
                 </div>
                 <Switch checked={enabled} onCheckedChange={setEnabled} />
@@ -244,24 +251,24 @@ export function GarbageReminder({ open, onClose }: GarbageReminderProps) {
             {enabled && (
               <>
                 {/* Collection Days */}
-                <Card>
+                <Card className="border-primary/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm">
                   <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
+                    <CardTitle className="flex items-center gap-2 text-base text-foreground">
                       <Calendar className="h-4 w-4 text-primary" />
                       {l.collectionDays}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="mb-3 text-xs text-gray-500">{l.selectDays}</p>
+                    <p className="mb-3 text-xs text-muted-foreground font-medium">{l.selectDays}</p>
                     <div className="flex flex-wrap gap-2">
                       {weekdays.map((day, index) => (
                         <button
                           key={index}
                           onClick={() => toggleDay(index)}
-                          className={`flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-all active:scale-95 ${
+                          className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-all active:scale-95 ${
                             selectedDays.includes(index)
-                              ? "bg-primary text-primary-foreground shadow-sm"
-                              : "bg-muted text-gray-500 hover:bg-muted/80"
+                              ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                              : "bg-muted/50 text-muted-foreground hover:bg-muted"
                           }`}
                         >
                           {selectedDays.includes(index) && (
@@ -275,9 +282,9 @@ export function GarbageReminder({ open, onClose }: GarbageReminderProps) {
                 </Card>
 
                 {/* Reminder Time */}
-                <Card>
+                <Card className="border-primary/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm">
                   <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
+                    <CardTitle className="flex items-center gap-2 text-base text-foreground">
                       <Clock className="h-4 w-4 text-primary" />
                       {l.reminderTime}
                     </CardTitle>
@@ -287,15 +294,15 @@ export function GarbageReminder({ open, onClose }: GarbageReminderProps) {
                       type="time"
                       value={reminderTime}
                       onChange={(e) => setReminderTime(e.target.value)}
-                      className="w-full h-12 bg-muted/50 border-none rounded-md text-base font-medium px-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      className="w-full h-12 bg-muted/50 border border-primary/10 rounded-lg text-base font-semibold px-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                     />
                   </CardContent>
                 </Card>
 
                 {/* Location */}
-                <Card>
+                <Card className="border-primary/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm">
                   <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
+                    <CardTitle className="flex items-center gap-2 text-base text-foreground">
                       <MapPin className="h-4 w-4 text-primary" />
                       {l.location}
                     </CardTitle>
@@ -304,27 +311,27 @@ export function GarbageReminder({ open, onClose }: GarbageReminderProps) {
                     <div className="flex gap-3">
                       <button
                         onClick={() => setGarbageLocation("street")}
-                        className={`flex flex-1 flex-col items-center gap-2 rounded-md border-2 p-4 transition-all active:scale-95 ${
+                        className={`flex flex-1 flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all active:scale-95 ${
                           garbageLocation === "street"
-                            ? "border-primary bg-primary/10 shadow-sm"
-                            : "border-border bg-card hover:border-primary/30"
+                            ? "border-primary bg-primary/10 shadow-md shadow-primary/25"
+                            : "border-primary/10 bg-muted/30 hover:border-primary/30"
                         }`}
                       >
-                        <Home className="h-6 w-6" />
-                        <span className="text-xs font-medium text-center">
+                        <Home className={`h-6 w-6 ${garbageLocation === "street" ? "text-primary" : "text-muted-foreground"}`} />
+                        <span className="text-xs font-semibold text-center text-foreground">
                           {l.street}
                         </span>
                       </button>
                       <button
                         onClick={() => setGarbageLocation("building")}
-                        className={`flex flex-1 flex-col items-center gap-2 rounded-md border-2 p-4 transition-all active:scale-95 ${
+                        className={`flex flex-1 flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all active:scale-95 ${
                           garbageLocation === "building"
-                            ? "border-primary bg-primary/10 shadow-sm"
-                            : "border-border bg-card hover:border-primary/30"
+                            ? "border-primary bg-primary/10 shadow-md shadow-primary/25"
+                            : "border-primary/10 bg-muted/30 hover:border-primary/30"
                         }`}
                       >
-                        <Building2 className="h-6 w-6" />
-                        <span className="text-xs font-medium text-center">
+                        <Building2 className={`h-6 w-6 ${garbageLocation === "building" ? "text-primary" : "text-muted-foreground"}`} />
+                        <span className="text-xs font-semibold text-center text-foreground">
                           {l.building}
                         </span>
                       </button>
@@ -334,18 +341,18 @@ export function GarbageReminder({ open, onClose }: GarbageReminderProps) {
 
                 {/* Next Reminder */}
                 {selectedDays.length > 0 && (
-                  <Card className="bg-primary/5 border-primary/20">
+                  <Card className="bg-primary/10 border-primary/30 shadow-md shadow-primary/15">
                     <CardContent className="py-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="rounded-md bg-primary/10 p-2">
+                          <div className="rounded-xl bg-primary/20 p-2.5">
                             <Bell className="h-5 w-5 text-primary" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium">
+                            <p className="text-sm font-semibold text-primary">
                               {l.nextReminder}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-primary/70 font-medium">
                               {garbageLocation === "street"
                                 ? l.reminderMsg
                                 : l.reminderMsgBuilding}
@@ -354,7 +361,7 @@ export function GarbageReminder({ open, onClose }: GarbageReminderProps) {
                         </div>
                         <Badge
                           variant="secondary"
-                          className="bg-primary/10 text-primary"
+                          className="bg-white dark:bg-card text-primary font-bold shadow-sm"
                         >
                           {getNextReminderInfo()}
                         </Badge>
@@ -367,8 +374,10 @@ export function GarbageReminder({ open, onClose }: GarbageReminderProps) {
 
             <Button
               onClick={handleSave}
-              className="w-full rounded-md py-6 font-bold"
+              disabled={enabled && selectedDays.length === 0}
+              className="w-full rounded-xl py-6 font-bold flex items-center justify-center gap-2 shadow-md shadow-primary/25"
             >
+              <Save className="h-4 w-4" />
               {l.save}
             </Button>
           </div>

@@ -366,7 +366,7 @@ export default function Auth() {
             >
               <img
                 src="/icons/192.png"
-                alt="Friggo"
+                alt="KAZA APP"
                 className="w-[66px] h-[66px] object-contain rounded-[16px]"
               />
             </div>
@@ -374,8 +374,8 @@ export default function Auth() {
             {view === "landing" && (
               <>
                 <img
-                  src="/logo inicial nome.svg"
-                  alt="Friggo"
+                  src="../src/assets/logo inicial nome.svg"
+                  alt="KAZA APP"
                   className="h-[80px] object-contain mb-2"
                 />
                 <p
@@ -385,8 +385,8 @@ export default function Auth() {
                   {language === "pt-BR"
                     ? "Tecnologia para sua rotina."
                     : language === "es"
-                    ? "Tecnología para tu rutina."
-                    : "Technology for your routine."}
+                      ? "Tecnología para tu rutina."
+                      : "Technology for your routine."}
                 </p>
               </>
             )}
@@ -436,8 +436,8 @@ export default function Auth() {
                   {language === "pt-BR"
                     ? "Bem-vindo!"
                     : language === "es"
-                    ? "¡Bienvenido!"
-                    : "Welcome!"}
+                      ? "¡Bienvenido!"
+                      : "Welcome!"}
                 </h2>
                 <p
                   className="text-[13px] text-center mb-5"
@@ -446,8 +446,8 @@ export default function Auth() {
                   {language === "pt-BR"
                     ? "Escolha como quer continuar"
                     : language === "es"
-                    ? "Elige cómo quieres continuar"
-                    : "Choose how to continue"}
+                      ? "Elige cómo quieres continuar"
+                      : "Choose how to continue"}
                 </p>
 
                 <div className="space-y-3">
@@ -494,8 +494,8 @@ export default function Auth() {
                         {language === "pt-BR"
                           ? "Continuar com Google"
                           : language === "es"
-                          ? "Continuar con Google"
-                          : "Continue with Google"}
+                            ? "Continuar con Google"
+                            : "Continue with Google"}
                       </>
                     )}
                   </button>
@@ -552,8 +552,8 @@ export default function Auth() {
                     {language === "pt-BR"
                       ? "Entrar com email"
                       : language === "es"
-                      ? "Entrar con email"
-                      : "Sign in with email"}
+                        ? "Entrar con email"
+                        : "Sign in with email"}
                   </button>
 
                   {/* Criar conta — link */}
@@ -566,8 +566,8 @@ export default function Auth() {
                     {language === "pt-BR"
                       ? "Criar conta — 7 dias grátis"
                       : language === "es"
-                      ? "Crear cuenta — 7 días gratis"
-                      : "Create account — 7 days free"}
+                        ? "Crear cuenta — 7 días gratis"
+                        : "Create account — 7 days free"}
                   </button>
                 </div>
               </motion.div>
@@ -590,15 +590,15 @@ export default function Auth() {
                   {language === "pt-BR"
                     ? "Entrar"
                     : language === "es"
-                    ? "Entrar"
-                    : "Sign in"}
+                      ? "Entrar"
+                      : "Sign in"}
                 </h2>
                 <p className="text-[14px] mb-6" style={{ color: "#548A76" }}>
                   {language === "pt-BR"
                     ? "Use seu email e senha para continuar"
                     : language === "es"
-                    ? "Usa tu email y contraseña"
-                    : "Use your email and password"}
+                      ? "Usa tu email y contraseña"
+                      : "Use your email and password"}
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -732,15 +732,15 @@ export default function Auth() {
                   {language === "pt-BR"
                     ? "Criar conta"
                     : language === "es"
-                    ? "Crear cuenta"
-                    : "Create account"}
+                      ? "Crear cuenta"
+                      : "Create account"}
                 </h2>
                 <p className="text-[14px] mb-6" style={{ color: "#548A76" }}>
                   {language === "pt-BR"
                     ? "7 dias grátis, sem precisar de cartão"
                     : language === "es"
-                    ? "7 días gratis, sin tarjeta"
-                    : "7 days free, no card needed"}
+                      ? "7 días gratis, sin tarjeta"
+                      : "7 days free, no card needed"}
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">

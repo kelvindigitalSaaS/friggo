@@ -221,7 +221,7 @@ export default function SubscriptionPage() {
         )}
 
         {/* Security Info */}
-        <motion.section 
+        <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -231,24 +231,28 @@ export default function SubscriptionPage() {
             <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center shrink-0">
               <Lock className="h-6 w-6 text-emerald-500" />
             </div>
-            <div>
+            <div className="flex-1">
               <h4 className="text-base font-black text-foreground mb-1">{l.securityTitle}</h4>
-              <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+              <p className="text-xs text-muted-foreground leading-relaxed font-medium mb-4">
                 {l.securityDesc}
               </p>
-              <div className="flex flex-wrap items-center gap-3 mt-4">
-                <div className="flex items-center gap-1.5 grayscale opacity-60">
-                  <span className="text-[10px] font-black uppercase text-muted-foreground">Provider:</span>
-                  <span className="text-[10px] font-black text-foreground">Cakto Safe Pay</span>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 bg-white/50 dark:bg-white/5 p-3 rounded-lg border border-primary/10">
+                  <img
+                    src="https://app.cakto.com.br/logo/green-text-logo-transparent-background-login.png"
+                    alt="Cakto Safe Pay"
+                    className="h-5 object-contain"
+                  />
                 </div>
-                <div className="h-3 w-px bg-border shrink-0" />
-                <div className="flex items-center gap-1.5 bg-primary/5 px-2 py-1 rounded-md border border-primary/10">
-                  <Zap className="h-3 w-3 text-primary" />
-                  <span className="text-[10px] font-black text-primary uppercase">PIX Mensal</span>
-                </div>
-                <div className="flex items-center gap-1.5 bg-emerald-500/5 px-2 py-1 rounded-md border border-emerald-500/10">
-                  <CreditCard className="h-3 w-3 text-emerald-600" />
-                  <span className="text-[10px] font-black text-emerald-600 uppercase">Cartão de Crédito</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1.5 bg-primary/5 px-2.5 py-1.5 rounded-md border border-primary/10">
+                    <Zap className="h-3 w-3 text-primary" />
+                    <span className="text-[10px] font-black text-primary uppercase">PIX Mensal</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-emerald-500/5 px-2.5 py-1.5 rounded-md border border-emerald-500/10">
+                    <CreditCard className="h-3 w-3 text-emerald-600" />
+                    <span className="text-[10px] font-black text-emerald-600 uppercase">Cartão de Crédito</span>
+                  </div>
                 </div>
               </div>
             </div>
