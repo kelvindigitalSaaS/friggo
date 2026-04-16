@@ -75,6 +75,7 @@ export function ShoppingTab() {
   const navigate = useNavigate();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [newItemUnit, setNewItemUnit] = useState("un");
+  const [newItemStore, setNewItemStore] = useState<"market" | "fair" | "pharmacy" | "other">("market");
   const [showFilters, setShowFilters] = useState(false);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
@@ -251,10 +252,10 @@ export function ShoppingTab() {
     if (!itemName) return;
     addToShoppingList({
       name: itemName,
-      category: "pantry",
+      category: newItemStore === "pharmacy" ? "hygiene" : "pantry",
       quantity: product?.defaultQuantity || 1,
       unit: product?.unit || newItemUnit,
-      store: product?.category || "market"
+      store: product?.category || newItemStore
     });
     setNewItem("");
     setShowSuggestions(false);
@@ -745,8 +746,21 @@ export function ShoppingTab() {
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             className="flex-1 h-[52px] rounded-2xl border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 backdrop-blur-xl text-sm transition-all focus:shadow-sm"
           />
+          <Select value={newItemStore} onValueChange={(v) => setNewItemStore(v as any)}>
+            <SelectTrigger className="h-[52px] w-[64px] rounded-2xl border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 text-base font-bold shrink-0 px-0 justify-center">
+              <SelectValue>
+                {newItemStore === "market" ? "🛒" : newItemStore === "fair" ? "🌿" : newItemStore === "pharmacy" ? "💊" : "📦"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="market">🛒 {l.market}</SelectItem>
+              <SelectItem value="fair">🌿 {l.fair}</SelectItem>
+              <SelectItem value="pharmacy">💊 {l.pharmacy}</SelectItem>
+              <SelectItem value="other">📦 {language === "pt-BR" ? "Outros" : language === "es" ? "Otros" : "Other"}</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={newItemUnit} onValueChange={setNewItemUnit}>
-            <SelectTrigger className="h-[52px] w-[72px] rounded-2xl border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 text-xs font-bold shrink-0">
+            <SelectTrigger className="h-[52px] w-[64px] rounded-2xl border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 text-xs font-bold shrink-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

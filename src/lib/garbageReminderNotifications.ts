@@ -147,7 +147,7 @@ function getNextCollectionDates(
  * Obter configuração do localStorage
  */
 export function getGarbageReminderConfig(): GarbageReminderConfig {
-  const saved = localStorage.getItem("friggo-garbage-reminder");
+  const saved = localStorage.getItem("kaza-garbage-reminder");
   if (saved) {
     try {
       return JSON.parse(saved);

@@ -49,9 +49,11 @@ export default function GarbageReminderPage() {
   );
   const [buildingFloor, setBuildingFloor] = useState("");
 
-  // Load from localStorage
+  const STORAGE_KEY = "kaza-garbage-reminder";
+
+  // Load from localStorage (with migration from old friggo key)
   useEffect(() => {
-    const saved = localStorage.getItem("friggo-garbage-reminder");
+    const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("friggo-garbage-reminder");
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -60,28 +62,13 @@ export default function GarbageReminderPage() {
         setReminderTime(data.reminderTime ?? "20:00");
         setGarbageLocation(data.garbageLocation ?? "street");
         setBuildingFloor(data.buildingFloor ?? "");
+        // Migrate old key
+        localStorage.removeItem("friggo-garbage-reminder");
       } catch (e) {
         console.error("Error parsing garbage reminder settings:", e);
       }
     }
   }, []);
-
-  // Auto-save on every change
-  useEffect(() => {
-    const data = {
-      enabled,
-      selectedDays,
-      reminderTime,
-      garbageLocation,
-      buildingFloor
-    };
-    localStorage.setItem("friggo-garbage-reminder", JSON.stringify(data));
-    
-    // Also update notification monitor if enabled
-    if (enabled && selectedDays.length > 0) {
-      startGarbageReminderMonitoring();
-    }
-  }, [enabled, selectedDays, reminderTime, garbageLocation, buildingFloor]);
 
   const labels = {
     "pt-BR": {
@@ -97,7 +84,8 @@ export default function GarbageReminderPage() {
       building: "Prédio (Descer ao lixo)",
       floor: "Andar do Apartamento",
       floorPlaceholder: "Ex: 5º andar",
-      save: "Voltar",
+      save: "Salvar Configuração",
+      saved: "Configuração salva!",
       nextReminder: "Próximo lembrete",
       tonight: "Hoje!",
       tomorrow: "Amanha",
@@ -119,7 +107,8 @@ export default function GarbageReminderPage() {
       building: "Building (Take to garbage room)",
       floor: "Apartment Floor",
       floorPlaceholder: "Ex: 5th floor",
-      save: "Go Back",
+      save: "Save Settings",
+      saved: "Settings saved!",
       nextReminder: "Next reminder",
       tonight: "Today!",
       tomorrow: "Tomorrow",
@@ -141,7 +130,8 @@ export default function GarbageReminderPage() {
       building: "Edificio (Bajar a la basura)",
       floor: "Piso del Apartamento",
       floorPlaceholder: "Ej: 5º piso",
-      save: "Volver",
+      save: "Guardar Configuración",
+      saved: "¡Configuración guardada!",
       nextReminder: "Próximo recordatorio",
       tonight: "¡Hoy!",
       tomorrow: "Mañana",
@@ -154,6 +144,16 @@ export default function GarbageReminderPage() {
 
   const l = labels[language === "pt-BR" ? "pt-BR" : language === "es" ? "es" : "en"];
   const weekdays = WEEKDAYS[language === "pt-BR" ? "pt-BR" : language === "es" ? "es" : "en"];
+
+  const handleSave = () => {
+    const data = { enabled, selectedDays, reminderTime, garbageLocation, buildingFloor };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    if (enabled && selectedDays.length > 0) {
+      startGarbageReminderMonitoring();
+    }
+    toast.success(l.saved, { duration: 2000 });
+    navigate(-1);
+  };
 
   const toggleDay = (dayIndex: number) => {
     setSelectedDays((prev) =>
@@ -334,7 +334,7 @@ export default function GarbageReminderPage() {
       <div className="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-[#fafafa] dark:from-[#0a0a0a] to-transparent z-40 pointer-events-none pb-safe">
         <div className="max-w-lg mx-auto pointer-events-auto">
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleSave}
             className="w-full flex items-center justify-center h-14 rounded-2xl text-white text-[15px] font-bold shadow-lg shadow-primary/25 transition-all active:scale-[0.98]"
             style={{ background: "#165A52" }}
           >

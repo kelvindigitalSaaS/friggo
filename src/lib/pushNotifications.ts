@@ -19,8 +19,24 @@ function detectBrowser() {
 
 // ── Vibration patterns ───────────────────────────────────────────────────────
 const VIBRATE_DEFAULT = [100, 50, 100]; // short double buzz
-const VIBRATE_URGENT = [200, 100, 200, 100, 200]; // triple buzz for urgent
+// 3-second alarm pattern: 500ms on + 100ms off repeated ~5 times ≈ 3s total
+// NOTE: Web Vibration API (navigator.vibrate) only works in foreground tab on Android Chrome.
+// iOS Safari does not support navigator.vibrate at all. On native (Capacitor) the OS handles
+// vibration natively via the Haptics plugin — add @capacitor/haptics for full 3s alarm support.
+const VIBRATE_URGENT = [500, 100, 500, 100, 500, 100, 500, 100, 500]; // ~3s alarm pattern
 const VIBRATE_GENTLE = [80]; // single gentle tap
+
+/**
+ * Triggers a 3-second vibration alarm (best-effort across platforms).
+ * - Android Chrome/PWA: uses Web Vibration API (~3s pattern)
+ * - iOS Safari: no vibration support (limitation of WebKit)
+ * - Native Capacitor: native haptics should be used instead
+ */
+export function triggerAlarmVibration() {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    navigator.vibrate(VIBRATE_URGENT);
+  }
+}
 
 // ── Notification categories & their configs ──────────────────────────────────
 type NotifCategory =
@@ -217,13 +233,13 @@ export function registerNotificationHandlers() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FRIGGO_SOUND = "friggo_notification.wav";
-const CHANNEL_ID = "friggo_default";
-const CHANNEL_URGENT = "friggo_urgent";
-const NOTIFICATION_GROUP_DEFAULT = "friggo_updates";
-const NOTIFICATION_GROUP_GARBAGE = "friggo_garbage";
-const ACTION_TYPE_DEFAULT = "friggo_default_actions";
-const ACTION_TYPE_URGENT = "friggo_urgent_actions";
-const ACTION_TYPE_GARBAGE = "friggo_garbage_actions";
+const CHANNEL_ID = "kaza_default";
+const CHANNEL_URGENT = "kaza_urgent";
+const NOTIFICATION_GROUP_DEFAULT = "kaza_updates";
+const NOTIFICATION_GROUP_GARBAGE = "kaza_garbage";
+const ACTION_TYPE_DEFAULT = "kaza_default_actions";
+const ACTION_TYPE_URGENT = "kaza_urgent_actions";
+const ACTION_TYPE_GARBAGE = "kaza_garbage_actions";
 
 let actionTypesRegistered = false;
 let localNotificationListenersRegistered = false;

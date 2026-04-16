@@ -50,8 +50,8 @@ export default defineConfig(({ mode }: { mode: string }) => ({
         navigateFallbackDenylist: [/^\/api/]
       },
       manifest: {
-        name: "Friggo",
-        short_name: "Friggo",
+        name: "Kaza",
+        short_name: "Kaza",
         description:
           "Tudo o que sua casa precisa, antes de acabar. Geladeira, receitas, lista de compras e mais.",
         theme_color: "#165A52",

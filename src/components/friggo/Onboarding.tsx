@@ -492,8 +492,21 @@ export function Onboarding() {
 
   const [cpfError, setCpfError] = useState("");
 
+  // If user already has name AND cpf saved, skip those steps on reconfiguration
+  const hasNameAndCpf = Boolean(onboardingData?.name && onboardingData?.cpf);
+  const SKIPPABLE_STEPS = hasNameAndCpf ? ["personalize", "cpf"] : [];
+
   const handleNext = async () => {
     if (steps[currentStep] === "personalize") {
+      // Skip personalize + cpf together if both already filled
+      if (hasNameAndCpf) {
+        const homeTypeIndex = steps.indexOf("homeType");
+        if (homeTypeIndex !== -1) {
+          setPage([homeTypeIndex, 1]);
+          setCurrentStep(homeTypeIndex);
+          return;
+        }
+      }
       if (!data.name || !data.name.trim()) {
         toast.error(
           language === "pt-BR"
@@ -506,14 +519,19 @@ export function Onboarding() {
       }
     }
     if (steps[currentStep] === "cpf") {
+      // If CPF already exists in DB, skip validation and advance
+      if (hasNameAndCpf) {
+        const nextIndex = currentStep + 1;
+        setPage([nextIndex, 1]);
+        setCurrentStep(nextIndex);
+        return;
+      }
       const rawCpf = data.cpf || "";
       if (!isValidCPF(rawCpf)) {
         setCpfError(l.invalidCpf || "CPF inválido");
         return;
       }
       setCpfError("");
-      
-      // Validação assíncrona para checar duplicidade de CPF (neste ponto usamos apenas a API que tentará salvar)
     }
 
     // Ensure at least one notification preference is selected
@@ -531,8 +549,13 @@ export function Onboarding() {
   };
   const handleBack = () => {
     if (currentStep > 0) {
-      setPage([currentStep - 1, -1]);
-      setCurrentStep((prev) => prev - 1);
+      // If going back would land on a skippable step, jump over it
+      let targetStep = currentStep - 1;
+      while (targetStep > 0 && SKIPPABLE_STEPS.includes(steps[targetStep])) {
+        targetStep--;
+      }
+      setPage([targetStep, -1]);
+      setCurrentStep(targetStep);
     }
   };
   const handleComplete = async () => {

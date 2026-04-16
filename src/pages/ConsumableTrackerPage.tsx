@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -35,18 +36,133 @@ const defaultConsumables: ConsumableItem[] = [
     { id: '5', name: 'Pasta de Dente', icon: '🪥', currentStock: 2, unit: 'tubos', dailyConsumption: 0.05, minStock: 1, hidden: false, usageInterval: 'daily' },
 ];
 
+const LABELS = {
+    'pt-BR': {
+        title: 'Consumíveis',
+        consumptionLogged: 'Consumo registrado!',
+        restocked: 'Estoque atualizado!',
+        save: 'Salvo!',
+        addedToList: 'adicionado à lista',
+        itemAdded: 'Item adicionado!',
+        newItem: 'Novo Item',
+        chooseIcon: 'Escolha um ícone',
+        itemName: 'Nome do item',
+        currentStock: 'Estoque atual',
+        unit: 'Unidade',
+        dailyUse: 'Consumo por período',
+        perPerson: 'por pessoa',
+        daily: 'Por dia',
+        weekly: 'Por semana',
+        fortnightly: 'Por quinzena',
+        monthly: 'Por mês',
+        dailyTotal: 'Total diário',
+        people: 'pessoas',
+        minStock: 'Estoque mínimo',
+        cancel: 'Cancelar',
+        confirm: 'Confirmar',
+        deleteItem: 'Remover',
+        customAmount: 'Quantidade personalizada',
+        howItWorks: 'Como funciona?',
+        howItWorksDesc: 'O Kaza calcula automaticamente quando seu estoque vai acabar com base no consumo diário e número de moradores.',
+        showHidden: 'Mostrar ocultos',
+        daysLeft: 'd',
+        debit: 'Usar',
+        restock: 'Repor',
+        addItem: 'Adicionar item',
+        editItem: 'Editar item',
+        ok: 'OK',
+        warning: 'Atenção',
+        danger: 'Urgente',
+    },
+    'en': {
+        title: 'Consumables',
+        consumptionLogged: 'Consumption logged!',
+        restocked: 'Stock updated!',
+        save: 'Saved!',
+        addedToList: 'added to list',
+        itemAdded: 'Item added!',
+        newItem: 'New Item',
+        chooseIcon: 'Choose an icon',
+        itemName: 'Item name',
+        currentStock: 'Current stock',
+        unit: 'Unit',
+        dailyUse: 'Consumption per period',
+        perPerson: 'per person',
+        daily: 'Per day',
+        weekly: 'Per week',
+        fortnightly: 'Fortnightly',
+        monthly: 'Per month',
+        dailyTotal: 'Daily total',
+        people: 'people',
+        minStock: 'Minimum stock',
+        cancel: 'Cancel',
+        confirm: 'Confirm',
+        deleteItem: 'Remove',
+        customAmount: 'Custom amount',
+        howItWorks: 'How does it work?',
+        howItWorksDesc: 'Kaza automatically calculates when your stock will run out based on daily consumption and number of residents.',
+        showHidden: 'Show hidden',
+        daysLeft: 'd',
+        debit: 'Use',
+        restock: 'Restock',
+        addItem: 'Add item',
+        editItem: 'Edit item',
+        ok: 'OK',
+        warning: 'Warning',
+        danger: 'Urgent',
+    },
+    'es': {
+        title: 'Consumibles',
+        consumptionLogged: '¡Consumo registrado!',
+        restocked: '¡Stock actualizado!',
+        save: '¡Guardado!',
+        addedToList: 'agregado a la lista',
+        itemAdded: '¡Artículo agregado!',
+        newItem: 'Nuevo artículo',
+        chooseIcon: 'Elige un ícono',
+        itemName: 'Nombre del artículo',
+        currentStock: 'Stock actual',
+        unit: 'Unidad',
+        dailyUse: 'Consumo por período',
+        perPerson: 'por persona',
+        daily: 'Por día',
+        weekly: 'Por semana',
+        fortnightly: 'Por quincena',
+        monthly: 'Por mes',
+        dailyTotal: 'Total diario',
+        people: 'personas',
+        minStock: 'Stock mínimo',
+        cancel: 'Cancelar',
+        confirm: 'Confirmar',
+        deleteItem: 'Eliminar',
+        customAmount: 'Cantidad personalizada',
+        howItWorks: '¿Cómo funciona?',
+        howItWorksDesc: 'Kaza calcula automáticamente cuándo se agotará tu stock según el consumo diario y el número de residentes.',
+        showHidden: 'Mostrar ocultos',
+        daysLeft: 'd',
+        debit: 'Usar',
+        restock: 'Reponer',
+        addItem: 'Agregar artículo',
+        editItem: 'Editar artículo',
+        ok: 'OK',
+        warning: 'Atención',
+        danger: 'Urgente',
+    },
+} as const;
+
 export default function ConsumableTrackerPage() {
     const navigate = useNavigate();
-    const { 
-        addToShoppingList, 
-        onboardingData, 
-        consumables, 
-        addConsumable, 
-        updateConsumable, 
-        removeConsumable 
+    const {
+        addToShoppingList,
+        onboardingData,
+        consumables,
+        addConsumable,
+        updateConsumable,
+        removeConsumable
     } = useKaza();
     const { language } = useLanguage();
     const residents = onboardingData?.residents || 2;
+    const l = LABELS[language as keyof typeof LABELS] || LABELS['pt-BR'];
 
     const [screen, setScreen] = useState<'list' | 'add' | 'edit' | 'custom'>('list');
     const [hideMissing, setHideMissing] = useState(false);

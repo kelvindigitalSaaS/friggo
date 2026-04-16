@@ -43,6 +43,7 @@ const InstallGuidePage = lazy(() => import("./pages/InstallGuidePage"));
 const SubscriptionPage = lazy(() => import("./pages/SubscriptionPage"));
 const FAQPage = lazy(() => import("./pages/FAQPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
+const MealPlannerPage = lazy(() => import("./pages/MealPlannerPage"));
 
 const queryClient = new QueryClient();
 
@@ -181,7 +182,7 @@ const App = () => {
       if (url.includes("auth/callback") || url.includes("auth%2Fcallback")) {
         await closeInAppBrowser();
         try {
-          const normalized = url.replace("friggo://", "https://friggo.app/");
+          const normalized = url.replace("kaza://", "https://kaza.app/").replace("friggo://", "https://kaza.app/");
           const urlObj = new URL(normalized);
 
           // PKCE flow: exchange code for session
@@ -204,8 +205,8 @@ const App = () => {
               });
             }
           }
-        } catch (error) {
-          console.error("Auth callback error:", error);
+        } catch {
+          // Auth callback failed silently — user will be prompted to log in again
         }
         return;
       }
@@ -343,6 +344,10 @@ const App = () => {
                             <Route
                               path="/settings/privacy"
                               element={<ProtectedRoute element={<PrivacyPage />} />}
+                            />
+                            <Route
+                              path="/plan/meal-planner"
+                              element={<ProtectedRoute element={<MealPlannerPage />} />}
                             />
                             <Route path="*" element={<NotFound />} />
                           </Routes>

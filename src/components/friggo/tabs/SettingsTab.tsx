@@ -35,7 +35,9 @@ import {
   Download,
   Smartphone,
   Laptop,
-  MonitorDown
+  MonitorDown,
+  Home,
+  Users
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useKaza } from "@/contexts/FriggoContext";
@@ -72,7 +74,7 @@ export function SettingsTab() {
   const { language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { canInstall, install } = usePWA();
-  const { getPlanTier, subscription } = useSubscription();
+  const { getPlanTier, subscription, trialDaysRemaining } = useSubscription();
   const navigate = useNavigate();
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
@@ -292,246 +294,259 @@ export function SettingsTab() {
   return (
     <PageTransition
       direction="right"
-      className="min-h-[100dvh] bg-[#165a52] pb-32 pt-8"
+      className="min-h-[100dvh] bg-[#F7F6F3] pb-32 pt-8"
     >
       <main className="space-y-6 px-3">
-        {/* Premium Profile Header */}
-        <section
-          className={cn(
-            "group relative flex items-center gap-4 rounded-3xl p-5 border shadow-md transition-all",
-            planTier === "premium"
-              ? "border-amber-500/20 bg-amber-50/20 dark:bg-amber-950/20"
-              : "bg-white/10 backdrop-blur-xl border-white/20"
-          )}
-        >
-          <AvatarUpload 
-            currentUrl={onboardingData?.avatarUrl} 
-            size={72} 
-            className="shrink-0 ring-2 ring-white/20"
-          />
-          <div className="flex-1 min-w-0" onClick={() => navigate("/profile")}>
-            <div className="flex items-center gap-2 mb-0.5 min-w-0">
-              {editingInlineName ? (
-                <div className="flex items-center gap-2 w-full min-w-0">
-                  <Input
-                    value={localName}
-                    onChange={(e) => setLocalName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        updateOnboardingData({ name: localName });
-                        setEditingInlineName(false);
-                        toast.success(language === "pt-BR" ? "Nome atualizado" : "Name updated");
-                      }
-                    }}
-                    className="flex-1"
-                  />
-                  <Button variant="ghost" onClick={() => { updateOnboardingData({ name: localName }); setEditingInlineName(false); toast.success(language === "pt-BR" ? "Nome atualizado" : "Name updated"); }}>
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" onClick={() => { setEditingInlineName(false); setLocalName(onboardingData?.name || (user?.user_metadata?.name as string) || user?.email?.split("@")[0] || ""); }}>
-                    <RotateCcw className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <h2 className="text-lg font-bold text-white truncate">
-                    {onboardingData?.name || user?.email?.split("@")[0]}
-                  </h2>
-                  <button aria-label="Editar nome" title="Editar nome" onClick={() => setEditingInlineName(true)} className="text-white/60 hover:text-white p-1">
-                    <Edit className="h-4 w-4" />
-                  </button>
-                </>
-              )}
-              <CurrentPlanBadge showUpgradeSheet={false} />
+        {/* Profile — minimal */}
+        <section className="flex flex-col items-center gap-3 pt-2 pb-1">
+          <button onClick={() => navigate("/profile")} className="relative group">
+            <AvatarUpload
+              currentUrl={onboardingData?.avatarUrl}
+              size={80}
+              className="ring-4 ring-[#E2E1DC] shadow-md"
+            />
+            <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-white border border-[#E2E1DC] flex items-center justify-center shadow-sm">
+              <Edit className="h-3 w-3 text-[#7A7A72]" />
             </div>
-            <p className="text-sm font-medium text-white/70">{l.editProfile}</p>
-            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase text-white tracking-wider">
-              {onboardingData?.residents || 1} {l.residents} • {homeTypeLabel}
-            </div>
+          </button>
+          <div className="flex flex-col items-center gap-1">
+            <p className="text-[17px] font-bold text-[#2C2C2A] leading-tight">
+              {onboardingData?.name || user?.email?.split("@")[0]}
+            </p>
+            {planTier === "premium" && trialDaysRemaining <= 0 ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#3D6B55]/10 border border-[#3D6B55]/25 text-[#3D6B55] text-[11px] font-black uppercase tracking-wider">
+                <Crown className="h-3 w-3" /> Premium
+              </span>
+            ) : trialDaysRemaining > 0 ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-black uppercase tracking-wider">
+                <Star className="h-3 w-3" />
+                {language === "pt-BR" ? `${trialDaysRemaining} dias de teste` : language === "es" ? `${trialDaysRemaining} días de prueba` : `${trialDaysRemaining} trial days`}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F0EFE8] border border-[#E2E1DC] text-[#9A998F] text-[11px] font-black uppercase tracking-wider">
+                {language === "pt-BR" ? "Gratuito" : language === "es" ? "Gratis" : "Free"}
+              </span>
+            )}
           </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground group-active:text-primary transition-colors" onClick={() => navigate("/profile")} />
         </section>
 
         {/* Quick Shortcuts */}
-        <section className="space-y-4">
-          <h3 className="text-[11px] font-bold text-white/60 uppercase tracking-[1.5px] px-1">
-            <Zap className="h-3.5 w-3.5 inline mr-1 mb-0.5" /> {l.shortcuts}
+        <section className="space-y-3">
+          <h3 className="text-[11px] font-bold text-[#9A998F] uppercase tracking-[1.5px] px-1 flex items-center gap-1">
+            <Zap className="h-3.5 w-3.5" /> {l.shortcuts}
           </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => navigate("/activity-history")}
-              className="flex flex-col items-start gap-2.5 rounded-2xl bg-white/10 backdrop-blur-xl p-4 border border-white/20 transition-all active:scale-[0.97] text-left shadow-sm"
-            >
-              <div className="rounded-xl bg-white/20 p-2.5">
-                <History className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="font-semibold text-white text-sm leading-tight">
-                  {l.history}
-                </p>
-                <p className="text-[10px] font-medium text-white/60">
-                  {l.historyDesc}
-                </p>
-              </div>
-            </button>
-            <button
-              onClick={() => navigate("/settings/install")}
-              className="flex flex-col items-start gap-2.5 rounded-2xl bg-white/10 backdrop-blur-xl p-4 border border-white/20 transition-all active:scale-[0.97] text-left shadow-sm"
-            >
-              <div className="rounded-xl bg-white/20 p-2.5">
-                <Download className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="font-semibold text-white text-sm leading-tight">
-                  {l.installGuide || "Como Instalar"}
-                </p>
-                <p className="text-[10px] font-medium text-white/60">
-                  {l.installGuideDesc || "Android, iOS e PC"}
-                </p>
-              </div>
-            </button>
-            <button
-              onClick={() => navigate("/monthly-report")}
-              className="flex flex-col items-start gap-2.5 rounded-2xl bg-white/10 backdrop-blur-xl p-4 border border-white/20 transition-all active:scale-[0.97] text-left shadow-sm"
-            >
-              <div className="rounded-xl bg-emerald-400/20 p-2.5">
-                <Package className="h-5 w-5 text-emerald-400" />
-              </div>
-              <div>
-                <p className="font-semibold text-white text-sm leading-tight">
-                  {l.report}
-                </p>
-                <p className="text-[10px] font-medium text-white/60">
-                  {l.reportDesc}
-                </p>
-              </div>
-            </button>
-            <button
-              onClick={() => navigate("/settings/subscription")}
-              className="flex flex-col items-start gap-2.5 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 p-4 border border-amber-300 transition-all active:scale-[0.97] text-left shadow-sm"
-            >
-              <div className="rounded-xl bg-white/20 p-2.5 backdrop-blur-md">
-                <Crown className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <p className="font-semibold text-white text-sm leading-tight">
-                  {l.subscription}
-                </p>
-                <p className="text-[10px] font-medium text-white/80">
-                  {l.subscriptionDesc}
-                </p>
-              </div>
-            </button>
-            <button
-              onClick={() => setConfirmReconfigureOpen(true)}
-              className="flex flex-col items-start gap-2.5 rounded-2xl bg-white/10 backdrop-blur-xl p-4 border border-white/20 transition-all active:scale-[0.97] text-left shadow-sm"
-            >
-              <div className="rounded-xl bg-amber-500/10 p-2.5">
-                <RotateCcw className="h-5 w-5 text-amber-500" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground text-sm leading-tight">
-                  {l.reconfigure}
-                </p>
-                <p className="text-[10px] font-medium text-muted-foreground">
-                  {l.reconfigureDesc}
-                </p>
-              </div>
-            </button>
-            <button
-              onClick={() => navigate("/garbage-reminder")}
-              className="flex flex-col items-start gap-2.5 rounded-2xl bg-white/80 dark:bg-white/5 backdrop-blur-xl p-4 border border-black/[0.04] dark:border-white/[0.06] transition-all active:scale-[0.97] text-left shadow-sm hover:bg-white/90 dark:hover:bg-white/10"
-            >
-              <div className="rounded-xl bg-orange-500/10 border border-orange-500/20 p-2.5">
-                <Trash2 className="h-5 w-5 text-orange-500" />
-              </div>
-              <div>
-                <p className="font-semibold text-foreground text-sm leading-tight">
-                  {l.garbage}
-                </p>
-                <p className="text-[10px] font-medium text-muted-foreground">
-                  {l.garbageDesc}
-                </p>
-              </div>
-            </button>
+          <div className="grid grid-cols-2 gap-2.5">
+            {([
+              { label: l.history, desc: l.historyDesc, icon: History, color: "text-[#3D3D3A]", bg: "bg-[#EDECEA]", onClick: () => navigate("/activity-history") },
+              { label: l.installGuide || "Como Instalar", desc: l.installGuideDesc || "Android, iOS e PC", icon: Download, color: "text-[#3D3D3A]", bg: "bg-[#EDECEA]", onClick: () => navigate("/settings/install") },
+              { label: l.report, desc: l.reportDesc, icon: Package, color: "text-[#3D6B55]", bg: "bg-[#3D6B55]/10", onClick: () => navigate("/monthly-report") },
+              { label: l.subscription, desc: l.subscriptionDesc, icon: Crown, color: "text-[#3D3D3A]", bg: "bg-[#EDECEA]", onClick: () => navigate("/settings/subscription") },
+              { label: l.reconfigure, desc: l.reconfigureDesc, icon: RotateCcw, color: "text-amber-600", bg: "bg-amber-50", onClick: () => setConfirmReconfigureOpen(true) },
+              { label: l.garbage, desc: l.garbageDesc, icon: Trash2, color: "text-orange-500", bg: "bg-orange-50", onClick: () => navigate("/garbage-reminder") },
+            ] as const).map(({ label, desc, icon: Icon, color, bg, onClick }) => (
+              <button
+                key={label}
+                onClick={onClick}
+                className="flex flex-col items-start gap-2.5 rounded-2xl bg-white p-4 border border-[#E2E1DC] transition-all active:scale-[0.97] text-left shadow-sm"
+              >
+                <div className={cn("rounded-xl p-2.5", bg)}>
+                  <Icon className={cn("h-5 w-5", color)} />
+                </div>
+                <div>
+                  <p className="font-semibold text-[#2C2C2A] text-sm leading-tight">{label}</p>
+                  <p className="text-[10px] font-medium text-[#9A998F] mt-0.5">{desc}</p>
+                </div>
+              </button>
+            ))}
           </div>
+        </section>
+
+        {/* Subscription Section */}
+        <section className="space-y-3">
+          <h3 className="text-[11px] font-bold text-[#9A998F] uppercase tracking-[1.5px] px-1 flex items-center gap-1.5">
+            <Crown className="h-3.5 w-3.5" /> {l.subscription}
+          </h3>
+
+          {/* Current plan row */}
+          <div className="rounded-2xl bg-white border border-[#E2E1DC] overflow-hidden shadow-sm">
+            {planTier === "premium" && trialDaysRemaining <= 0 ? (
+              /* Premium paid — CLICKABLE → subscription page */
+              <button
+                onClick={() => navigate("/settings/subscription")}
+                className="w-full flex items-center justify-between px-5 py-4 active:bg-[#F7F6F3] transition-colors group"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="h-11 w-11 rounded-2xl bg-[#3D6B55]/10 border border-[#3D6B55]/20 flex items-center justify-center">
+                    <Crown className="h-5 w-5 text-[#3D6B55]" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-bold text-[#2C2C2A] text-[15px] leading-tight">Kaza Premium</p>
+                    <p className="text-[12px] text-[#7A7A72] font-medium">
+                      {language === "pt-BR" ? "Acesso completo ativo" : language === "es" ? "Acceso completo activo" : "Full access active"}
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="h-4.5 w-4.5 text-[#B0AFA7] group-active:text-[#3D3D3A]" />
+              </button>
+            ) : (
+              /* Trial / Free — NOT clickable, just status */
+              <div className="flex items-center gap-3.5 px-5 py-4">
+                <div className={cn(
+                  "h-11 w-11 rounded-2xl flex items-center justify-center",
+                  trialDaysRemaining > 0 ? "bg-amber-50 border border-amber-200" : "bg-[#F0EFE8] border border-[#E2E1DC]"
+                )}>
+                  {trialDaysRemaining > 0
+                    ? <Star className="h-5 w-5 text-amber-500" />
+                    : <Zap className="h-5 w-5 text-[#B0AFA7]" />
+                  }
+                </div>
+                <div>
+                  <p className="font-bold text-[#2C2C2A] text-[15px] leading-tight">
+                    {trialDaysRemaining > 0
+                      ? (language === "pt-BR" ? "Período de Teste" : language === "es" ? "Período de Prueba" : "Trial Period")
+                      : (language === "pt-BR" ? "Plano Gratuito" : language === "es" ? "Plan Gratuito" : "Free Plan")
+                    }
+                  </p>
+                  <p className="text-[12px] text-[#7A7A72] font-medium">
+                    {trialDaysRemaining > 0
+                      ? (language === "pt-BR" ? `${trialDaysRemaining} dias restantes` : language === "es" ? `${trialDaysRemaining} días restantes` : `${trialDaysRemaining} days left`)
+                      : (language === "pt-BR" ? "Recursos limitados" : language === "es" ? "Recursos limitados" : "Limited features")
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Plan cards — always visible when trial or free */}
+          {(trialDaysRemaining > 0 || planTier !== "premium") && (
+            <div className="space-y-2.5">
+              {([
+                {
+                  id: "individual",
+                  label: "Individual",
+                  tagline: language === "pt-BR" ? "Para 1 dispositivo" : language === "es" ? "Para 1 dispositivo" : "For 1 device",
+                  price: "R$ 14,99",
+                  period: language === "pt-BR" ? "/mês" : "/mo",
+                  url: "https://pay.cakto.com.br/356go8z",
+                  features: [
+                    language === "pt-BR" ? "Itens e receitas ilimitados" : language === "es" ? "Items y recetas ilimitados" : "Unlimited items & recipes",
+                    language === "pt-BR" ? "Alertas inteligentes" : language === "es" ? "Alertas inteligentes" : "Smart alerts",
+                    language === "pt-BR" ? "Planejador semanal" : language === "es" ? "Planificador semanal" : "Weekly planner",
+                  ],
+                  popular: false,
+                },
+                {
+                  id: "trio",
+                  label: "Trio",
+                  tagline: language === "pt-BR" ? "Para até 3 dispositivos" : language === "es" ? "Para hasta 3 dispositivos" : "Up to 3 devices",
+                  price: "R$ 27,00",
+                  period: language === "pt-BR" ? "/mês" : "/mo",
+                  url: "https://pay.cakto.com.br/wbjq4ne_846287",
+                  features: [
+                    language === "pt-BR" ? "Tudo do Individual" : language === "es" ? "Todo del Individual" : "Everything in Individual",
+                    language === "pt-BR" ? "Compartilhe com a família" : language === "es" ? "Comparte con la familia" : "Share with family",
+                    language === "pt-BR" ? "Sincronização entre telas" : language === "es" ? "Sincronización entre pantallas" : "Cross-device sync",
+                  ],
+                  popular: true,
+                },
+              ] as const).map((plan) => (
+                <div
+                  key={plan.id}
+                  className="relative rounded-2xl bg-white border border-[#E2E1DC] overflow-hidden shadow-sm"
+                >
+                  {plan.popular && (
+                    <div className="absolute top-3.5 right-3.5 px-2.5 py-0.5 rounded-full bg-[#3D6B55] text-white text-[9px] font-black uppercase tracking-widest">
+                      {language === "pt-BR" ? "Mais Popular" : language === "es" ? "Más popular" : "Most Popular"}
+                    </div>
+                  )}
+                  <div className="px-5 pt-5 pb-3">
+                    <p className="font-black text-[#2C2C2A] text-[17px] leading-tight">{plan.label}</p>
+                    <p className="text-[12px] text-[#9A998F] font-medium mt-0.5">{plan.tagline}</p>
+                    <div className="flex items-baseline gap-1 mt-2.5">
+                      <span className="text-[26px] font-black text-[#2C2C2A] tracking-tight">{plan.price}</span>
+                      <span className="text-[13px] font-semibold text-[#B0AFA7]">{plan.period}</span>
+                    </div>
+                  </div>
+                  <div className="px-5 pb-3 space-y-1.5">
+                    {plan.features.map((f) => (
+                      <div key={f} className="flex items-center gap-2.5">
+                        <Check className="h-3.5 w-3.5 text-[#3D6B55] shrink-0" />
+                        <span className="text-[13px] text-[#7A7A72] font-medium">{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="px-4 pb-4 pt-1">
+                    <button
+                      onClick={() => window.open(plan.url, "_blank")}
+                      className="w-full h-12 rounded-xl bg-[#3D6B55] hover:bg-[#2f5543] text-white font-black text-[14px] tracking-wide transition-all active:scale-[0.97] shadow-sm"
+                    >
+                      {language === "pt-BR" ? "Assinar" : language === "es" ? "Suscribirse" : "Subscribe"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <p className="text-center text-[10px] text-[#B0AFA7] font-medium pt-0.5">
+                {language === "pt-BR" ? "Cancele quando quiser · PIX e cartão via Cakto" : "Cancel anytime · PIX and card via Cakto"}
+              </p>
+            </div>
+          )}
         </section>
 
         {/* Preferences */}
         <section className="space-y-3">
-          <h3 className="text-[11px] font-bold text-white/60 uppercase tracking-[1.5px] px-1">
-            {l.appearance}
-          </h3>
-          <div className="rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 overflow-hidden shadow-sm">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+          <h3 className="text-[11px] font-bold text-[#9A998F] uppercase tracking-[1.5px] px-1">{l.appearance}</h3>
+          <div className="rounded-2xl bg-white border border-[#E2E1DC] overflow-hidden shadow-sm">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#E2E1DC]">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-white/20 p-2.5">
-                  <Layout className="h-5 w-5 text-white" />
+                <div className="rounded-xl bg-[#EDECEA] p-2.5">
+                  <Layout className="h-5 w-5 text-[#3D3D3A]" />
                 </div>
-                <p className="font-semibold text-white text-[15px]">{l.darkMode}</p>
+                <p className="font-semibold text-[#2C2C2A] text-[15px]">{l.darkMode}</p>
               </div>
               <div className="flex gap-1.5">
-                {(
-                  [
-                    {
-                      value: "light",
-                      Icon: Sun,
-                      labels: { "pt-BR": "Claro", en: "Light", es: "Claro" }
-                    },
-                    {
-                      value: "dark",
-                      Icon: Moon,
-                      labels: { "pt-BR": "Escuro", en: "Dark", es: "Oscuro" }
-                    },
-                    {
-                      value: "system",
-                      Icon: Monitor,
-                      labels: { "pt-BR": "Auto", en: "Auto", es: "Auto" }
-                    }
-                  ] as const
-                ).map(({ value, Icon, labels }) => (
+                {([
+                  { value: "light", Icon: Sun, labels: { "pt-BR": "Claro", en: "Light", es: "Claro" } },
+                  { value: "dark", Icon: Moon, labels: { "pt-BR": "Escuro", en: "Dark", es: "Oscuro" } },
+                  { value: "system", Icon: Monitor, labels: { "pt-BR": "Auto", en: "Auto", es: "Auto" } },
+                ] as const).map(({ value, Icon, labels }) => (
                   <button
                     key={value}
                     onClick={() => setTheme(value as any)}
                     className={cn(
                       "flex flex-col items-center justify-center gap-0.5 h-12 w-12 rounded-xl text-[9px] font-bold transition-all uppercase tracking-wide",
                       theme === value
-                        ? "bg-white text-[#165a52] shadow-lg shadow-black/10"
-                        : "bg-white/10 text-white/70 hover:bg-white/20"
+                        ? "bg-[#2C2C2A] text-white shadow-sm"
+                        : "bg-[#F0EFE8] text-[#7A7A72] hover:bg-[#E8E7E0]"
                     )}
                   >
                     <Icon className="h-4 w-4" />
-                    <span>
-                      {labels[language as keyof typeof labels] ?? labels.en}
-                    </span>
+                    <span>{labels[language as keyof typeof labels] ?? labels.en}</span>
                   </button>
                 ))}
               </div>
             </div>
-
             <div className="flex items-center justify-between px-5 py-4">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-white/20 p-2.5">
-                  <Globe className="h-5 w-5 text-white" />
+                <div className="rounded-xl bg-[#EDECEA] p-2.5">
+                  <Globe className="h-5 w-5 text-[#3D3D3A]" />
                 </div>
-                <p className="font-semibold text-white text-[15px]">{l.language}</p>
+                <p className="font-semibold text-[#2C2C2A] text-[15px]">{l.language}</p>
               </div>
               <div className="flex gap-1.5">
-                {(
-                  [
-                    { value: "pt-BR", flag: "🇧🇷", label: "PT" },
-                    { value: "en", flag: "🇺🇸", label: "EN" },
-                    { value: "es", flag: "🇪🇸", label: "ES" }
-                  ] as const
-                ).map(({ value, flag, label }) => (
+                {([
+                  { value: "pt-BR", flag: "🇧🇷", label: "PT" },
+                  { value: "en", flag: "🇺🇸", label: "EN" },
+                  { value: "es", flag: "🇪🇸", label: "ES" },
+                ] as const).map(({ value, flag, label }) => (
                   <button
                     key={value}
                     onClick={() => setLanguage(value as any)}
                     className={cn(
                       "flex flex-col items-center justify-center gap-0.5 h-12 w-12 rounded-xl text-[9px] font-bold transition-all",
                       language === value
-                        ? "bg-white text-[#165a52] shadow-lg shadow-black/10"
-                        : "bg-white/10 text-white/70 hover:bg-white/20"
+                        ? "bg-[#2C2C2A] text-white shadow-sm"
+                        : "bg-[#F0EFE8] text-[#7A7A72] hover:bg-[#E8E7E0]"
                     )}
                   >
                     <span className="text-xl leading-none">{flag}</span>
@@ -545,228 +560,182 @@ export function SettingsTab() {
 
         {/* Notifications */}
         <section className="space-y-3">
-          <h3 className="text-[11px] font-bold text-white/60 uppercase tracking-[1.5px] px-1 flex items-center gap-1">
-            <Bell className="h-3.5 w-3.5 inline" /> {l.notifTitle}
+          <h3 className="text-[11px] font-bold text-[#9A998F] uppercase tracking-[1.5px] px-1 flex items-center gap-1">
+            <Bell className="h-3.5 w-3.5" /> {l.notifTitle}
           </h3>
-          <p className="text-xs text-white/50 px-1">{l.notifDesc}</p>
-          <div className="rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 overflow-hidden shadow-sm">
+          <p className="text-xs text-[#9A998F] px-1">{l.notifDesc}</p>
+          <div className="rounded-2xl bg-white border border-[#E2E1DC] overflow-hidden shadow-sm">
             {([
-              { key: "expiry", Icon: Clock, color: "text-amber-500" },
-              { key: "shopping", Icon: ShoppingCart, color: "text-blue-500" },
-              { key: "recipes", Icon: UtensilsCrossed, color: "text-green-500" },
-              { key: "nightCheckup", Icon: CalendarClock, color: "text-indigo-500" },
-              { key: "cooking", Icon: Flame, color: "text-orange-500" },
-              { key: "consumables", Icon: Package2, color: "text-purple-500" },
-            ] as const).map(({ key, Icon, color }, idx) => {
+              { key: "expiry", Icon: Clock, color: "text-amber-500", bg: "bg-amber-50" },
+              { key: "shopping", Icon: ShoppingCart, color: "text-blue-500", bg: "bg-blue-50" },
+              { key: "recipes", Icon: UtensilsCrossed, color: "text-emerald-600", bg: "bg-emerald-50" },
+              { key: "nightCheckup", Icon: CalendarClock, color: "text-indigo-500", bg: "bg-indigo-50" },
+              { key: "cooking", Icon: Flame, color: "text-orange-500", bg: "bg-orange-50" },
+              { key: "consumables", Icon: Package2, color: "text-purple-500", bg: "bg-purple-50" },
+            ] as const).map(({ key, Icon, color, bg }, idx) => {
               const prefs = onboardingData?.notificationPrefs || ["expiry", "shopping", "nightCheckup"];
               const isActive = prefs.includes(key);
               return (
-                <div
-                  key={key}
-                  className={cn(
-                    "flex items-center justify-between px-5 py-3.5",
-                    idx < 5 && "border-b border-white/10"
-                  )}
-                >
+                <div key={key} className={cn("flex items-center justify-between px-5 py-3.5", idx < 5 && "border-b border-[#E2E1DC]")}>
                   <div className="flex items-center gap-3">
-                    <div className={cn("rounded-xl p-2", isActive ? "bg-white/20" : "bg-black/10")}>
-                      <Icon className={cn("h-4.5 w-4.5", isActive ? color : "text-white/40")} />
+                    <div className={cn("rounded-xl p-2", isActive ? bg : "bg-[#F0EFE8]")}>
+                      <Icon className={cn("h-4 w-4", isActive ? color : "text-[#B0AFA7]")} />
                     </div>
                     <div>
-                      <p className="font-semibold text-white text-[14px]">{(l.notifOptions as any)[key]?.label}</p>
-                      <p className="text-[11px] text-white/60">{(l.notifOptions as any)[key]?.desc}</p>
+                      <p className="font-semibold text-[#2C2C2A] text-[14px]">{(l.notifOptions as any)[key]?.label}</p>
+                      <p className="text-[11px] text-[#9A998F]">{(l.notifOptions as any)[key]?.desc}</p>
                     </div>
                   </div>
                   <Switch
                     checked={isActive}
                     onCheckedChange={() => {
                       const current = onboardingData?.notificationPrefs || ["expiry", "shopping", "nightCheckup"];
-                      const next = isActive
-                        ? current.filter((p: string) => p !== key)
-                        : [...current, key];
-                        if (next.length === 0) {
-                          toast.error(language === "pt-BR" ? "Selecione ao menos uma preferência de notificação." : "Select at least one notification preference.");
-                          return;
-                        }
-                        updateOnboardingData({ notificationPrefs: next });
+                      const next = isActive ? current.filter((p: string) => p !== key) : [...current, key];
+                      if (next.length === 0) {
+                        toast.error(language === "pt-BR" ? "Selecione ao menos uma preferência de notificação." : "Select at least one notification preference.");
+                        return;
+                      }
+                      updateOnboardingData({ notificationPrefs: next });
                     }}
                   />
                 </div>
               );
             })}
           </div>
-          {/* Test Notification Button */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <select
-                value={notifDelay}
-                onChange={(e) => setNotifDelay(Number(e.target.value))}
-                className="h-10 rounded-xl bg-muted/30 border-none px-3 text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-              >
-                {[3, 5, 10, 15, 30, 60].map((s) => (
-                  <option key={s} value={s}>{s} {l.notifSeconds}</option>
-                ))}
-              </select>
-              <button
-                onClick={() => {
-                  if ("Notification" in window) {
-                    Notification.requestPermission().then((permission) => {
-                      if (permission === "granted") {
-                        setTimeout(() => {
-                          sendWebNotification(
-                            "🧊 Kaza — Tudo Pronto!",
-                            language === "pt-BR"
-                              ? "Notificações ativadas! Você será avisado sobre prazos, estoque e coleta de lixo."
-                              : language === "es"
-                                ? "¡Notificaciones activadas! Serás avisado sobre plazos, inventario y recolección."
-                                : "Notifications enabled! You'll be alerted about expiry, stock and garbage collection.",
-                            {
-                              tag: "test-notification",
-                              category: "test"
-                            }
-                          );
-                        }, notifDelay * 1000);
-                      }
-                    });
-                  }
-                  toast.success(`${l.notifSent} (${notifDelay}s)`);
-                }}
-                className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-primary/10 py-3.5 text-primary font-semibold text-sm transition-all active:scale-[0.97]"
-              >
-                <BellRing className="h-4.5 w-4.5" />
-                {l.testNotif}
-              </button>
-            </div>
+          <div className="flex items-center gap-2.5">
+            <select
+              value={notifDelay}
+              onChange={(e) => setNotifDelay(Number(e.target.value))}
+              className="h-11 rounded-xl bg-white border border-[#E2E1DC] px-3 text-sm font-semibold text-[#2C2C2A] focus:outline-none focus:ring-2 focus:ring-[#3D6B55]/30"
+            >
+              {[3, 5, 10, 15, 30, 60].map((s) => (
+                <option key={s} value={s}>{s} {l.notifSeconds}</option>
+              ))}
+            </select>
+            <button
+              onClick={async () => {
+                if (!("Notification" in window)) {
+                  toast.error(language === "pt-BR" ? "Notificações não suportadas neste navegador." : "Notifications not supported in this browser.");
+                  return;
+                }
+                let permission = Notification.permission;
+                if (permission === "default") permission = await Notification.requestPermission();
+                if (permission !== "granted") {
+                  toast.error(language === "pt-BR" ? "Permissão de notificação negada. Habilite nas configurações do navegador." : "Notification permission denied.");
+                  return;
+                }
+                toast.success(`${l.notifSent} (${notifDelay}s)`);
+                
+                const testNotifs = language === "pt-BR" ? [
+                  { title: "🧊 Kaza — Tudo Pronto!", body: "Notificações ativadas com sucesso." },
+                  { title: "🕰️ Kaza — Vencimento", body: "Atenção: A maçã vence amanhã!" },
+                  { title: "🛒 Kaza — Lista Compras", body: "O item 'Leite' foi adicionado." },
+                  { title: "🍳 Kaza — Cozinha", body: "Seu timer de 15 minutos terminou!" },
+                  { title: "🌙 Kaza — Check-up", body: "Tudo certo na cozinha para dormir?" },
+                  { title: "📦 Kaza — Estoque", body: "O sabão em pó está acabando." }
+                ] : [
+                  { title: "🧊 Kaza — All Set!", body: "Notifications successfully enabled." },
+                  { title: "🕰️ Kaza — Expiry", body: "Warning: Apple expires tomorrow!" },
+                  { title: "🛒 Kaza — Shopping List", body: "Item 'Milk' was added." },
+                  { title: "🍳 Kaza — Kitchen", body: "Your 15 minute timer is up!" },
+                  { title: "🌙 Kaza — Check-up", body: "All good in the kitchen for the night?" },
+                  { title: "📦 Kaza — Stock", body: "Detergent is running low." }
+                ];
+
+                testNotifs.forEach((notif, index) => {
+                  setTimeout(() => {
+                    sendWebNotification(notif.title, notif.body, { tag: `test-notif-${index}`, category: "general" });
+                  }, (notifDelay * 1000) + (index * 5000));
+                });
+              }}
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-white border border-[#E2E1DC] py-3 text-[#3D6B55] font-semibold text-sm transition-all active:scale-[0.97] shadow-sm"
+            >
+              <BellRing className="h-4 w-4" />
+              {l.testNotif}
+            </button>
           </div>
         </section>
 
         {/* Help & Support */}
         <section className="space-y-3">
-          <h3 className="text-[11px] font-bold text-white/60 uppercase tracking-[1.5px] px-1 flex items-center gap-1">
-            <HelpCircle className="h-3.5 w-3.5 inline" /> {l.helpSupport}
+          <h3 className="text-[11px] font-bold text-[#9A998F] uppercase tracking-[1.5px] px-1 flex items-center gap-1">
+            <HelpCircle className="h-3.5 w-3.5" /> {l.helpSupport}
           </h3>
-          <div className="rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 overflow-hidden shadow-sm">
-            <button
-              onClick={() => navigate("/settings/faq")}
-              className="w-full flex items-center justify-between px-5 py-4 border-b border-white/10 transition-colors active:bg-white/5 group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-white/20 p-2.5">
-                  <HelpCircle className="h-5 w-5 text-white" />
+          <div className="rounded-2xl bg-white border border-[#E2E1DC] overflow-hidden shadow-sm">
+            {[
+              { label: l.faq, desc: l.faqDesc, icon: HelpCircle, onClick: () => navigate("/settings/faq") },
+              { label: l.privacy, desc: l.privacyDesc, icon: FileText, onClick: () => navigate("/settings/privacy") },
+              { label: l.installGuide, desc: l.installGuideDesc, icon: MonitorDown, onClick: () => navigate("/settings/install") },
+            ].map(({ label, desc, icon: Icon, onClick }, idx, arr) => (
+              <button
+                key={label}
+                onClick={onClick}
+                className={cn("w-full flex items-center justify-between px-5 py-4 active:bg-[#F7F6F3] transition-colors group", idx < arr.length - 1 && "border-b border-[#E2E1DC]")}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-xl bg-[#EDECEA] p-2.5">
+                    <Icon className="h-5 w-5 text-[#3D3D3A]" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-[#2C2C2A] text-[15px]">{label}</p>
+                    <p className="text-xs text-[#9A998F]">{desc}</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className="font-semibold text-white text-[15px]">{l.faq}</p>
-                  <p className="text-xs text-white/60">{l.faqDesc}</p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-white/60 group-active:text-white transition-colors" />
-            </button>
-
-            <button
-              onClick={() => navigate("/settings/privacy")}
-              className="w-full flex items-center justify-between px-5 py-4 transition-colors active:bg-white/5 group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-white/20 p-2.5">
-                  <FileText className="h-5 w-5 text-white" />
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-white text-[15px]">{l.privacy}</p>
-                  <p className="text-xs text-white/60">{l.privacyDesc}</p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-white/60 group-active:text-white transition-colors" />
-            </button>
-          </div>
-        </section>
-
-        {/* Installation Guide */}
-        <section className="space-y-3">
-          <h3 className="text-[11px] font-bold text-white/60 uppercase tracking-[1.5px] px-1 flex items-center gap-1">
-            <Download className="h-3.5 w-3.5 inline" /> {l.installGuide}
-          </h3>
-          <div className="rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 overflow-hidden shadow-sm">
-            <button
-              onClick={() => navigate("/settings/install")}
-              className="w-full flex items-center justify-between px-5 py-4 transition-colors active:bg-white/5 group"
-            >
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-white/20 p-2.5">
-                  <MonitorDown className="h-5 w-5 text-white" />
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-white text-[15px]">{l.installGuide}</p>
-                  <p className="text-xs text-white/60">{l.installGuideDesc}</p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-white/60 group-active:text-white transition-colors" />
-            </button>
+                <ChevronRight className="h-4.5 w-4.5 text-[#B0AFA7]" />
+              </button>
+            ))}
           </div>
         </section>
 
         {/* Security & Account */}
         <section className="space-y-3">
-          <h3 className="text-[11px] font-bold text-white/60 uppercase tracking-[1.5px] px-1">
-            {l.security}
-          </h3>
-          <div className="rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 overflow-hidden shadow-sm">
+          <h3 className="text-[11px] font-bold text-[#9A998F] uppercase tracking-[1.5px] px-1">{l.security}</h3>
+          <div className="rounded-2xl bg-white border border-[#E2E1DC] overflow-hidden shadow-sm">
             <button
               onClick={() => setChangePasswordOpen(true)}
-              className="w-full flex items-center justify-between px-5 py-4 border-b border-white/20 transition-colors active:bg-white/5 group"
+              className="w-full flex items-center justify-between px-5 py-4 border-b border-[#E2E1DC] active:bg-[#F7F6F3] transition-colors group"
             >
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-white/20 p-2.5">
-                  <KeyRound className="h-5 w-5 text-white" />
+                <div className="rounded-xl bg-[#EDECEA] p-2.5">
+                  <KeyRound className="h-5 w-5 text-[#3D3D3A]" />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-white text-[15px]">
-                    {l.changePassword}
-                  </p>
-                  <p className="text-xs text-white/60">
-                    {l.changePasswordDesc}
-                  </p>
+                  <p className="font-semibold text-[#2C2C2A] text-[15px]">{l.changePassword}</p>
+                  <p className="text-xs text-[#9A998F]">{l.changePasswordDesc}</p>
                 </div>
               </div>
-              <ChevronRight className="h-5 w-5 text-white/60 group-active:text-white transition-colors" />
+              <ChevronRight className="h-4.5 w-4.5 text-[#B0AFA7]" />
             </button>
-
             <button
               onClick={() => setDeleteAccountOpen(true)}
-              className="w-full flex items-center justify-between px-5 py-4 border-b border-white/20 active:bg-destructive/20 transition-colors group"
+              className="w-full flex items-center justify-between px-5 py-4 border-b border-[#E2E1DC] active:bg-red-50 transition-colors group"
             >
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-red-400/20 p-2.5">
-                  <AlertTriangle className="h-5 w-5 text-red-200" />
+                <div className="rounded-xl bg-red-50 p-2.5">
+                  <AlertTriangle className="h-5 w-5 text-red-500" />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-red-200 text-[15px]">
-                    {l.deleteAccount}
-                  </p>
-                  <p className="text-xs text-red-200/60">{l.deleteAccountDesc}</p>
+                  <p className="font-semibold text-red-500 text-[15px]">{l.deleteAccount}</p>
+                  <p className="text-xs text-red-400/70">{l.deleteAccountDesc}</p>
                 </div>
               </div>
-              <ChevronRight className="h-5 w-5 text-red-200/60 group-active:text-red-200 transition-colors" />
+              <ChevronRight className="h-4.5 w-4.5 text-red-300" />
             </button>
-
             <button
               onClick={signOut}
-              className="w-full flex items-center justify-between px-5 py-4 active:bg-destructive/20 transition-colors group"
+              className="w-full flex items-center gap-3 px-5 py-4 active:bg-red-50 transition-colors"
             >
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-red-400/20 p-2.5 text-red-200">
-                  <LogOut className="h-5 w-5" />
-                </div>
-                <p className="font-semibold text-red-200 text-[15px]">{l.logout}</p>
+              <div className="rounded-xl bg-red-50 p-2.5">
+                <LogOut className="h-5 w-5 text-red-500" />
               </div>
+              <p className="font-semibold text-red-500 text-[15px]">{l.logout}</p>
             </button>
           </div>
         </section>
 
         <div className="text-center py-6 pb-12">
-          <p className="text-[16px] font-cursive italic text-white/50">
-            Kaza v2.0.0
-          </p>
-          <p className="text-xs text-white/40 mt-2">{l.madeWith}</p>
+          <p className="text-[13px] text-[#B0AFA7] font-medium">Kaza v2.0.0</p>
+          <p className="text-xs text-[#B0AFA7] mt-1">{l.madeWith}</p>
         </div>
       </main>
 

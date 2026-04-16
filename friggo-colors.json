@@ -1,58 +1,130 @@
 {
-  "brandName": "Friggo",
+  "brandName": "Kaza",
   "colors": {
     "primary": {
       "hex": "#0B5449",
-      "rgb": { "r": 11, "g": 84, "b": 73 },
-      "hsl": { "h": 162, "s": 72, "l": 27 },
+      "rgb": {
+        "r": 11,
+        "g": 84,
+        "b": 73
+      },
+      "hsl": {
+        "h": 162,
+        "s": 72,
+        "l": 27
+      },
       "description": "Verde profundo - Cor primária do app"
     },
     "primaryForeground": {
       "hex": "#FFFFFF",
-      "rgb": { "r": 255, "g": 255, "b": 255 },
-      "hsl": { "h": 0, "s": 0, "l": 100 },
+      "rgb": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 100
+      },
       "description": "Branco - Texto sobre primária"
     },
     "background": {
       "hex": "#F5F5F5",
-      "rgb": { "r": 245, "g": 245, "b": 245 },
-      "hsl": { "h": 154, "s": 40, "l": 96 },
+      "rgb": {
+        "r": 245,
+        "g": 245,
+        "b": 245
+      },
+      "hsl": {
+        "h": 154,
+        "s": 40,
+        "l": 96
+      },
       "description": "Fundo claro - Cor de fundo principal"
     },
     "foreground": {
       "hex": "#0F2F2A",
-      "rgb": { "r": 15, "g": 47, "b": 42 },
-      "hsl": { "h": 162, "s": 52, "l": 12 },
+      "rgb": {
+        "r": 15,
+        "g": 47,
+        "b": 42
+      },
+      "hsl": {
+        "h": 162,
+        "s": 52,
+        "l": 12
+      },
       "description": "Cinza escuro - Texto padrão"
     },
     "card": {
       "hex": "#FFFFFF",
-      "rgb": { "r": 255, "g": 255, "b": 255 },
-      "hsl": { "h": 0, "s": 0, "l": 100 },
+      "rgb": {
+        "r": 255,
+        "g": 255,
+        "b": 255
+      },
+      "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 100
+      },
       "description": "Branco - Cards e superfícies"
     },
     "muted": {
       "hex": "#A0A9A5",
-      "rgb": { "r": 160, "g": 169, "b": 165 },
-      "hsl": { "h": 154, "s": 10, "l": 65 },
+      "rgb": {
+        "r": 160,
+        "g": 169,
+        "b": 165
+      },
+      "hsl": {
+        "h": 154,
+        "s": 10,
+        "l": 65
+      },
       "description": "Cinza neutro - Elementos desabilitados"
     },
     "accentGreen": {
       "hex": "#22C55E",
-      "rgb": { "r": 34, "g": 197, "b": 94 },
-      "hsl": { "h": 133, "s": 71, "l": 45 },
+      "rgb": {
+        "r": 34,
+        "g": 197,
+        "b": 94
+      },
+      "hsl": {
+        "h": 133,
+        "s": 71,
+        "l": 45
+      },
       "description": "Verde claro - Destaque e sucesso"
     },
     "accentOrange": {
       "hex": "#FF7A00",
-      "rgb": { "r": 255, "g": 122, "b": 0 },
-      "hsl": { "h": 24, "s": 100, "l": 50 },
+      "rgb": {
+        "r": 255,
+        "g": 122,
+        "b": 0
+      },
+      "hsl": {
+        "h": 24,
+        "s": 100,
+        "l": 50
+      },
       "description": "Laranja - Alertas e atenção"
     },
     "border": {
       "hex": "#E8ECEB",
-      "rgb": { "r": 232, "g": 236, "b": 235 },
-      "hsl": { "h": 154, "s": 25, "l": 92 },
+      "rgb": {
+        "r": 232,
+        "g": 236,
+        "b": 235
+      },
+      "hsl": {
+        "h": 154,
+        "s": 25,
+        "l": 92
+      },
       "description": "Cinza claro - Bordas"
     },
     "shadow": {
@@ -71,9 +143,9 @@
     "style": "White on Green",
     "viewBox": "0 0 200 200",
     "files": {
-      "svg": "src/assets/friggo-logo.svg",
-      "favicon-light": "public/favicon-friggo-light.svg",
-      "favicon-dark": "public/favicon-friggo-dark.svg"
+      "svg": "src/assets/kaza-logo.svg",
+      "favicon-light": "public/favicon-kaza -light.svg",
+      "favicon-dark": "public/favicon-kaza-dark.svg"
     }
   },
   "typography": {

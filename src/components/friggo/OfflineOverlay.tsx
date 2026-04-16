@@ -31,7 +31,7 @@ export function OfflineOverlay() {
   useEffect(() => {
     const handleOffline = () => setIsOffline(true);
     const handleOnline = () => setIsOffline(false);
-    
+
     // Suporte para disparar o modo offline manualmente (Ex: timeout ou fetch fail)
     const handleForceOffline = () => setIsOffline(true);
 
@@ -50,10 +50,10 @@ export function OfflineOverlay() {
 
   return (
     <div className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-3xl px-6 text-center animate-in fade-in duration-300">
-      
+
       {/* Container Principal */}
       <div className="relative flex flex-col items-center max-w-[340px] w-full bg-white dark:bg-[#111] border border-black/[0.05] dark:border-white/[0.08] rounded-[2.5rem] p-8 shadow-2xl overflow-hidden shadow-red-500/10">
-        
+
         {/* Glows */}
         <div className="absolute top-0 left-0 w-48 h-48 bg-red-500/10 rounded-full blur-[60px] -translate-x-1/2 -translate-y-1/2" />
         <div className="absolute bottom-0 right-0 w-48 h-48 bg-orange-500/10 rounded-full blur-[60px] translate-x-1/2 translate-y-1/2" />
@@ -61,7 +61,7 @@ export function OfflineOverlay() {
         {/* Círculo do Logo com "X Vermelho" */}
         <div className="relative mb-6">
           <div className="h-24 w-24 rounded-[1.75rem] border border-black/[0.04] dark:border-white/10 shadow-lg flex items-center justify-center shadow-black/10 overflow-hidden relative bg-white">
-            <img src="/icons/192.png" alt="Kaza Logo" className="w-16 h-16 object-contain z-10 opacity-40 grayscale" />
+            <img src="https://cdn-checkout.cakto.com.br/products/a860788b-9cfc-43e2-b233-a602fe205e0c.png?width=180" alt="Kaza Logo" className="w-16 h-16 object-contain z-10 opacity-40 grayscale" />
             <div className="absolute inset-0 bg-red-500/10 mix-blend-multiply dark:mix-blend-lighten z-20" />
           </div>
 
@@ -72,7 +72,7 @@ export function OfflineOverlay() {
         </div>
 
         <h2 className="text-2xl font-black text-foreground mb-3 tracking-tight flex items-center justify-center gap-2">
-           {t.title}
+          {t.title}
         </h2>
 
         <p className="text-[13px] text-muted-foreground leading-relaxed font-medium mb-8 mx-auto px-2">

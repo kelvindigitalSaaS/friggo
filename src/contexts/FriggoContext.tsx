@@ -129,7 +129,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
   const [consumables, setConsumables] = useState<ConsumableItem[]>([]);
   const [defrostTimers, setDefrostTimers] = useState<DefrostTimer[]>(() => {
-    const saved = localStorage.getItem("friggo_defrost_timers_list");
+    const saved = localStorage.getItem("kaza_defrost_timers_list") || localStorage.getItem("friggo_defrost_timers_list");
     return saved ? JSON.parse(saved) : [];
   });
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
@@ -163,7 +163,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem(
-      "friggo_defrost_timers_list",
+      "kaza_defrost_timers_list",
       JSON.stringify(defrostTimers)
     );
   }, [defrostTimers]);
@@ -175,7 +175,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
 
   const showError = (title: string, err: unknown) => {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error(title, err);
+    if (import.meta.env.DEV) { console.error("[DEV]", title, err); }
     toast({ title, description: msg, variant: "destructive" });
   };
 
@@ -297,6 +297,8 @@ export function KazaProvider({ children }: { children: ReactNode }) {
 
   // ── alerts ───────────────────────────────────────────────────────────────
   useEffect(() => {
+    // Don't run until data is fully loaded to avoid false-hydrating with empty items
+    if (loading) return;
     const newAlerts: Alert[] = [];
     const now = new Date();
 
@@ -384,13 +386,13 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           : alert.type === "overripe" ? "overripe" as const
           : "low-stock" as const;
       const title =
-        alert.type === "consume-today" ? "⏰ Friggo — Consumir Hoje!"
-          : alert.type === "expiring" ? "🕰️ Friggo — Atenção ao Prazo"
-          : alert.type === "overripe" ? "🍌 Friggo — Hora de Usar"
-          : "📦 Friggo — Reposição Necessária";
+        alert.type === "consume-today" ? "⏰ Kaza — Consumir Hoje!"
+          : alert.type === "expiring" ? "🕰️ Kaza — Atenção ao Prazo"
+          : alert.type === "overripe" ? "🍌 Kaza — Hora de Usar"
+          : "📦 Kaza — Reposição Necessária";
       scheduleLocalNotification(title, alert.message, 0, alert.id, category);
     });
-  }, [items, onboardingData?.notificationPrefs, language]);
+  }, [items, onboardingData?.notificationPrefs, language, loading]);
 
   // ── mappers ──────────────────────────────────────────────────────────────
   function toKazaItem(row: any): KazaItem {
@@ -865,13 +867,15 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     const list = prefs ?? DEFAULT_NOTIFICATION_PREFS;
     const { error } = await supabase
       .from("notification_preferences")
-      .update({
+      .upsert({
+        home_id: hid,
         expiring_items: list.includes("expiry"),
         shopping_list_updates: list.includes("shopping"),
-        low_stock_consumables: list.includes("nightCheckup"),
-        daily_summary: list.includes("recipes")
-      })
-      .eq("home_id", hid);
+        low_stock_consumables: list.includes("consumables"),
+        daily_summary: list.includes("recipes"),
+        cooking_reminders: list.includes("cooking"),
+        night_checkup: list.includes("nightCheckup"),
+      }, { onConflict: "home_id" });
     return { error };
   }
 
@@ -995,7 +999,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
 
   const updateOnboardingData = (data: Partial<OnboardingData>) => {
     setOnboardingData((prev) => (prev ? { ...prev, ...data } : null));
-    if (user) updateProfile(data).catch((e) => console.error("auto-save:", e));
+    if (user) updateProfile(data).catch((e) => { if (import.meta.env.DEV) console.error("[DEV] auto-save:", e); });
   };
 
   return (

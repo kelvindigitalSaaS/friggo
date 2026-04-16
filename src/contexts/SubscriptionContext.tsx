@@ -179,9 +179,7 @@ export function SubscriptionProvider({
       // @ts-ignore
       setRegistrationDate(profile?.created_at ? new Date(profile.created_at) : null);
 
-      if (!profile && user) {
-        console.log("Profile not found, using defaults");
-      }
+      // Profile not found: defaults already applied above
 
       const { data, error } = await supabase
         .from("subscriptions")
@@ -238,7 +236,7 @@ export function SubscriptionProvider({
         setSubscription(null);
       }
     } catch (error: any) {
-      console.error("Error fetching subscription:", error);
+      if (import.meta.env.DEV) { console.error("[DEV] subscription fetch error:", error); }
       // Suppress JWT errors
       setSubscription(null);
     } finally {
@@ -267,7 +265,7 @@ export function SubscriptionProvider({
           await supabase.functions.invoke("check-subscription");
           await fetchSubscription();
         } catch (error) {
-          console.error("Error syncing subscription after checkout:", error);
+          if (import.meta.env.DEV) { console.error("[DEV] sync error:", error); }
         }
       };
       syncSubscription();
@@ -328,7 +326,7 @@ export function SubscriptionProvider({
       );
       return true;
     } catch (error) {
-      console.error("Error using recipe:", error);
+      if (import.meta.env.DEV) { console.error("[DEV] recipe error:", error); }
       return false;
     }
   }, [subscription, canUseRecipe]);
@@ -360,7 +358,7 @@ export function SubscriptionProvider({
         await fetchSubscription();
         return true;
       } catch (error) {
-        console.error("Error upgrading plan:", error);
+        if (import.meta.env.DEV) { console.error("[DEV] upgrade error:", error); }
         return false;
       }
     },
@@ -375,12 +373,11 @@ export function SubscriptionProvider({
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(
-          `[Checkout] Tentativa ${attempt}/${maxRetries} para plano ${plan}`
-        );
+        if (import.meta.env.DEV) {
+          console.log(`[DEV] [Checkout] Attempt ${attempt}/${maxRetries} for plan ${plan}`);
+        }
 
-        // Fetch profile to include optional CPF and always include email for the edge function
-        // Use `profile_sensitive` (canonical storage for CPF)
+        // Fetch profile to include optional CPF via edge function (never exposed in URL)
         let cpf: string | null = null;
         try {
           const { data: profile } = await supabase
@@ -390,31 +387,26 @@ export function SubscriptionProvider({
             .maybeSingle();
           // @ts-ignore
           cpf = profile?.cpf ?? null;
-        } catch (err) {
-          console.warn("Could not read profile_sensitive cpf before checkout:", err);
+        } catch {
+          // Non-critical: CPF fetch failed, proceed without it
         }
 
         const { data, error } = await supabase.functions.invoke(
           "create-checkout",
           {
             body: { plan, email: user?.email ?? null, cpf },
-            headers: {
-              "Content-Type": "application/json"
-            }
+            headers: { "Content-Type": "application/json" }
           }
         );
 
         if (error) {
           let errorMessage = "Erro desconhecido";
-
           try {
-            // Se error tem context (Response)
             const ctx = (error as any).context;
             if (ctx && ctx instanceof Response) {
               try {
                 const bodyJson = await ctx.json();
-                errorMessage =
-                  bodyJson?.error || bodyJson?.message || String(error);
+                errorMessage = bodyJson?.error || bodyJson?.message || String(error);
               } catch {
                 errorMessage = await ctx.text();
               }
@@ -425,16 +417,12 @@ export function SubscriptionProvider({
             } else {
               errorMessage = JSON.stringify(error);
             }
-          } catch (parseErr) {
+          } catch {
             errorMessage = String(error);
           }
 
           lastError = new Error(errorMessage);
-          console.error("[Checkout] Erro na tentativa:", errorMessage);
-
-          // Retry em caso de erro de rede
           if (attempt < maxRetries) {
-            console.log(`[Checkout] Aguardando 2 segundos antes de retry...`);
             await new Promise((resolve) => setTimeout(resolve, 2000));
             continue;
           } else {
@@ -443,8 +431,6 @@ export function SubscriptionProvider({
         }
 
         if (data?.url) {
-          // Redireciona para a Stripe Hosted Page
-          console.log("[Checkout] Redirecionando para Stripe...");
           window.location.href = data.url;
           return;
         } else {
@@ -452,24 +438,15 @@ export function SubscriptionProvider({
         }
       } catch (error: any) {
         lastError = error;
-        const errorMsg = error?.message ? String(error.message) : String(error);
-        console.error(`[Checkout] Erro na tentativa ${attempt}:`, errorMsg);
-
         if (attempt < maxRetries) {
-          console.log(`[Checkout] Aguardando antes de retry...`);
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       }
     }
 
-    // Se chegou aqui, falhou após todas as tentativas
-    const finalErrorMsg = lastError?.message
-      ? String(lastError.message)
-      : "Erro desconhecido";
-    console.error("[Checkout] Falha após 3 tentativas:", finalErrorMsg);
+    const finalErrorMsg = lastError?.message ? String(lastError.message) : "Erro desconhecido";
     throw new Error(
-      finalErrorMsg ||
-        "Não foi possível iniciar o pagamento. Verifique sua conexão e tente novamente."
+      finalErrorMsg || "Não foi possível iniciar o pagamento. Verifique sua conexão e tente novamente."
     );
   }, []);
 
@@ -485,7 +462,7 @@ export function SubscriptionProvider({
         await openExternalUrl(data.url);
       }
     } catch (error) {
-      console.error("Error opening customer portal:", error);
+      if (import.meta.env.DEV) { console.error("[DEV] portal error:", error); }
       throw error;
     }
   }, []);

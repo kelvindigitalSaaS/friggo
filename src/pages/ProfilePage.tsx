@@ -6,12 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, User, Home, Users, Refrigerator, Loader2, CreditCard } from 'lucide-react';
+import { ArrowLeft, User, Home, Users, Refrigerator, Loader2, CreditCard, Lock } from 'lucide-react';
 import AvatarUpload from '@/components/friggo/AvatarUpload';
 import { isValidCPF, formatCPF } from '@/lib/utils/validation';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PageTransition } from '@/components/PageTransition';
 
@@ -107,24 +106,24 @@ export default function ProfilePage() {
 
     // AvatarUpload component handle upload and calls updateProfile via KazaContext
 
+    // CPF already saved in DB — never overwrite
+    const existingCpf = onboardingData?.cpf || '';
+    const cpfIsLocked = Boolean(existingCpf);
+
     const handleSave = async () => {
-        if (cpf && !isValidCPF(cpf)) {
-            toast.error(l.invalidCpf);
+        const rawCpf = cpf.replace(/\D/g, '');
+        // Only validate / send CPF if not locked and user entered something
+        if (!cpfIsLocked && rawCpf && !isValidCPF(rawCpf)) {
+            toast.error(l.invalidCpf || 'CPF inválido');
             return;
         }
 
         setIsSaving(true);
         try {
-            const rawCpf = cpf.replace(/\D/g, '');
-            if (rawCpf && !isValidCPF(rawCpf)) {
-                toast.error(language === 'pt-BR' ? 'CPF inválido' : 'Invalid CPF');
-                setIsSaving(false);
-                return;
-            }
-
-            // Note: server-side uniqueness validation via Supabase requires an RPC or server role.
-            // Here we perform client-side format validation and then save. The backend migration
-            // includes a cpf column and can enforce uniqueness server-side if desired.
+            // Diff: only include CPF in update if it actually changed and is valid
+            const cpfToSave = cpfIsLocked
+                ? existingCpf   // never change a locked CPF
+                : rawCpf || undefined;
 
             await updateProfile({
                 name,
@@ -133,12 +132,14 @@ export default function ProfilePage() {
                 fridgeType,
                 fridgeBrand: fridgeType === 'smart' ? fridgeBrand : '',
                 avatarUrl,
-                cpf: rawCpf
+                ...(cpfToSave !== undefined ? { cpf: cpfToSave } : {}),
             });
             toast.success(l.success);
             navigate(-1);
         } catch (error) {
-            console.error('Error saving profile:', error);
+            if (import.meta.env.DEV) {
+                console.error('[DEV] Error saving profile:', error);
+            }
             toast.error(l.error);
         } finally {
             setIsSaving(false);
@@ -173,24 +174,43 @@ export default function ProfilePage() {
                     <div className="space-y-1.5">
                         <Label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
                             <CreditCard className="h-3.5 w-3.5 text-primary" /> {l.cpf}
+                            {cpfIsLocked && <Lock className="h-3 w-3 text-muted-foreground ml-auto" />}
                         </Label>
-                        <Input 
-                            value={cpf} 
-                            onChange={(e) => setCpf(formatCPF(e.target.value))} 
+                        <Input
+                            value={cpfIsLocked
+                                ? existingCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '***.$2.$3-**')
+                                : cpf
+                            }
+                            onChange={(e) => !cpfIsLocked && setCpf(formatCPF(e.target.value))}
                             placeholder={l.cpfPlaceholder}
                             maxLength={14}
-                            disabled={Boolean(onboardingData?.cpf)}
-                            className={cn("h-11 rounded-2xl bg-muted/30 border-2 focus:border-primary font-semibold text-[15px]", cpf && !isValidCPF(cpf) && "border-destructive focus-visible:ring-destructive")} 
+                            disabled={cpfIsLocked}
+                            readOnly={cpfIsLocked}
+                            className={cn(
+                                "h-11 rounded-2xl bg-muted/30 border-2 font-semibold text-[15px]",
+                                cpfIsLocked
+                                    ? "opacity-60 cursor-not-allowed select-none"
+                                    : "focus:border-primary",
+                                !cpfIsLocked && cpf && !isValidCPF(cpf) && "border-destructive focus-visible:ring-destructive"
+                            )}
                         />
-                        <p className="text-[10px] text-muted-foreground mt-0.5 px-2">
-                            {language === 'pt-BR'
-                                ? 'Necessário para ativação dos 7 dias de trial.'
-                                : language === 'es'
-                                ? 'Necesário para la activación de la prueba de 7 días.'
-                                : 'Required for 7-day trial activation.'}
-                        </p>
-                        {onboardingData?.cpf && (
-                            <p className="text-[10px] font-bold text-primary mt-0.5 px-2">{language === 'pt-BR' ? 'CPF configurado — não é possível alterar.' : language === 'es' ? 'CPF configurado — no es posible cambiar.' : 'CPF set — cannot be changed.'}</p>
+                        {cpfIsLocked ? (
+                            <p className="text-[10px] font-bold text-primary mt-0.5 px-2 flex items-center gap-1">
+                                <Lock className="h-2.5 w-2.5" />
+                                {language === 'pt-BR'
+                                    ? 'CPF já cadastrado. Para alterá-lo, entre em contato com o suporte.'
+                                    : language === 'es'
+                                    ? 'CPF ya registrado. Para cambiarlo, contacte al soporte.'
+                                    : 'CPF already set. To change it, contact support.'}
+                            </p>
+                        ) : (
+                            <p className="text-[10px] text-muted-foreground mt-0.5 px-2">
+                                {language === 'pt-BR'
+                                    ? 'Necessário para ativação dos 7 dias de trial.'
+                                    : language === 'es'
+                                    ? 'Necesário para la activación de la prueba de 7 días.'
+                                    : 'Required for 7-day trial activation.'}
+                            </p>
                         )}
                     </div>
 

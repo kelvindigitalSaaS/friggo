@@ -8,7 +8,6 @@ import {
   Moon,
   Cookie,
   Plus,
-  Search,
   Calendar,
 } from "lucide-react";
 import {
@@ -27,14 +26,6 @@ import { useNavigate } from "react-router-dom";
 import { allRecipes } from "@/data/recipeDatabase";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
 type ViewMode = "weekly" | "monthly";
@@ -67,13 +58,11 @@ const MEAL_CONFIG: Record<string, { label: string; icon: any; color: string; bg:
 };
 
 export function PlannerTab() {
-  const { mealPlan, removeFromMealPlan, addToMealPlan } = useKaza();
+  const { mealPlan, removeFromMealPlan } = useKaza();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>("weekly");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedWeeklyDate, setSelectedWeeklyDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -95,30 +84,8 @@ export function PlannerTab() {
     end: endOfMonth(currentMonth),
   });
 
-  const filteredRecipes = allRecipes
-    .filter(
-      (r) =>
-        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (r.description ?? "").toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .slice(0, 12);
-
-  const handleAddMeal = (recipeId: string, recipeName: string, mealType: string) => {
-    if (!selectedDate) return;
-    addToMealPlan({
-      recipe_id: recipeId,
-      recipe_name: recipeName,
-      planned_date: selectedDate,
-      meal_type: mealType as any,
-    });
-    setIsDialogOpen(false);
-    setSearchQuery("");
-    toast.success("Refeição adicionada ao plano!");
-  };
-
   const openAddDialog = (dateStr: string) => {
-    setSelectedDate(dateStr);
-    setIsDialogOpen(true);
+    navigate(`/plan/meal-planner?date=${dateStr}`);
   };
 
   return (
@@ -409,90 +376,13 @@ export function PlannerTab() {
           <Button
             className="mt-6 rounded-2xl px-6"
             style={{ background: "#165A52" }}
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent("navigateTab", { detail: "recipes" }));
-            }}
+            onClick={() => navigate(`/plan/meal-planner?date=${format(new Date(), "yyyy-MM-dd")}`)}
           >
             Explorar Receitas
           </Button>
         </div>
       )}
 
-      {/* ── Add Meal Dialog ── */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md rounded-[2rem] bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-2xl border-white/10 shadow-2xl p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-3">
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              Planejar refeição
-            </DialogTitle>
-            {selectedDate && (
-              <p className="text-sm text-muted-foreground capitalize">
-                {format(new Date(selectedDate + "T00:00:00"), "eeee, dd 'de' MMMM", { locale: ptBR })}
-              </p>
-            )}
-          </DialogHeader>
-
-          <div className="px-6 pb-6">
-            <div className="relative mb-4">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar receitas..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-11 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border-transparent"
-              />
-            </div>
-
-            <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1 pb-2">
-              {filteredRecipes.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">Nenhuma receita encontrada.</p>
-              ) : (
-                filteredRecipes.map((recipe) => (
-                  <div
-                    key={recipe.id}
-                    className="border border-black/[0.04] dark:border-white/[0.08] rounded-3xl bg-white/50 dark:bg-white/[0.02] overflow-hidden shadow-sm"
-                  >
-                    <div className="flex items-center gap-3 px-4 py-3">
-                      <div className="h-10 w-10 flex items-center justify-center rounded-2xl bg-primary/10 shrink-0 shadow-inner">
-                        {recipe.image ? (
-                          <img src={recipe.image} className="h-full w-full object-cover rounded-2xl" alt="" />
-                        ) : (
-                          <ChefHat className="h-4 w-4 text-primary" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-foreground truncate">{recipe.name}</p>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mt-1 opacity-60">
-                          {recipe.category || "Receita"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-4 gap-2 px-4 pb-4">
-                      {Object.entries(MEAL_CONFIG).map(([type, cfg]) => {
-                        const Icon = cfg.icon;
-                        return (
-                          <button
-                            key={type}
-                            onClick={() => handleAddMeal(recipe.id, recipe.name, type)}
-                            className={cn(
-                              "h-10 rounded-2xl text-[9px] font-black uppercase tracking-tighter flex flex-col items-center justify-center gap-0.5 transition-all active:scale-90 border border-transparent hover:border-current/10",
-                              cfg.bg,
-                              cfg.color
-                            )}
-                          >
-                            <Icon className="h-3.5 w-3.5" />
-                            <span>{cfg.label.split(' ')[0]}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
