@@ -415,7 +415,7 @@ const staggerItem = {
 };
 
 export function Onboarding() {
-  const { completeOnboarding, setConsumablesBulk } = useKaza();
+  const { completeOnboarding, setConsumablesBulk, onboardingData } = useKaza();
   const { language } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { signOut } = useAuth();
@@ -431,13 +431,18 @@ export function Onboarding() {
   const [[page, direction], setPage] = useState([0, 0]);
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [data, setData] = useState<Partial<OnboardingData & { cpf?: string }>>({
-    homeType: "apartment",
-    residents: 2,
-    habits: [],
-    notificationPrefs: ["expiry", "shopping", "nightCheckup"],
-    cpf: ""
-  });
+  const [data, setData] = useState<Partial<OnboardingData & { cpf?: string }>>(() => ({
+    name: onboardingData?.name || "",
+    homeType: onboardingData?.homeType || "apartment",
+    residents: onboardingData?.residents || 2,
+    habits: onboardingData?.habits || [],
+    notificationPrefs: onboardingData?.notificationPrefs || ["expiry", "shopping", "nightCheckup"],
+    cpf: onboardingData?.cpf || "",
+    fridgeType: onboardingData?.fridgeType || "regular",
+    fridgeBrand: onboardingData?.fridgeBrand || "",
+    coolingLevel: onboardingData?.coolingLevel || 3,
+    avatarUrl: onboardingData?.avatarUrl
+  }));
 
   // Consumables state for onboarding step
   const [onboardingConsumables, setOnboardingConsumables] = useState<
@@ -465,6 +470,25 @@ export function Onboarding() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Sync data with onboardingData when it changes (e.g., after reconfiguring)
+  useEffect(() => {
+    if (onboardingData) {
+      setData(prev => ({
+        ...prev,
+        name: onboardingData.name || prev.name || "",
+        homeType: onboardingData.homeType || prev.homeType || "apartment",
+        residents: onboardingData.residents || prev.residents || 2,
+        habits: onboardingData.habits || prev.habits || [],
+        notificationPrefs: onboardingData.notificationPrefs || prev.notificationPrefs || ["expiry", "shopping", "nightCheckup"],
+        cpf: onboardingData.cpf || prev.cpf || "",
+        fridgeType: onboardingData.fridgeType || prev.fridgeType || "regular",
+        fridgeBrand: onboardingData.fridgeBrand || prev.fridgeBrand || "",
+        coolingLevel: onboardingData.coolingLevel || prev.coolingLevel || 3,
+        avatarUrl: onboardingData.avatarUrl || prev.avatarUrl
+      }));
+    }
+  }, [onboardingData?.cpf, onboardingData?.name, onboardingData?.homeType]);
 
   const [cpfError, setCpfError] = useState("");
 
@@ -695,14 +719,21 @@ export function Onboarding() {
                   setData((prev) => ({ ...prev, cpf: formatCPF(e.target.value) }));
                 }}
                 maxLength={14}
+                disabled={Boolean(onboardingData?.cpf)}
                 className={cn(
                   "h-14 rounded-2xl text-lg font-medium bg-white dark:bg-white/5 border-black/[0.06] dark:border-white/10 px-5 transition-all focus:ring-2 focus:ring-primary/30",
-                  cpfError ? "border-destructive focus:border-destructive focus:ring-destructive/30" : "focus:border-primary"
+                  cpfError ? "border-destructive focus:border-destructive focus:ring-destructive/30" : "focus:border-primary",
+                  onboardingData?.cpf && "opacity-60 cursor-not-allowed"
                 )}
                 autoFocus
               />
               {cpfError && (
                 <p className="mt-2 text-sm text-destructive">{cpfError}</p>
+              )}
+              {onboardingData?.cpf && (
+                <p className="text-[10px] font-bold text-primary mt-2 px-2">
+                  {language === "pt-BR" ? "CPF configurado — não é possível alterar." : language === "es" ? "CPF configurado — no es posible cambiar." : "CPF set — cannot be changed."}
+                </p>
               )}
             </motion.div>
           </motion.div>
