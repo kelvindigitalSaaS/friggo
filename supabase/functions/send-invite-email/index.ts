@@ -15,7 +15,13 @@ interface InviteRequest {
 serve(async (req) => {
   // Handle CORS
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*" } });
+    return new Response("ok", {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      },
+    });
   }
 
   try {
@@ -23,7 +29,13 @@ serve(async (req) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: "Missing Authorization header" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
       );
     }
 
@@ -36,7 +48,13 @@ serve(async (req) => {
     if (authError || !user) {
       return new Response(
         JSON.stringify({ error: "Invalid token" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
+        {
+          status: 401,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
       );
     }
 
@@ -46,7 +64,13 @@ serve(async (req) => {
     if (!group_id || !invited_email) {
       return new Response(
         JSON.stringify({ error: "Missing group_id or invited_email" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
       );
     }
 
@@ -61,17 +85,37 @@ serve(async (req) => {
     if (groupError || !group) {
       return new Response(
         JSON.stringify({ error: "Unauthorized or group not found" }),
-        { status: 403, headers: { "Content-Type": "application/json" } }
+        {
+          status: 403,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
       );
     }
 
-    // Check if user already invited or member
-    const { data: existingMember } = await supabase
-      .from("sub_account_members")
+    // Check if email already invited to this group
+    const { data: existingInvite } = await supabase
+      .from("sub_account_invites")
       .select("*")
       .eq("group_id", group_id)
-      .eq("user_id", user.id)
+      .eq("invited_email", invited_email)
+      .eq("status", "pending")
       .single();
+
+    if (existingInvite) {
+      return new Response(
+        JSON.stringify({ error: "Este email já foi convidado para este grupo" }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
+      );
+    }
 
     // Get master's display name
     const { data: masterProfile } = await supabase
@@ -97,7 +141,13 @@ serve(async (req) => {
     if (inviteError) {
       return new Response(
         JSON.stringify({ error: inviteError.message }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
       );
     }
 
@@ -125,13 +175,25 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, invite_id: invite.id }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
     );
   } catch (error) {
     console.error(error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ error: error instanceof Error ? error.message : "Internal server error" }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
     );
   }
 });

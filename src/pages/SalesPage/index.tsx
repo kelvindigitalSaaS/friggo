@@ -8,39 +8,26 @@ import {
 } from "lucide-react";
 
 import LogoImage from "@/assets/logo inicial nome.svg";
+import LoginImage from "@/assets/fluxo/login.jpeg";
+import HomeImage from "@/assets/fluxo/home.png";
 
 // --- INTERACTIVE MOCKUPS COMPONENTS ---
 
 // 1. Mockup for Hero
 const HeroMockup = () => {
+   const [runStatus, setRunStatus] = useState<'login' | 'loading' | 'home'>('login');
   return (
-    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] lg:h-[700px] flex justify-center items-end hidden md:flex pointer-events-none">
+    <div className="absolute bottom-[-100px] md:bottom-0 left-1/2 -translate-x-1/2 w-[900px] lg:w-[1000px] h-[600px] lg:h-[700px] flex justify-center items-end pointer-events-none transform scale-[0.55] sm:scale-[0.7] md:scale-100 origin-bottom">
       
-      {/* --- Phone 1: Left (Dark UI) --- */}
+      {/* --- Phone 1: Left (Dark UI -> Now Login Image as requested) --- */}
       <motion.div 
         initial={{ y: 200, opacity: 0, rotate: -15, x: 100 }}
         animate={{ y: 50, opacity: 1, rotate: -5, x: -180 }}
         transition={{ duration: 1, delay: 0.1, type: "spring", stiffness: 80 }}
-        className="absolute bottom-0 w-[300px] lg:w-[340px] h-[640px] bg-[#1A1A1A] rounded-[3rem] border-[8px] border-[#2A2A2A] shadow-2xl z-10 overflow-hidden"
+        className="absolute bottom-0 w-[300px] lg:w-[340px] h-[640px] rounded-[3rem] border-[8px] border-[#2A2A2A] shadow-2xl z-10 overflow-hidden bg-[#1A3B2C]"
       >
          <div className="w-[120px] h-6 bg-[#2A2A2A] absolute top-0 left-1/2 -translate-x-1/2 rounded-b-xl z-20"></div>
-         <div className="p-6 pt-12 flex flex-col gap-4 text-white">
-            <h4 className="font-fraunces text-2xl font-bold text-white mb-2">Despensa</h4>
-            <div className="bg-[#2A2A2A] rounded-2xl p-4 flex justify-between items-center shadow-sm">
-              <span className="font-bold text-sm">Azeite Extra Virgem</span>
-              <span className="text-verde-claro text-xs font-bold">1 un</span>
-            </div>
-            <div className="bg-[#202020] rounded-2xl p-4 flex justify-between items-center opacity-80 border border-white/5">
-              <span className="font-bold text-sm">Arroz Branco</span>
-              <span className="text-red-400 text-xs font-bold">Acabou</span>
-            </div>
-            <div className="bg-[#202020] border border-white/5 rounded-2xl p-4 shadow-sm relative mt-2 relative overflow-hidden">
-               <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-ambar opacity-20 blur-xl rounded-full"></div>
-               <p className="text-xs uppercase tracking-widest text-[#F4A261] mb-1 font-bold">Alerta Inteligente</p>
-               <h3 className="font-fraunces text-xl font-bold bg-gradient-to-r from-ambar to-orange-300 bg-clip-text text-transparent">Kaza IA te escuta</h3>
-               <p className="text-xs text-white/70 mt-2">Você consome 1 litro de azeite por mês. Comprar mais hoje?</p>
-            </div>
-         </div>
+         <img src={LoginImage} alt="KAZA Login" className="w-full h-full object-cover opacity-90" />
       </motion.div>
 
       {/* Floating Badge Left */}
@@ -48,7 +35,7 @@ const HeroMockup = () => {
          initial={{ scale: 0, opacity: 0, x: -50 }}
          animate={{ scale: 1, opacity: 1, x: 0 }}
          transition={{ delay: 1.2, type: "spring" }}
-         className="absolute bottom-[280px] left-[0px] lg:-left-[50px] bg-white rounded-2xl p-4 shadow-2xl z-30 flex gap-4 items-center border border-borda"
+         className="absolute bottom-[280px] left-[150px] lg:left-[50px] bg-white rounded-2xl p-4 shadow-2xl z-30 flex gap-4 items-center border border-borda"
       >
          <div className="flex -space-x-3">
             <div className="w-10 h-10 rounded-full bg-verde-palido border-[3px] border-white flex justify-center items-center font-bold text-principal text-sm">M</div>
@@ -86,7 +73,7 @@ const HeroMockup = () => {
          initial={{ scale: 0, opacity: 0, x: 50 }}
          animate={{ scale: 1, opacity: 1, x: 0 }}
          transition={{ delay: 1.4, type: "spring" }}
-         className="absolute bottom-[350px] right-[0px] lg:-right-[50px] bg-[#7751E7] text-white rounded-2xl p-4 shadow-2xl z-30 flex items-center gap-3"
+         className="absolute bottom-[350px] right-[100px] lg:right-[50px] bg-[#7751E7] text-white rounded-2xl p-4 shadow-2xl z-30 flex items-center gap-3"
       >
          <Bell className="w-5 h-5 opacity-90"/>
          <div>
@@ -98,72 +85,110 @@ const HeroMockup = () => {
          initial={{ scale: 0, opacity: 0, x: 50 }}
          animate={{ scale: 1, opacity: 1, x: 0 }}
          transition={{ delay: 1.6, type: "spring" }}
-         className="absolute bottom-[270px] right-[-20px] lg:-right-[30px] bg-white text-texto-principal border border-borda rounded-2xl p-3 shadow-xl z-30 flex items-center gap-2"
+         className="absolute bottom-[270px] right-[120px] lg:right-[70px] bg-white text-texto-principal border border-borda rounded-2xl p-3 shadow-xl z-30 flex items-center gap-2"
       >
          <div className="w-2 h-2 rounded-full bg-verde-claro animate-pulse"></div>
          <p className="font-bold text-[11px]">Sincronização 24/7</p>
       </motion.div>
 
-      {/* --- Phone 3: Center (Main UI) --- */}
+      {/* --- Phone 3: Center (INTERACTIVE MAIN UI) --- */}
       <motion.div 
         initial={{ y: 300, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 1, type: "spring", stiffness: 90 }}
-        className="relative w-[340px] lg:w-[380px] h-[720px] bg-superficie rounded-[3.5rem] border-[10px] border-[#1A1A1A] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.4)] z-20 overflow-hidden origin-bottom translate-y-[15%]"
+        className="relative w-[340px] lg:w-[380px] h-[720px] bg-[#1A3B2C] rounded-[3.5rem] border-[10px] border-[#1A1A1A] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.4)] z-20 overflow-hidden origin-bottom translate-y-[15%] pointer-events-auto"
       >
          {/* Dynamic Island Notch */}
          <div className="w-[120px] h-8 bg-[#1A1A1A] absolute top-2 left-1/2 -translate-x-1/2 rounded-full z-30 flex items-center justify-end px-3">
              <div className="w-2.5 h-2.5 rounded-full bg-blue-900 border border-blue-800/50"></div>
          </div>
          
-         <div className="p-6 pt-16 h-full flex flex-col bg-fundo-claro">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full bg-verde-palido text-principal font-bold flex items-center justify-center border border-verde-claro/30 shadow-inner text-lg">M</div>
-                    <div>
-                        <p className="text-xs text-texto-secundario mb-0.5">Bem-vinda de volta,</p>
-                        <p className="text-sm font-bold text-texto-principal">Marina Silva</p>
-                    </div>
+         {/* -- State 1: Login Flow -- */}
+         {runStatus === 'login' && (
+             <div className="w-full h-full relative group">
+                <img src={LoginImage} alt="KAZA Login Test" className="w-full h-full object-cover" />
+                {/* Invisible Hover Click Area for the Google Button */}
+                <div 
+                   className="absolute left-1/2 -translate-x-1/2 bottom-[140px] w-[85%] h-[55px] cursor-pointer"
+                   onClick={() => { setRunStatus('loading'); setTimeout(() => setRunStatus('home'), 1500) }}
+                >
+                   <div className="w-full h-full rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-white/20 border-2 border-white pointer-events-none">
+                      <span className="text-white font-bold text-xs uppercase tracking-widest drop-shadow-md">Testar Login</span>
+                   </div>
+                   <div className="absolute inset-0 rounded-xl ring-2 ring-white animate-pulse pointer-events-none"></div>
                 </div>
-                <button className="w-11 h-11 rounded-full bg-white border border-borda flex items-center justify-center shadow-sm relative text-texto-principal">
-                   <Bell className="w-5 h-5"/>
-                   <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-                </button>
-            </div>
+             </div>
+         )}
 
-            {/* Smart Card */}
-            <div className="bg-verde-escuro rounded-3xl p-6 text-white shadow-xl relative overflow-hidden mb-6">
-               <div className="absolute -right-10 -top-10 w-40 h-40 bg-principal rounded-full blur-2xl opacity-80"></div>
-               <h3 className="font-fraunces text-2xl font-bold mb-2 relative z-10 text-balance leading-tight">Resumo da Casa</h3>
-               <p className="text-verde-palido text-xs max-w-[200px] mb-6 relative z-10 leading-relaxed">Você tem 4 itens próximos do vencimento e 12 itens na lista de compras.</p>
-               <button className="bg-ambar text-white text-xs font-bold px-5 py-2.5 rounded-full hover:bg-orange-500 transition-colors shadow-md relative z-10 uppercase tracking-wider">Ver Detalhes</button>
-            </div>
-
-            {/* List */}
-            <div className="flex justify-between items-end mb-4 px-1">
-               <h4 className="font-bold text-texto-principal text-[15px]">Lista Imediata</h4>
-               <span className="text-xs font-bold text-principal cursor-pointer">Ver Tudo</span>
-            </div>
-
-            <div className="flex flex-col gap-3">
-               {[ {n:"Leite", st:"Vence amanhã", t:"danger", ic:"🥛"}, {n:"Detergente", st:"Acabando", t:"warn", ic:"🫧"}, {n:"Ovos", st:"Restam 2 un", t:"warn", ic:"🥚"} ].map((i,idx) => (
-                  <div key={idx} className="bg-white rounded-2xl p-4 shadow-sm border border-borda/50 flex justify-between items-center hover:-translate-y-0.5 transition-transform">
-                     <div className="flex items-center gap-3">
-                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl font-bold border border-white ${i.t==='danger'?'bg-[#FFF5F5] text-red-500':'bg-[#FFF9F0] text-ambar'}`}>
-                            <span className="drop-shadow-sm">{i.ic}</span>
-                         </div>
-                         <div>
-                            <p className="font-bold text-[13px] text-texto-principal">{i.n}</p>
-                            <p className={`text-[11px] font-bold mt-0.5 ${i.t==='danger'?'text-red-500':'text-ambar'}`}>{i.st}</p>
-                         </div>
+         {/* -- State 2: Loading Flow -- */}
+         {runStatus === 'loading' && (
+             <div className="w-full h-full bg-[#FAF8F4] flex flex-col items-center justify-center gap-6">
+                <div className="w-12 h-12 rounded-full border-4 border-borda border-t-principal animate-spin"></div>
+                <p className="font-mono text-verde-escuro font-bold uppercase tracking-widest animate-pulse">Autenticando...</p>
+             </div>
+         )}
+         
+         {/* -- State 3: Home Flow (Pouring Notifications) -- */}
+         {runStatus === 'home' && (
+             <div className="w-full h-full relative">
+                <img src={HomeImage} alt="KAZA Home" className="w-full h-full object-cover" />
+                
+                {/* Navigation Overlays Jorrando Notificações */}
+                <div className="absolute top-12 left-0 w-full h-full flex flex-col items-center gap-3 p-4 pointer-events-none">
+                   
+                   <motion.div 
+                     initial={{ y: -50, opacity: 0, scale: 0.9 }} 
+                     animate={{ y: 0, opacity: 1, scale: 1 }} 
+                     transition={{ delay: 0.5, type: 'spring' }} 
+                     className="bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-borda w-full flex items-center gap-4"
+                   >
+                     <div className="w-10 h-10 rounded-full bg-[#FFF9F0] text-ambar flex items-center justify-center font-bold text-xl drop-shadow-sm">🥚</div>
+                     <div>
+                       <p className="font-bold text-sm text-texto-principal">Bem-vinda, Marina!</p>
+                       <p className="text-xs text-texto-secundario mt-0.5">Sua geladeira tem 2 alertas.</p>
                      </div>
-                     <div className="w-6 h-6 rounded-full border-2 border-borda/80"></div>
-                  </div>
-               ))}
-            </div>
+                   </motion.div>
 
-         </div>
+                   <motion.div 
+                     initial={{ y: -50, opacity: 0, scale: 0.9 }} 
+                     animate={{ y: 0, opacity: 1, scale: 1 }} 
+                     transition={{ delay: 1.2, type: 'spring' }} 
+                     className="bg-red-50/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-red-100 w-full flex items-center gap-4"
+                   >
+                     <div className="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center font-bold text-xl drop-shadow-sm"><AlertCircle className="w-5 h-5"/></div>
+                     <div>
+                       <p className="font-bold text-sm text-red-600">Alerta: Iogurte e Leite</p>
+                       <p className="text-xs text-red-600/80 mt-0.5">Marcados como vendidos na despensa.</p>
+                     </div>
+                   </motion.div>
+
+                   <motion.div 
+                     initial={{ y: -50, opacity: 0, scale: 0.9 }} 
+                     animate={{ y: 0, opacity: 1, scale: 1 }} 
+                     transition={{ delay: 1.8, type: 'spring' }} 
+                     className="bg-verde-palido/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-verde-claro/30 w-full flex items-center gap-4"
+                   >
+                     <div className="w-10 h-10 rounded-full bg-principal text-white flex items-center justify-center font-bold text-xl shadow-sm"><Users className="w-5 h-5"/></div>
+                     <div>
+                       <p className="font-bold text-sm text-principal">Lucas completou a lista</p>
+                       <p className="text-xs text-principal/80 mt-0.5">Comprados hoje: Detergente, Arroz.</p>
+                     </div>
+                   </motion.div>
+
+                   <motion.div 
+                     initial={{ y: 50, opacity: 0 }}
+                     animate={{ y: 0, opacity: 1 }}
+                     transition={{ delay: 3, duration: 1 }}
+                     className="mt-auto mb-10 pointer-events-auto"
+                   >
+                     <button onClick={() => setRunStatus('login')} className="bg-[#1A1A1A] text-white px-5 py-2 rounded-full font-bold text-xs shadow-lg flex items-center gap-2 uppercase tracking-wide hover:bg-black">
+                       <X className="w-3 h-3"/> Fechar Demo
+                     </button>
+                   </motion.div>
+
+                </div>
+             </div>
+         )}
       </motion.div>
 
     </div>
@@ -449,17 +474,23 @@ export default function SalesPage() {
                 {/* Dark App Store Style Badges */}
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto mt-2 relative z-20">
                    <Link to="/auth" className="w-full sm:w-auto bg-[#111111] border border-[#222] text-white px-8 py-4 rounded-xl text-center hover:bg-black transition-all shadow-xl hover:-translate-y-1 flex items-center justify-center gap-3">
-                      <Apple className="w-6 h-6 fill-white"/>
-                      <div className="text-left leading-tight">
-                         <p className="text-[10px] font-medium opacity-80 uppercase tracking-wider">Acessar App</p>
-                         <p className="text-sm font-bold">Começar Agora</p>
+                      <Apple className="w-7 h-7 fill-white"/>
+                      <div className="text-left leading-none flex flex-col justify-center">
+                         <p className="text-[9px] text-gray-300 font-medium uppercase tracking-wider mb-0.5">Baixar na</p>
+                         <p className="text-base font-bold tracking-tight">App Store</p>
                       </div>
                    </Link>
                    <a href="#demo" className="w-full sm:w-auto bg-[#111111] border border-[#222] text-white px-8 py-4 rounded-xl text-center hover:bg-black transition-all shadow-xl hover:-translate-y-1 flex items-center justify-center gap-3">
-                      <PlayCircle className="w-6 h-6 fill-transparent stroke-white"/>
-                      <div className="text-left leading-tight">
-                         <p className="text-[10px] font-medium opacity-80 uppercase tracking-wider">Modo teste online</p>
-                         <p className="text-sm font-bold">Ver Demonstração</p>
+                      {/* Standard Google Play Icon Replacement */}
+                      <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                         <path d="M4.33 21.03c-.27-.14-.42-.42-.42-.77V3.76c0-.4.18-.68.46-.81l11.16 11.12-11.2 6.96z" fill="#4B90EE" />
+                         <path d="M15.54 14.07L4.36 21.03c.27.16.63.14.97-.05l10.21-5.91-1.04-1z" fill="#EE4844" />
+                         <path d="M16.58 13.06l4.63-2.68c.84-.49.84-1.28 0-1.77l-4.63-2.68-1.05 1 1.05 6.13z" fill="#F8C726" />
+                         <path d="M5.31 3.86C4.94 3.65 4.54 3.65 4.3 3.79l11.23 6.97 1.05-1.01-11.27-5.89z" fill="#1CB06B" />
+                      </svg>
+                      <div className="text-left leading-none flex flex-col justify-center">
+                         <p className="text-[9px] text-gray-300 font-medium uppercase tracking-wider mb-0.5">Disponível no</p>
+                         <p className="text-base font-bold tracking-tight">Google Play</p>
                       </div>
                    </a>
                 </div>
@@ -471,16 +502,8 @@ export default function SalesPage() {
              </div>
 
              {/* Right Column: Hero Mockup -> Now Center overlapping mockups */}
-             <div className="relative w-full max-w-[1200px] h-[600px] lg:h-[700px] mx-auto z-10 mt-16 md:mt-10 overflow-visible">
+             <div className="relative w-full max-w-[1200px] h-[600px] lg:h-[700px] mx-auto z-10 lg:mt-10 overflow-visible mt-6">
                <HeroMockup />
-               {/* Mobile fallback text since absolute positions may overflow */}
-               <div className="md:hidden flex h-full items-center justify-center mt-[-100px]">
-                 <div className="bg-white border border-borda rounded-2xl p-6 text-center max-w-[280px] shadow-2xl relative z-30">
-                    <Smartphone className="w-10 h-10 mx-auto text-principal mb-4" />
-                    <h3 className="font-fraunces font-bold text-xl mb-2">Ecossistema KAZA</h3>
-                    <p className="text-sm text-texto-secundario">Pela demonstração web, use em uma tela maior para visualizar a interatividade completa.</p>
-                 </div>
-               </div>
              </div>
           </section>
 

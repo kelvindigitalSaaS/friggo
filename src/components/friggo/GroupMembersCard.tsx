@@ -39,10 +39,13 @@ export function GroupMembersCard() {
     }
 
     setInviting(true);
-    await inviteByEmail(email);
-    setInviteEmail("");
-    setShowInviteDialog(false);
+    const success = await inviteByEmail(email);
     setInviting(false);
+
+    if (success) {
+      setInviteEmail("");
+      setShowInviteDialog(false);
+    }
   };
 
   const handleRemove = async () => {

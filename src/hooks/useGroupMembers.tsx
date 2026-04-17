@@ -158,18 +158,12 @@ export function useGroupMembers() {
 
   const inviteByEmail = useCallback(
     async (email: string) => {
-      if (!groupId || !user) return;
+      if (!groupId || !user) {
+        toast.error("Erro: grupo ou usuário não encontrado");
+        return false;
+      }
 
       try {
-        // Get user's display name
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("display_name")
-          .eq("id", user.id)
-          .single();
-
-        const masterName = profile?.display_name || user.email || "Um usuário";
-
         // Call edge function to send invite
         const { data, error } = await supabase.functions.invoke("send-invite-email", {
           body: {
@@ -178,12 +172,25 @@ export function useGroupMembers() {
           },
         });
 
-        if (error) throw error;
+        if (error) {
+          const errorMsg = typeof error === "object" ? error.message : String(error);
+          toast.error(errorMsg || "Erro ao enviar convite");
+          console.error("Error sending invite:", error);
+          return false;
+        }
+
+        if (!data || !data.success) {
+          toast.error("Erro ao enviar convite");
+          return false;
+        }
 
         toast.success(`Convite enviado para ${email}`);
+        return true;
       } catch (err) {
         console.error("Error sending invite:", err);
-        toast.error("Erro ao enviar convite");
+        const errorMsg = err instanceof Error ? err.message : "Erro ao enviar convite";
+        toast.error(errorMsg);
+        return false;
       }
     },
     [groupId, user]
