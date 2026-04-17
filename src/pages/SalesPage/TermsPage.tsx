@@ -10,7 +10,7 @@ export default function SalesTermsPage() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-teal-300/20 rounded-full blur-[100px] mix-blend-multiply"></div>
       </div>
 
-      <header className="fixed top-0 inset-x-0 bg-white/40 backdrop-blur-[40px] z-50 border-b border-white/50 shadow-sm saturate-150">
+      <header className="fixed top-0 inset-x-0 bg-[#1A5C4A]/25 backdrop-blur-[50px] saturate-[180%] z-50 border-b border-[#1A5C4A]/20 border-t border-white/10 shadow-sm">
         <div className="max-w-[1000px] mx-auto px-6 h-20 flex items-center justify-between">
           <Link to="/pagina-de-vendas" className="flex items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-[#1A5C4A] p-2 rounded-lg">
             <img src="/src/assets/logo inicial nome.svg" alt="Kaza Logo" className="h-8" />

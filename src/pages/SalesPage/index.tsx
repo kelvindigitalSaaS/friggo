@@ -179,10 +179,11 @@ export default function SalesPage() {
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         .ios26-glass {
-          background: rgba(255, 255, 255, 0.4);
-          backdrop-filter: blur(60px) saturate(180%);
-          -webkit-backdrop-filter: blur(60px) saturate(180%);
-          border: 1px solid rgba(255,255,255,0.7);
+          background: rgba(26, 92, 74, 0.25);
+          backdrop-filter: blur(50px) saturate(180%);
+          -webkit-backdrop-filter: blur(50px) saturate(180%);
+          border-bottom: 1px solid rgba(26, 92, 74, 0.2);
+          border-top: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .ios26-dark-glass {
