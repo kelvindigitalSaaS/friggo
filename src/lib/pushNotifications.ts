@@ -45,6 +45,7 @@ type NotifCategory =
   | "overripe"
   | "low-stock"
   | "garbage"
+  | "meal-plan"
   | "general"
   | "test";
 
@@ -93,6 +94,14 @@ const CATEGORY_CONFIGS: Record<NotifCategory, NotifCategoryConfig> = {
     actions: [
       { action: "done", title: "✅ Já coloquei!" },
       { action: "snooze", title: "⏰ Lembrar em 30min" }
+    ]
+  },
+  "meal-plan": {
+    vibrate: VIBRATE_GENTLE,
+    requireInteraction: false,
+    actions: [
+      { action: "open", title: "🍽️ Ver plano" },
+      { action: "dismiss", title: "Ok" }
     ]
   },
   "general": {
@@ -285,6 +294,7 @@ const CATEGORY_SUMMARY: Record<NotifCategory, string> = {
   overripe: "Use antes de perder",
   "low-stock": "Reposição sugerida",
   garbage: "Lembrete importante da casa",
+  "meal-plan": "Refeição planejada",
   general: "Atualização do Kaza",
   test: "Teste do sistema"
 };

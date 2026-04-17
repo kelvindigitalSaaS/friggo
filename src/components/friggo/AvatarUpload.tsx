@@ -76,8 +76,8 @@ export default function AvatarUpload({ currentUrl, size = 100, className }: Avat
 
   return (
     <div className={cn("relative group", className)}>
-      <div 
-        className="relative flex items-center justify-center overflow-hidden rounded-full bg-muted border-4 border-white dark:border-white/10 shadow-xl"
+      <div
+        className="relative flex items-center justify-center overflow-hidden rounded-full bg-muted shadow-xl"
         style={{ width: size, height: size }}
       >
         {currentUrl ? (

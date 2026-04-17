@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useKaza } from "@/contexts/FriggoContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { allRecipes } from "@/data/recipeDatabase";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -17,6 +18,15 @@ import {
   Check,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { PageTransition } from "@/components/PageTransition";
 
 const MEAL_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
@@ -30,11 +40,22 @@ export default function MealPlannerPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { addToMealPlan } = useKaza();
+  const { isMultiPro } = useSubscription();
 
   const dateParam = searchParams.get("date") || format(new Date(), "yyyy-MM-dd");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMealType, setSelectedMealType] = useState<string | null>(null);
   const [addedRecipes, setAddedRecipes] = useState<Set<string>>(new Set());
+
+  // Dialog state for meal details
+  const [showTimeDialog, setShowTimeDialog] = useState(false);
+  const [pendingMeal, setPendingMeal] = useState<{
+    recipeId: string;
+    recipeName: string;
+    mealType: string;
+  } | null>(null);
+  const [plannedTime, setPlannedTime] = useState("");
+  const [notifyMembers, setNotifyMembers] = useState(true);
 
   const dateLabel = (() => {
     try {
@@ -53,14 +74,27 @@ export default function MealPlannerPage() {
     .slice(0, 30);
 
   const handleAddMeal = (recipeId: string, recipeName: string, mealType: string) => {
-    addToMealPlan({
-      recipe_id: recipeId,
-      recipe_name: recipeName,
+    setPendingMeal({ recipeId, recipeName, mealType });
+    setPlannedTime("");
+    setNotifyMembers(true);
+    setShowTimeDialog(true);
+  };
+
+  const handleConfirmMeal = async () => {
+    if (!pendingMeal) return;
+
+    await addToMealPlan({
+      recipe_id: pendingMeal.recipeId,
+      recipe_name: pendingMeal.recipeName,
       planned_date: dateParam,
-      meal_type: mealType as any,
+      meal_type: pendingMeal.mealType as any,
+      planned_time: plannedTime || undefined,
+      notify_members: notifyMembers,
     });
-    setAddedRecipes((prev) => new Set(prev).add(`${recipeId}-${mealType}`));
-    toast.success(`${recipeName} adicionado ao plano!`);
+
+    setAddedRecipes((prev) => new Set(prev).add(`${pendingMeal.recipeId}-${pendingMeal.mealType}`));
+    setShowTimeDialog(false);
+    setPendingMeal(null);
   };
 
   return (
@@ -186,6 +220,53 @@ export default function MealPlannerPage() {
           ))
         )}
       </div>
+
+      {/* Time & Notification Dialog */}
+      <AlertDialog open={showTimeDialog} onOpenChange={setShowTimeDialog}>
+        <AlertDialogContent>
+          <AlertDialogTitle>Detalhes da refeição</AlertDialogTitle>
+          <AlertDialogDescription>
+            {pendingMeal && `${pendingMeal.recipeName} — ${MEAL_CONFIG[pendingMeal.mealType]?.label || pendingMeal.mealType}`}
+          </AlertDialogDescription>
+
+          <div className="space-y-4 py-4">
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Horário (opcional)
+              </label>
+              <Input
+                type="time"
+                value={plannedTime}
+                onChange={(e) => setPlannedTime(e.target.value)}
+                className="mt-2 h-10"
+              />
+            </div>
+
+            {isMultiPro && (
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  id="notify-members"
+                  checked={notifyMembers}
+                  onCheckedChange={(checked) => setNotifyMembers(!!checked)}
+                />
+                <label
+                  htmlFor="notify-members"
+                  className="text-sm font-medium text-foreground cursor-pointer flex-1"
+                >
+                  Notificar membros do plano
+                </label>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-2 justify-end">
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmMeal}>
+              Confirmar
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageTransition>
   );
 }

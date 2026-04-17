@@ -37,13 +37,15 @@ import {
   Laptop,
   MonitorDown,
   Home,
-  Users
+  Users,
+  MessageCircle
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useKaza } from "@/contexts/FriggoContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useSubscription, PLAN_DETAILS } from "@/contexts/SubscriptionContext";
+import { GroupMembersCard } from "@/components/friggo/GroupMembersCard";
 import { usePWA } from "@/contexts/PWAContext";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -74,7 +76,7 @@ export function SettingsTab() {
   const { language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { canInstall, install } = usePWA();
-  const { getPlanTier, subscription, trialDaysRemaining } = useSubscription();
+  const { getPlanTier, subscription, trialDaysRemaining, isMultiPro } = useSubscription();
   const navigate = useNavigate();
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
@@ -321,10 +323,13 @@ export function SettingsTab() {
                 <Crown className="h-3 w-3" /> Premium
               </span>
             ) : trialDaysRemaining > 0 ? (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-[11px] font-black uppercase tracking-wider w-fit">
+              <button
+                onClick={() => navigate("/app/settings/subscription/manage")}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-[11px] font-black uppercase tracking-wider w-fit hover:bg-amber-500/30 transition-colors active:scale-95"
+              >
                 <Star className="h-3 w-3" />
                 {language === "pt-BR" ? `Trial · ${trialDaysRemaining}d` : language === "es" ? `Trial · ${trialDaysRemaining}d` : `Trial · ${trialDaysRemaining}d`}
-              </span>
+              </button>
             ) : (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F0EFE8] dark:bg-white/10 border border-[#E2E1DC] dark:border-white/10 text-[#9A998F] dark:text-white/40 text-[11px] font-black uppercase tracking-wider w-fit">
                 {language === "pt-BR" ? "Gratuito" : language === "es" ? "Gratis" : "Free"}
@@ -339,6 +344,13 @@ export function SettingsTab() {
           </div>
         </section>
 
+        {/* Group Members Card (MultiPRO only) */}
+        {isMultiPro && (
+          <section>
+            <GroupMembersCard />
+          </section>
+        )}
+
         {/* Quick Shortcuts */}
         <section className="space-y-3">
           <h3 className="text-[11px] font-bold text-[#9A998F] dark:text-white/40 uppercase tracking-[1.5px] px-1 flex items-center gap-1">
@@ -349,7 +361,7 @@ export function SettingsTab() {
               { label: l.history, desc: l.historyDesc, icon: History, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/activity-history") },
               { label: l.installGuide || "Como Instalar", desc: l.installGuideDesc || "Android, iOS e PC", icon: Download, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/settings/install") },
               { label: l.report, desc: l.reportDesc, icon: Package, color: "text-[#3D6B55] dark:text-emerald-400", bg: "bg-[#3D6B55]/10 dark:bg-emerald-500/20", onClick: () => navigate("/app/monthly-report") },
-              { label: l.subscription, desc: l.subscriptionDesc, icon: Crown, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/settings/subscription") },
+              { label: l.subscription, desc: l.subscriptionDesc, icon: Crown, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/settings/subscription/manage") },
               { label: l.reconfigure, desc: l.reconfigureDesc, icon: RotateCcw, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-500/20", onClick: () => setConfirmReconfigureOpen(true) },
               { label: l.garbage, desc: l.garbageDesc, icon: Trash2, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-500/20", onClick: () => navigate("/app/garbage-reminder") },
             ] as const).map(({ label, desc, icon: Icon, color, bg, onClick }) => (
@@ -381,7 +393,7 @@ export function SettingsTab() {
             {planTier === "premium" && trialDaysRemaining <= 0 ? (
               /* Premium paid — CLICKABLE → subscription page */
               <button
-                onClick={() => navigate("/app/settings/subscription")}
+                onClick={() => navigate("/app/settings/subscription/manage")}
                 className="w-full flex items-center justify-between px-5 py-4 active:bg-[#F7F6F3] dark:active:bg-white/5 transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
@@ -692,6 +704,7 @@ export function SettingsTab() {
           <div className="rounded-2xl bg-white dark:bg-[#11302c] border border-[#E2E1DC] dark:border-white/10 overflow-hidden shadow-sm">
             {[
               { label: l.faq, desc: l.faqDesc, icon: HelpCircle, onClick: () => navigate("/app/settings/faq") },
+              { label: "Suporte", desc: "Entre em contato via WhatsApp", icon: MessageCircle, onClick: () => window.open("https://wa.me/5511914878708", "_blank") },
               { label: l.privacy, desc: l.privacyDesc, icon: FileText, onClick: () => navigate("/app/settings/privacy") },
             ].map(({ label, desc, icon: Icon, onClick }, idx, arr) => (
               <button

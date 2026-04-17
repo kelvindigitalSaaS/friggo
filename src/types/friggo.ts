@@ -147,4 +147,7 @@ export interface MealPlanEntry {
   recipe_name: string;
   planned_date: string;
   meal_type: "breakfast" | "lunch" | "dinner" | "snack";
+  planned_time?: string | null;
+  notify_members?: boolean;
+  created_by?: string | null;
 }

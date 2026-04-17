@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useKaza } from '@/contexts/KazaContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ShoppingCart, TrendingDown, Calendar, Package, Bell, Plus, Minus, Settings2, ArrowLeft, Users, EyeOff, Eye } from 'lucide-react';
 import { toast } from 'sonner';
@@ -161,6 +162,7 @@ export default function ConsumableTrackerPage() {
         removeConsumable
     } = useKaza();
     const { language } = useLanguage();
+    const { isMultiPro } = useSubscription();
     const residents = onboardingData?.residents || 2;
     const l = LABELS[language as keyof typeof LABELS] || LABELS['pt-BR'];
 
@@ -622,6 +624,14 @@ export default function ConsumableTrackerPage() {
                                             <span className="text-[10px] font-black text-primary uppercase tracking-widest">
                                                 {Number.isFinite(Number(item.dailyConsumption)) ? Number(item.dailyConsumption).toFixed(2) : String(item.dailyConsumption)} {item.unit}/{l[item.usageInterval || 'daily']}
                                             </span>
+                                            {isMultiPro && (
+                                                <>
+                                                    <span className="text-[10px] font-bold text-muted-foreground opacity-60">•</span>
+                                                    <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+                                                        {(Number(item.dailyConsumption) / residents).toFixed(2)} {l.perPerson}
+                                                    </span>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="shrink-0">

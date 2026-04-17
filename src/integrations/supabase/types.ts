@@ -62,6 +62,19 @@ export interface AccountSession {
   created_at: string;
   updated_at: string;
 }
+
+export interface SubAccountInvite {
+  id: string;
+  group_id: string;
+  master_user_id: string;
+  master_name: string;
+  invited_email: string;
+  token: string;
+  status: 'pending' | 'accepted' | 'expired';
+  expires_at: string;
+  created_at: string;
+}
+
 export type ActionTypeEnum =
   | "added" | "consumed" | "cooked" | "discarded" | "defrosted" | "expired";
 export type ConsumableActionEnum = "debit" | "restock" | "adjust";
@@ -73,6 +86,11 @@ export interface Database {
         Row: AccountSession;
         Insert: Omit<AccountSession, 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Omit<AccountSession, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      sub_account_invites: {
+        Row: SubAccountInvite;
+        Insert: Omit<SubAccountInvite, 'id' | 'created_at'>;
+        Update: Partial<Omit<SubAccountInvite, 'id' | 'created_at'>>;
       };
       [key: string]: { Row: Record<string, unknown>; Insert: Record<string, unknown>; Update: Record<string, unknown>; };
     };

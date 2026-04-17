@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useAuth } from "@/hooks/useAuth";
 import { usePWA } from "@/contexts/PWAContext";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Download, Monitor } from "lucide-react";
 import { motion } from "framer-motion";
@@ -73,6 +74,46 @@ export default function CheckoutSuccessPage() {
 
         // Atualizar subscription do usuário
         await refreshSubscription();
+
+        // Send invites to trio members (if any)
+        try {
+          const trioMembersStr = localStorage.getItem("trio_members");
+          if (trioMembersStr) {
+            const members = JSON.parse(trioMembersStr);
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (session && members.length > 0) {
+              for (const member of members) {
+                if (member.email && member.email.trim()) {
+                  try {
+                    // Get user's subscription to find group_id
+                    const { data: subscription } = await supabase
+                      .from("subscriptions")
+                      .select("*, sub_account_groups(id)")
+                      .eq("user_id", user?.id)
+                      .eq("plan_tier", "multiPRO")
+                      .single();
+
+                    if (subscription?.sub_account_groups?.id) {
+                      await supabase.functions.invoke("send-invite-email", {
+                        body: {
+                          group_id: subscription.sub_account_groups.id,
+                          invited_email: member.email
+                        }
+                      });
+                    }
+                  } catch (inviteError) {
+                    console.warn(`Failed to send invite to ${member.email}:`, inviteError);
+                  }
+                }
+              }
+            }
+            // Clear stored members after sending invites
+            try { localStorage.removeItem("trio_members"); } catch {}
+          }
+        } catch (inviteProcessError) {
+          console.warn("Error processing invites:", inviteProcessError);
+        }
 
         toast.success(l.thanks);
 

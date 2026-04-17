@@ -769,7 +769,9 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           recipe_name: entry.recipe_name,
           planned_date: entry.planned_date,
           meal_type: entry.meal_type,
-          created_by_user_id: user.id
+          planned_time: entry.planned_time || null,
+          notify_members: entry.notify_members ?? true,
+          created_by: user.id
         })
         .select().single();
       if (error) throw error;
@@ -779,8 +781,50 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           recipe_id: data.recipe_id,
           recipe_name: data.recipe_name,
           planned_date: data.planned_date,
-          meal_type: data.meal_type
+          meal_type: data.meal_type,
+          planned_time: data.planned_time,
+          notify_members: data.notify_members,
+          created_by: data.created_by
         }]);
+
+        // Schedule local notification if time is set
+        if (entry.planned_time) {
+          const notifTime = new Date(`${entry.planned_date}T${entry.planned_time}`);
+          if (notifTime > new Date()) {
+            await scheduleLocalNotification({
+              title: "Refeição planejada",
+              body: `${entry.recipe_name} — ${entry.meal_type} às ${entry.planned_time}`,
+              scheduleAt: notifTime,
+              category: "meal-plan"
+            }).catch(err => {
+              if (import.meta.env.DEV) console.error("Erro ao agendar notificação local:", err);
+            });
+          }
+        }
+
+        // Send push to group members if enabled
+        if (entry.notify_members) {
+          try {
+            await supabase.functions.invoke("send-push-notification", {
+              body: {
+                group_id: null, // Will be fetched from user's group
+                title: "Nova refeição planejada",
+                body: `${entry.recipe_name} em ${entry.planned_date} às ${entry.planned_time || 'sem horário específico'}`,
+                data: {
+                  type: "meal-plan",
+                  recipe_name: entry.recipe_name,
+                  planned_date: entry.planned_date,
+                  planned_time: entry.planned_time || ""
+                }
+              }
+            }).catch(err => {
+              if (import.meta.env.DEV) console.error("Erro ao enviar push notification:", err);
+            });
+          } catch (err) {
+            // Silently fail if push notification fails
+          }
+        }
+
         toast({ title: "Agendado!", description: "Refeição adicionada ao seu plano." });
       }
     } catch (err) {

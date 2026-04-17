@@ -50,6 +50,7 @@ const MealPlannerPage = lazy(() => import("./pages/MealPlannerPage"));
 const SalesPage = lazy(() => import("./pages/SalesPage"));
 const SalesTermsPage = lazy(() => import("./pages/SalesPage/TermsPage"));
 const SalesPrivacyPage = lazy(() => import("./pages/SalesPage/PrivacyPage"));
+const InvitePage = lazy(() => import("./pages/InvitePage"));
 
 const queryClient = new QueryClient();
 
@@ -258,6 +259,7 @@ const App = () => {
                             <Route path="/auth" element={<Auth />} />
                             <Route path="/sucesso" element={<SuccessPage />} />
                             <Route path="/success" element={<SuccessPage />} />
+                            <Route path="/invite" element={<InvitePage />} />
                             <Route path="/pagina-de-vendas" element={<SalesPage />} />
                             <Route path="/pagina-de-vendas/termos-de-uso" element={<SalesTermsPage />} />
                             <Route path="/pagina-de-vendas/privacidade" element={<SalesPrivacyPage />} />

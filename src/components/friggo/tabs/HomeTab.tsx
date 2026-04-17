@@ -5,7 +5,6 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { AlertCard } from '../AlertCard';
 import { ItemCard } from '../ItemCard';
 import { CurrentPlanBadge } from '../CurrentPlanBadge';
-import { PlanLimitCard } from '../PlanLimitCard';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { allRecipes } from '@/data/recipeDatabase';
@@ -27,6 +26,7 @@ import {
     CheckCircle2,
     Trash2,
     EyeOff,
+    UtensilsCrossed,
 } from 'lucide-react';
 
 type ActiveSection = 'fridge' | 'expiring' | 'alerts' | 'shopping' | null;
@@ -484,14 +484,6 @@ export function HomeTab() {
                 )}
             </AnimatePresence>
 
-            {/* ── PLAN LIMIT CARDS ── */}
-            {subscription && subscription.plan !== 'premium' && (
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <PlanLimitCard type="items" currentCount={items.length} onUpgrade={() => navigate('/app/settings/subscription')} />
-                    <PlanLimitCard type="recipes" onUpgrade={() => navigate('/app/settings/subscription')} />
-                </div>
-            )}
-
             {/* ── WEEKLY PROGRESS ── */}
             {(weeklyStats.consumed > 0 || weeklyStats.wasted > 0) && (
                 <motion.section
@@ -677,6 +669,24 @@ export function HomeTab() {
                     </div>
                 </motion.section>
             )}
+
+            {/* ── RECIPES TODAY QUICK ACCESS ── */}
+            <button
+                onClick={() => {
+                    const event = new CustomEvent('navigateTab', { detail: 'recipes' });
+                    window.dispatchEvent(event);
+                }}
+                className="rounded-2xl border border-black/[0.04] dark:border-white/[0.06] bg-white/70 dark:bg-white/5 backdrop-blur-xl p-4 flex items-center gap-3 transition-all active:scale-[0.98] hover:bg-white/80 dark:hover:bg-white/10"
+            >
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <UtensilsCrossed className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1 text-left">
+                    <p className="text-sm font-bold text-foreground">{l.tryRecipe}</p>
+                    <p className="text-xs text-muted-foreground">Ver receitas disponíveis</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
 
             {/* ── CONSUMABLES RUNNING LOW ── */}
             {lowConsumables.length > 0 && (
