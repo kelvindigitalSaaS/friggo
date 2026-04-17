@@ -8,14 +8,15 @@ import {
 } from "lucide-react";
 
 import LogoImage from "@/assets/logo inicial nome.svg";
-import LoginImage from "@/assets/fluxo/login.jpeg";
+import LoginImage from "@/assets/fluxo/login.png";
 import HomeImage from "@/assets/fluxo/home.png";
+import EstoqueImage from "@/assets/fluxo/etoque.png";
+import LoadingImage from "@/assets/fluxo/carregamento.png";
 
 // --- INTERACTIVE MOCKUPS COMPONENTS ---
 
 // 1. Mockup for Hero
 const HeroMockup = () => {
-   const [runStatus, setRunStatus] = useState<'login' | 'loading' | 'home'>('login');
   return (
     <div className="absolute bottom-[-100px] md:bottom-0 left-1/2 -translate-x-1/2 w-[900px] lg:w-[1000px] h-[600px] lg:h-[700px] flex justify-center items-end pointer-events-none transform scale-[0.55] sm:scale-[0.7] md:scale-100 origin-bottom">
       
@@ -91,104 +92,22 @@ const HeroMockup = () => {
          <p className="font-bold text-[11px]">Sincronização 24/7</p>
       </motion.div>
 
-      {/* --- Phone 3: Center (INTERACTIVE MAIN UI) --- */}
+      {/* --- Phone 3: Center (Static Login) --- */}
       <motion.div 
         initial={{ y: 300, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 1, type: "spring", stiffness: 90 }}
-        className="relative w-[340px] lg:w-[380px] h-[720px] bg-[#1A3B2C] rounded-[3.5rem] border-[10px] border-[#1A1A1A] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.4)] z-20 overflow-hidden origin-bottom translate-y-[15%] pointer-events-auto"
+        className="relative w-[340px] lg:w-[380px] h-[720px] bg-[#1A3B2C] rounded-[3.5rem] border-[10px] border-[#1A1A1A] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.4)] z-20 overflow-hidden origin-bottom translate-y-[15%] pointer-events-none"
       >
          {/* Dynamic Island Notch */}
          <div className="w-[120px] h-8 bg-[#1A1A1A] absolute top-2 left-1/2 -translate-x-1/2 rounded-full z-30 flex items-center justify-end px-3">
              <div className="w-2.5 h-2.5 rounded-full bg-blue-900 border border-blue-800/50"></div>
          </div>
          
-         {/* -- State 1: Login Flow -- */}
-         {runStatus === 'login' && (
-             <div className="w-full h-full relative group">
-                <img src={LoginImage} alt="KAZA Login Test" className="w-full h-full object-cover" />
-                {/* Invisible Hover Click Area for the Google Button */}
-                <div 
-                   className="absolute left-1/2 -translate-x-1/2 bottom-[140px] w-[85%] h-[55px] cursor-pointer"
-                   onClick={() => { setRunStatus('loading'); setTimeout(() => setRunStatus('home'), 1500) }}
-                >
-                   <div className="w-full h-full rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-white/20 border-2 border-white pointer-events-none">
-                      <span className="text-white font-bold text-xs uppercase tracking-widest drop-shadow-md">Testar Login</span>
-                   </div>
-                   <div className="absolute inset-0 rounded-xl ring-2 ring-white animate-pulse pointer-events-none"></div>
-                </div>
-             </div>
-         )}
-
-         {/* -- State 2: Loading Flow -- */}
-         {runStatus === 'loading' && (
-             <div className="w-full h-full bg-[#FAF8F4] flex flex-col items-center justify-center gap-6">
-                <div className="w-12 h-12 rounded-full border-4 border-borda border-t-principal animate-spin"></div>
-                <p className="font-mono text-verde-escuro font-bold uppercase tracking-widest animate-pulse">Autenticando...</p>
-             </div>
-         )}
-         
-         {/* -- State 3: Home Flow (Pouring Notifications) -- */}
-         {runStatus === 'home' && (
-             <div className="w-full h-full relative">
-                <img src={HomeImage} alt="KAZA Home" className="w-full h-full object-cover" />
-                
-                {/* Navigation Overlays Jorrando Notificações */}
-                <div className="absolute top-12 left-0 w-full h-full flex flex-col items-center gap-3 p-4 pointer-events-none">
-                   
-                   <motion.div 
-                     initial={{ y: -50, opacity: 0, scale: 0.9 }} 
-                     animate={{ y: 0, opacity: 1, scale: 1 }} 
-                     transition={{ delay: 0.5, type: 'spring' }} 
-                     className="bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-borda w-full flex items-center gap-4"
-                   >
-                     <div className="w-10 h-10 rounded-full bg-[#FFF9F0] text-ambar flex items-center justify-center font-bold text-xl drop-shadow-sm">🥚</div>
-                     <div>
-                       <p className="font-bold text-sm text-texto-principal">Bem-vinda, Marina!</p>
-                       <p className="text-xs text-texto-secundario mt-0.5">Sua geladeira tem 2 alertas.</p>
-                     </div>
-                   </motion.div>
-
-                   <motion.div 
-                     initial={{ y: -50, opacity: 0, scale: 0.9 }} 
-                     animate={{ y: 0, opacity: 1, scale: 1 }} 
-                     transition={{ delay: 1.2, type: 'spring' }} 
-                     className="bg-red-50/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-red-100 w-full flex items-center gap-4"
-                   >
-                     <div className="w-10 h-10 rounded-full bg-red-100 text-red-500 flex items-center justify-center font-bold text-xl drop-shadow-sm"><AlertCircle className="w-5 h-5"/></div>
-                     <div>
-                       <p className="font-bold text-sm text-red-600">Alerta: Iogurte e Leite</p>
-                       <p className="text-xs text-red-600/80 mt-0.5">Marcados como vendidos na despensa.</p>
-                     </div>
-                   </motion.div>
-
-                   <motion.div 
-                     initial={{ y: -50, opacity: 0, scale: 0.9 }} 
-                     animate={{ y: 0, opacity: 1, scale: 1 }} 
-                     transition={{ delay: 1.8, type: 'spring' }} 
-                     className="bg-verde-palido/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-verde-claro/30 w-full flex items-center gap-4"
-                   >
-                     <div className="w-10 h-10 rounded-full bg-principal text-white flex items-center justify-center font-bold text-xl shadow-sm"><Users className="w-5 h-5"/></div>
-                     <div>
-                       <p className="font-bold text-sm text-principal">Lucas completou a lista</p>
-                       <p className="text-xs text-principal/80 mt-0.5">Comprados hoje: Detergente, Arroz.</p>
-                     </div>
-                   </motion.div>
-
-                   <motion.div 
-                     initial={{ y: 50, opacity: 0 }}
-                     animate={{ y: 0, opacity: 1 }}
-                     transition={{ delay: 3, duration: 1 }}
-                     className="mt-auto mb-10 pointer-events-auto"
-                   >
-                     <button onClick={() => setRunStatus('login')} className="bg-[#1A1A1A] text-white px-5 py-2 rounded-full font-bold text-xs shadow-lg flex items-center gap-2 uppercase tracking-wide hover:bg-black">
-                       <X className="w-3 h-3"/> Fechar Demo
-                     </button>
-                   </motion.div>
-
-                </div>
-             </div>
-         )}
+         {/* -- Static Login Page -- */}
+         <div className="w-full h-full relative">
+            <img src={LoginImage} alt="KAZA Login" className="w-full h-full object-cover" />
+         </div>
       </motion.div>
 
     </div>
@@ -370,9 +289,15 @@ const DemoSessoes = () => (
 
 
 // --- MAIN PAGE COMPONENT ---
-
 export default function SalesPage() {
   const [activeTab, setActiveTab] = useState(0);
+  const [showSplash, setShowSplash] = useState(true);
+
+  React.useEffect(() => {
+    // Hide full screen splash after 2.5s
+    const timer = setTimeout(() => setShowSplash(false), 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const tabs = [
     { id: 0, label: "IndividualPRO", subtitle: "Uso solo" },
@@ -410,6 +335,10 @@ export default function SalesPage() {
 
         .border-borda { border-color: #E8E2D9; }
         
+        /* Hide scrollbar for mobile carousel */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
         body { background-color: #FAF8F4; color: #1A1A1A; }
         html.dark body { background-color: #FAF8F4; color: #1A1A1A; } /* Force light mode aesthetic */
         
@@ -420,6 +349,47 @@ export default function SalesPage() {
           border-bottom: 1px solid rgba(232, 226, 217, 0.6);
         }
       `}</style>
+      
+      {/* Full Screen Initial Splash */}
+      <AnimatePresence>
+        {showSplash && (
+          <motion.div 
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.05 }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="fixed inset-0 z-[9999] bg-[#1A3B2C] flex flex-col items-center justify-center overflow-hidden"
+          >
+             <img src={LoadingImage} alt="Loading KAZA" className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay" />
+             <div className="absolute inset-0 bg-gradient-to-t from-[#1A3B2C] via-transparent to-transparent"></div>
+             
+             <motion.div 
+               initial={{ scale: 0.8, opacity: 0 }}
+               animate={{ scale: 1, opacity: 1 }}
+               transition={{ duration: 0.5 }}
+               className="relative z-10 w-24 h-24 mb-10 bg-white/10 rounded-[2rem] backdrop-blur-xl flex items-center justify-center animate-pulse border border-white/20 shadow-2xl"
+             >
+                <img src={LogoImage} alt="KAZA" className="w-16 object-contain brightness-0 invert" />
+             </motion.div>
+             
+             <div className="relative z-10 w-48 h-1 overflow-hidden bg-white/10 rounded-full">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 2.2, ease: "circOut" }}
+                  className="h-full bg-verde-claro"
+                />
+             </div>
+             <motion.p 
+               initial={{ opacity: 0, y: 10 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ delay: 0.5 }}
+               className="relative z-10 mt-6 text-verde-palido/60 font-mono text-[10px] uppercase tracking-[0.2em] font-bold"
+             >
+               Iniciando plataforma
+             </motion.p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="min-h-screen bg-fundo-claro font-sans text-texto-principal selection:bg-verde-claro selection:text-white">
         
@@ -515,9 +485,9 @@ export default function SalesPage() {
                    <p className="text-texto-secundario text-lg font-medium">Do que está vencendo ao que falta comprar — o KAZA reduz a carga mental da rotina.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 md:gap-6 pb-8 md:grid md:grid-cols-2 lg:grid-cols-3 md:overflow-visible pr-6 md:pr-0 pl-6 md:pl-0 -mx-6 md:mx-0 hide-scrollbar pt-2">
                    {/* Card 1 */}
-                   <div className="bg-fundo-claro border border-borda rounded-3xl p-8 hover:-translate-y-1 transition-transform group">
+                   <div className="shrink-0 w-[85vw] sm:w-[320px] md:w-auto snap-center bg-fundo-claro border border-borda rounded-3xl p-8 hover:-translate-y-1 transition-transform group">
                       <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-borda flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                          <Box className="w-6 h-6 text-principal"/>
                       </div>
@@ -525,7 +495,7 @@ export default function SalesPage() {
                       <p className="text-texto-secundario font-medium leading-relaxed text-sm">Gerencie geladeira, despensa e limpeza com alertas de reposição e validade.</p>
                    </div>
                    {/* Card 2 */}
-                   <div className="bg-fundo-claro border border-borda rounded-3xl p-8 hover:-translate-y-1 transition-transform group">
+                   <div className="shrink-0 w-[85vw] sm:w-[320px] md:w-auto snap-center bg-fundo-claro border border-borda rounded-3xl p-8 hover:-translate-y-1 transition-transform group">
                       <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-borda flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                          <ChefHat className="w-6 h-6 text-principal"/>
                       </div>
@@ -533,7 +503,7 @@ export default function SalesPage() {
                       <p className="text-texto-secundario font-medium leading-relaxed text-sm">O app sugere receitas com base no que existe em casa.</p>
                    </div>
                    {/* Card 3 */}
-                   <div className="bg-fundo-claro border border-borda rounded-3xl p-8 hover:-translate-y-1 transition-transform group">
+                   <div className="shrink-0 w-[85vw] sm:w-[320px] md:w-auto snap-center bg-fundo-claro border border-borda rounded-3xl p-8 hover:-translate-y-1 transition-transform group">
                       <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-borda flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                          <Calendar className="w-6 h-6 text-principal"/>
                       </div>
@@ -541,7 +511,7 @@ export default function SalesPage() {
                       <p className="text-texto-secundario font-medium leading-relaxed text-sm">Monte semana ou mês com café, almoço, jantar e lanches.</p>
                    </div>
                    {/* Card 4 */}
-                   <div className="bg-fundo-claro border border-borda rounded-3xl p-8 hover:-translate-y-1 transition-transform group">
+                   <div className="shrink-0 w-[85vw] sm:w-[320px] md:w-auto snap-center bg-fundo-claro border border-borda rounded-3xl p-8 hover:-translate-y-1 transition-transform group">
                       <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-borda flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                          <ListChecks className="w-6 h-6 text-principal"/>
                       </div>
@@ -549,7 +519,7 @@ export default function SalesPage() {
                       <p className="text-texto-secundario font-medium leading-relaxed text-sm">A lista se atualiza com o que acabou, vai vencer ou faltará em breve.</p>
                    </div>
                    {/* Card 5 */}
-                   <div className="bg-verde-escuro border border-verde-escuro rounded-3xl p-8 shadow-xl hover:-translate-y-1 transition-transform group relative overflow-hidden">
+                   <div className="shrink-0 w-[85vw] sm:w-[320px] md:w-auto snap-center bg-verde-escuro border border-verde-escuro rounded-3xl p-8 shadow-xl hover:-translate-y-1 transition-transform group relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full blur-2xl"></div>
                       <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-white flex items-center justify-center mb-6 group-hover:scale-110 transition-transform relative z-10">
                          <Users className="w-6 h-6 text-verde-escuro"/>
@@ -558,7 +528,7 @@ export default function SalesPage() {
                       <p className="text-verde-palido/90 font-medium leading-relaxed text-sm relative z-10">No MultiPRO, até 3 acessos participam da mesma casa com organização centralizada.</p>
                    </div>
                    {/* Card 6 */}
-                   <div className="bg-fundo-claro border border-borda rounded-3xl p-8 hover:-translate-y-1 transition-transform group">
+                   <div className="shrink-0 w-[85vw] sm:w-[320px] md:w-auto snap-center bg-fundo-claro border border-borda rounded-3xl p-8 hover:-translate-y-1 transition-transform group">
                       <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-borda flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                          <Bell className="w-6 h-6 text-principal"/>
                       </div>
