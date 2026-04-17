@@ -29,6 +29,7 @@ const Checkout = lazy(() => import("./pages/Checkout"));
 const MonthlyReportPage = lazy(() => import("@/pages/MonthlyReportPage"));
 const NightCheckupPage = lazy(() => import("@/pages/NightCheckupPage"));
 const PlansPage = lazy(() => import("./pages/PlansPage"));
+const TrioSetupPage = lazy(() => import("./pages/TrioSetupPage"));
 const CheckoutSuccessPage = lazy(() => import("./pages/CheckoutSuccessPage"));
 const CheckoutCancelPage = lazy(() => import("./pages/CheckoutCancelPage"));
 const AddItemPage = lazy(() => import("./pages/AddItemPage"));
@@ -280,6 +281,10 @@ const App = () => {
                             <Route
                               path="/plans"
                               element={<Navigate to="/settings/subscription" replace />}
+                            />
+                            <Route
+                              path="/trio-setup"
+                              element={<ProtectedRoute element={<TrioSetupPage />} />}
                             />
                             <Route
                               path="/checkout/success"

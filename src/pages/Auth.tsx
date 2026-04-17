@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { isNative, isIOS } from "@/lib/capacitor";
 import { openExternalUrl } from "@/lib/nativeBrowser";
+import LogoNome from "@/assets/logo inicial nome.svg";
 
 type AuthView = "landing" | "login" | "register";
 
@@ -374,7 +375,7 @@ export default function Auth() {
             {view === "landing" && (
               <>
                 <img
-                  src="../src/assets/logo inicial nome.svg"
+                  src={LogoNome}
                   alt="KAZA APP"
                   className="h-[80px] object-contain mb-2"
                 />

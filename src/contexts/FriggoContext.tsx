@@ -278,8 +278,15 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           notificationPrefs: notifPrefs.length ? notifPrefs : DEFAULT_NOTIFICATION_PREFS
         })
       );
-    } catch (err) {
-      showError("Erro ao carregar dados", err);
+    } catch (err: any) {
+      const msg = err?.message || String(err);
+      const isAuthError = msg.includes("JWT") || msg.includes("auth") || msg.includes("token") || err?.code === "PGRST301";
+      if (!isAuthError) {
+        showError("Erro ao carregar dados", err);
+      }
+      setItems([]);
+      setShoppingList([]);
+      setOnboardingData(null);
     } finally {
       setLoading(false);
     }
