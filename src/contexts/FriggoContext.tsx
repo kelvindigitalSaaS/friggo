@@ -195,6 +195,24 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       setHomeId(hid);
 
       if (!hid) {
+        // Post-email-confirmation: complete pending invite setup stored in localStorage
+        const pendingRaw = localStorage.getItem("pending_invite_setup");
+        if (pendingRaw) {
+          try {
+            const pending = JSON.parse(pendingRaw);
+            localStorage.removeItem("pending_invite_setup");
+            await supabase.rpc("accept_invite", { invite_token: pending.inviteToken });
+            await supabase
+              .from("profiles")
+              .update({ name: pending.name, cpf: pending.cpf, onboarding_completed: true })
+              .eq("user_id", user.id);
+            // Re-run now that home_members entry exists
+            await fetchData();
+            return;
+          } catch (err) {
+            if (import.meta.env.DEV) console.error("[DEV] Pending invite setup failed:", err);
+          }
+        }
         setItems([]);
         setShoppingList([]);
         setConsumables([]);

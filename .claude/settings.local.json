@@ -8,7 +8,13 @@
       "Bash(git add *)",
       "Bash(git commit -m 'fix: load saved CPF and profile data in onboarding flow *)",
       "Bash(sed \"s/.*\\\\.from\\('//\")",
-      "Bash(sed \"s/'\\).*//\")"
+      "Bash(sed \"s/'\\).*//\")",
+      "Bash(gh pr create --title 'Simplify demo section and enhance hero design on SalesPage' --body ':*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://api.github.com/repos/kelvindigitalSaaS/friggo/pulls?state=open)",
+      "Bash(powershell -Command \"[System.Net.NetworkCredential]::new\\('', \\(Get-StoredCredential -Target 'git:https://github.com'\\).Password\\).Password\")",
+      "Bash(cmdkey /list)",
+      "Bash(grep -n \"homes.*POLICY\\\\|homes.*RLS\\\\|CREATE POLICY.*homes\" /c/Users/PC/Desktop/friggo/friggo/.claude/worktrees/cranky-wozniak/supabase/migrations/*.sql -A 5)",
+      "Bash(grep -n \"CREATE TABLE.*homes\\\\|ALTER TABLE.*homes\" /c/Users/PC/Desktop/friggo/friggo/.claude/worktrees/cranky-wozniak/supabase/migrations/*.sql)"
     ]
   }
 }
