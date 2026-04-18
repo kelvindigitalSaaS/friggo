@@ -126,6 +126,11 @@ export function useGroupMembers() {
             if (updated.status !== "pending") {
               setPendingInvites((prev) => prev.filter((i) => i.id !== updated.id));
             }
+          } else if (payload.eventType === "DELETE") {
+            const deleted = payload.old as SubAccountInvite;
+            if (deleted?.id) {
+              setPendingInvites((prev) => prev.filter((i) => i.id !== deleted.id));
+            }
           }
         }
       )
@@ -169,14 +174,8 @@ export function useGroupMembers() {
         const body: Record<string, string> = { invited_email: email };
         if (groupId) body.group_id = groupId;
 
-        // Fetch session to ensure we have a fresh token
-        const { data: { session } } = await supabase.auth.getSession();
-
         const { data, error } = await supabase.functions.invoke("send-invite-email", {
           body,
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
         });
 
         if (error) {
@@ -272,23 +271,44 @@ export function useGroupMembers() {
 
   const cancelInvite = useCallback(
     async (inviteId: string) => {
-      if (!groupId || !user) return;
-
+      if (!groupId) return;
       try {
         const { error } = await supabase
           .from("sub_account_invites")
           .delete()
           .eq("id", inviteId)
           .eq("group_id", groupId);
-
         if (error) throw error;
-        toast.info("Convite cancelado.");
+        setPendingInvites((prev) => prev.filter((i) => i.id !== inviteId));
+        toast.success("Convite cancelado");
       } catch (err) {
-        console.error("Error canceling invite:", err);
-        toast.error("Erro ao cancelar o convite");
+        console.error("Error cancelling invite:", err);
+        toast.error("Erro ao cancelar convite");
       }
     },
-    [groupId, user]
+    [groupId]
+  );
+
+  const resendInvite = useCallback(
+    async (inviteId: string, email: string) => {
+      if (!groupId) return;
+      try {
+        // Delete the old invite first so the duplicate check passes
+        const { error } = await supabase
+          .from("sub_account_invites")
+          .delete()
+          .eq("id", inviteId)
+          .eq("group_id", groupId);
+        if (error) throw error;
+        setPendingInvites((prev) => prev.filter((i) => i.id !== inviteId));
+        // Send a fresh invite with a new token
+        await inviteByEmail(email);
+      } catch (err) {
+        console.error("Error resending invite:", err);
+        toast.error("Erro ao reenviar convite");
+      }
+    },
+    [groupId, inviteByEmail]
   );
 
   return {
@@ -302,5 +322,6 @@ export function useGroupMembers() {
     inviteByEmail,
     removeMember,
     cancelInvite,
+    resendInvite,
   };
 }

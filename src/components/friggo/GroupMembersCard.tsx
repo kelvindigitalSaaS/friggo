@@ -11,19 +11,22 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
+import { SubAccountInvite } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export function GroupMembersCard() {
-  const { slots, filledSlots, maxSlots, inviteByEmail, removeMember, cancelInvite, loading } =
+  const { slots, filledSlots, maxSlots, inviteByEmail, removeMember, cancelInvite, resendInvite, loading } =
     useGroupMembers();
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
+  const [resendingId, setResendingId] = useState<string | null>(null);
   const [removeConfirm, setRemoveConfirm] = useState<{
     memberId: string;
     memberName: string;
   } | null>(null);
+  const [cancelConfirm, setCancelConfirm] = useState<SubAccountInvite | null>(null);
 
   const handleInvite = async () => {
     const email = inviteEmail.trim();
@@ -55,10 +58,15 @@ export function GroupMembersCard() {
   };
 
   const handleResend = async (inviteId: string, email: string) => {
-    // Delete the old invite
-    await cancelInvite(inviteId);
-    // Send a new one
-    await inviteByEmail(email);
+    setResendingId(inviteId);
+    await resendInvite(inviteId, email);
+    setResendingId(null);
+  };
+
+  const handleCancelInvite = async () => {
+    if (!cancelConfirm) return;
+    await cancelInvite(cancelConfirm.id);
+    setCancelConfirm(null);
   };
 
   if (loading) {
@@ -137,22 +145,25 @@ export function GroupMembersCard() {
                         {slot.invite.invited_email}
                       </p>
                       <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
-                        Convite enviado
+                        Aguardando confirmação
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => handleResend(slot.invite!.id, slot.invite!.invited_email)}
-                      className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 transition-colors"
+                      disabled={resendingId === slot.invite.id}
                       title="Reenviar convite"
+                      className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
                     >
-                      <RefreshCw className="h-4 w-4" />
+                      {resendingId === slot.invite.id
+                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        : <RefreshCw className="h-3.5 w-3.5" />}
                     </button>
                     <button
-                      onClick={() => cancelInvite(slot.invite!.id)}
-                      className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                      onClick={() => setCancelConfirm(slot.invite!)}
                       title="Cancelar convite"
+                      className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -232,6 +243,24 @@ export function GroupMembersCard() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleRemove} className="bg-red-600 hover:bg-red-700">
               Remover
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Cancel Invite Confirmation Dialog */}
+      <AlertDialog open={!!cancelConfirm} onOpenChange={() => setCancelConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogTitle>Cancelar convite</AlertDialogTitle>
+          <AlertDialogDescription>
+            Cancelar o convite enviado para <strong>{cancelConfirm?.invited_email}</strong>?
+            O link enviado por email deixará de funcionar.
+          </AlertDialogDescription>
+
+          <div className="flex gap-2 justify-end">
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelInvite} className="bg-red-600 hover:bg-red-700">
+              Cancelar convite
             </AlertDialogAction>
           </div>
         </AlertDialogContent>

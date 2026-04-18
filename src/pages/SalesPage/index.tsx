@@ -737,7 +737,7 @@ const InteractiveDemoPhone = () => {
   ];
 
   return (
-    <div className="relative w-full max-w-[340px] h-[640px] lg:h-[680px] rounded-[2.8rem] border-[7px] border-[#1A1A1A] shadow-[0_30px_80px_-15px_rgba(0,0,0,0.5)] overflow-hidden bg-[#fafafa]">
+    <div className="relative w-[340px] shrink-0 h-[640px] lg:h-[680px] rounded-[2.8rem] border-[7px] border-[#1A1A1A] shadow-[0_30px_80px_-15px_rgba(0,0,0,0.5)] overflow-hidden bg-[#fafafa]">
       {/* Dynamic Island */}
       <div className="w-[90px] h-6 bg-[#1A1A1A] absolute top-1.5 left-1/2 -translate-x-1/2 rounded-full z-50 flex items-center justify-end px-2.5">
         <div className="w-1.5 h-1.5 rounded-full bg-blue-900 border border-blue-800/50"></div>
@@ -803,197 +803,14 @@ const InteractiveDemoPhone = () => {
 
 
 // ═══════════════════════════════════════════════
-// ORIGINAL DEMO MOCKUPS (kept for the tab-based view)
+// MAIN PAGE COMPONENT
 // ═══════════════════════════════════════════════
-
-const DemoIndividual = () => (
-  <div className="flex flex-col h-full bg-fundo-claro">
-    <div className="p-5 bg-superficie border-b border-borda">
-      <h4 className="font-fraunces text-lg font-bold text-verde-escuro">Meu Painel Solo</h4>
-      <p className="text-texto-secundario text-[11px] mt-0.5">Tudo concentrado em uma única conta, simples, claro e direto.</p>
-    </div>
-    <div className="p-5 flex flex-col gap-3">
-      <div className="bg-superficie border border-borda rounded-xl p-3.5 flex justify-between items-center shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="bg-verde-palido p-2 rounded-lg text-principal"><Box className="w-4 h-4" /></div>
-          <div><p className="font-bold text-sm text-texto-principal">Estoque Geral</p><p className="text-[11px] text-texto-secundario">142 itens controlados</p></div>
-        </div>
-        <ChevronRight className="w-4 h-4 text-gray-300" />
-      </div>
-      <div className="bg-superficie border border-borda rounded-xl p-3.5 flex justify-between items-center shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="bg-[#FFF9F0] p-2 rounded-lg text-ambar"><ShoppingCart className="w-4 h-4" /></div>
-          <div><p className="font-bold text-sm text-texto-principal">Minha Lista</p><p className="text-[11px] text-texto-secundario">12 itens pendentes</p></div>
-        </div>
-        <ChevronRight className="w-4 h-4 text-gray-300" />
-      </div>
-      <div className="bg-superficie border border-borda rounded-xl p-3.5 flex justify-between items-center shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="bg-[#FFF5F5] p-2 rounded-lg text-red-500"><AlertCircle className="w-4 h-4" /></div>
-          <div><p className="font-bold text-sm text-texto-principal">Alertas</p><p className="text-[11px] text-texto-secundario">2 itens vencendo</p></div>
-        </div>
-        <ChevronRight className="w-4 h-4 text-gray-300" />
-      </div>
-    </div>
-  </div>
-);
-
-const DemoMestre = () => (
-  <div className="flex flex-col h-full bg-superficie relative">
-    <div className="p-5 bg-verde-escuro text-white rounded-t-[1.5rem]">
-      <div className="flex justify-between items-center mb-3">
-        <h4 className="font-fraunces text-lg font-bold">Visão da Casa</h4>
-        <div className="bg-white/20 px-2.5 py-0.5 rounded-full text-[10px] font-mono">CONTA MESTRE</div>
-      </div>
-      <p className="text-verde-palido text-[11px]">A conta mestre visualiza a casa inteira e controla os demais acessos.</p>
-    </div>
-    <div className="p-5 flex flex-col gap-3">
-      <h5 className="font-bold text-xs text-texto-principal uppercase tracking-widest">Membros Conectados</h5>
-
-      <div className="border border-borda rounded-xl p-3.5 flex justify-between items-center relative overflow-hidden">
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-principal"></div>
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-verde-palido flex items-center justify-center font-bold text-principal text-sm">A</div>
-          <div><p className="font-bold text-sm text-texto-principal">Ana (Você)</p><p className="text-[11px] text-texto-secundario">Conta Mestre • Online</p></div>
-        </div>
-        <button className="text-[10px] border border-borda px-2 py-0.5 rounded-full text-texto-secundario bg-gray-50 cursor-default">Ativo</button>
-      </div>
-
-      <div className="border border-borda rounded-xl p-3.5 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center font-bold text-texto-secundario text-sm">L</div>
-          <div><p className="font-bold text-sm text-texto-principal">Lucas</p><p className="text-[11px] text-texto-secundario">Subconta Compras • iPhone</p></div>
-        </div>
-        <button className="text-[10px] border border-red-100 bg-red-50 text-red-600 px-2 py-0.5 rounded-full">Desconectar</button>
-      </div>
-
-      <button className="mt-1 w-full py-2.5 bg-fundo-claro border border-borda rounded-xl text-sm font-bold text-principal flex items-center justify-center gap-2">
-        <Settings className="w-4 h-4" /> Gerenciar Acessos
-      </button>
-    </div>
-  </div>
-);
-
-const DemoCompras = () => (
-  <div className="flex flex-col h-full bg-fundo-claro">
-    <div className="p-5 bg-superficie border-b border-borda flex justify-between items-center">
-      <div>
-        <h4 className="font-fraunces text-lg font-bold text-verde-escuro">Compras</h4>
-        <p className="text-texto-secundario text-[11px] mt-0.5">Perfil focado apenas em suprimentos.</p>
-      </div>
-      <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center font-bold text-texto-secundario text-sm">L</div>
-    </div>
-    <div className="p-5 flex flex-col gap-2.5">
-      <div className="bg-[#FFF9F0] border border-[#FFEACA] rounded-xl p-2.5 flex gap-2.5 text-ambar mb-1 shadow-sm">
-        <AlertCircle className="w-4 h-4 shrink-0" />
-        <p className="text-[11px] font-bold">Repor Sabão em Pó e Papel Higiênico hoje.</p>
-      </div>
-
-      {[
-        { n: "Leite Integral", q: "3 caixas", done: true },
-        { n: "Ovos", q: "1 dúzia", done: false },
-        { n: "Detergente Neutro", q: "2 unidades", done: false }
-      ].map((i, idx) => (
-        <div key={idx} className={`bg-superficie border border-borda rounded-xl p-3.5 flex items-center gap-3 shadow-sm transition-opacity ${i.done ? 'opacity-50' : 'opacity-100'}`}>
-          <div className={`w-4 h-4 rounded-md border flex items-center justify-center ${i.done ? 'bg-principal border-principal' : 'border-gray-300'}`}>
-            {i.done && <Check className="w-2.5 h-2.5 text-white" />}
-          </div>
-          <div>
-            <p className={`font-bold text-sm ${i.done ? 'line-through text-texto-secundario' : 'text-texto-principal'}`}>{i.n}</p>
-            <p className="text-[11px] text-texto-secundario">{i.q}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-const DemoCozinha = () => (
-  <div className="flex flex-col h-full bg-superficie">
-    <div className="p-5 bg-verde-palido border-b border-verde-claro/30 flex justify-between items-center">
-      <div>
-        <h4 className="font-fraunces text-lg font-bold text-principal">Cozinha</h4>
-        <p className="text-principal/80 text-[11px] mt-0.5">Receitas e planejamento.</p>
-      </div>
-      <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center font-bold text-principal shadow-sm text-sm">M</div>
-    </div>
-    <div className="p-5 flex flex-col gap-3">
-      <div className="bg-superficie border border-red-100 rounded-xl overflow-hidden shadow-sm">
-        <div className="bg-red-50 p-2 flex items-center gap-2 text-red-600 border-b border-red-100">
-          <AlertCircle className="w-3.5 h-3.5" />
-          <span className="text-[10px] font-bold uppercase tracking-widest">Aviso de Validade</span>
-        </div>
-        <div className="p-3.5">
-          <p className="text-sm font-bold text-texto-principal">Iogurte Natural vence amanhã.</p>
-          <p className="text-[11px] text-texto-secundario mt-1">Temos receita de Bolo de Iogurte disponível.</p>
-        </div>
-      </div>
-
-      <h5 className="font-bold text-xs text-texto-principal uppercase tracking-widest mt-1">Plano de Hoje</h5>
-      <div className="border border-borda rounded-xl p-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-fundo-claro flex items-center justify-center text-principal">
-            <ChefHat className="w-4 h-4" />
-          </div>
-          <div>
-            <p className="text-texto-secundario text-[11px]">Jantar</p>
-            <p className="font-bold text-sm text-texto-principal">Risoto de Queijo</p>
-          </div>
-        </div>
-        <ChevronRight className="w-4 h-4 text-gray-300" />
-      </div>
-    </div>
-  </div>
-);
-
-const DemoSessoes = () => (
-  <div className="flex flex-col h-full bg-fundo-claro">
-    <div className="p-5 bg-verde-escuro text-white text-center">
-      <ShieldCheck className="w-7 h-7 mx-auto text-verde-palido mb-2" />
-      <h4 className="font-fraunces text-lg font-bold">Controle de Sessões</h4>
-      <p className="text-verde-palido text-[11px] mt-0.5">Gerencie os acessos do MultiPRO em tempo real.</p>
-    </div>
-    <div className="p-5 flex flex-col gap-2.5">
-      <div className="bg-superficie border border-principal rounded-xl p-3.5 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 bg-principal text-white text-[9px] uppercase font-bold px-2 py-0.5 rounded-bl-lg">Este Aparelho</div>
-        <div className="flex items-center gap-3">
-          <Smartphone className="w-5 h-5 text-principal" />
-          <div><p className="font-bold text-sm text-texto-principal">iPhone 15 Pro - Ana (Mestre)</p><p className="text-[11px] text-verde-claro font-bold">Online agora</p></div>
-        </div>
-      </div>
-      <div className="bg-superficie border border-borda rounded-xl p-3.5 shadow-sm flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Smartphone className="w-5 h-5 text-texto-secundario" />
-          <div><p className="font-bold text-sm text-texto-principal">Galaxy S23 - Lucas (Compras)</p><p className="text-[11px] text-verde-claro font-bold">Online agora</p></div>
-        </div>
-        <button className="text-gray-400" title="Desconectar Sessão"><X className="w-4 h-4" /></button>
-      </div>
-      <div className="bg-superficie border border-borda rounded-xl p-3.5 shadow-sm opacity-60">
-        <div className="flex items-center gap-3">
-          <Smartphone className="w-5 h-5 text-gray-400" />
-          <div><p className="font-bold text-sm text-gray-500">iPhone 13 - Marina (Cozinha)</p><p className="text-[11px] text-gray-400">Desconectado (visto há 2h)</p></div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
 
 // ═══════════════════════════════════════════════
 // MAIN PAGE COMPONENT
 // ═══════════════════════════════════════════════
 
 export default function SalesPage() {
-  const [activeTab, setActiveTab] = useState(0);
-
-  const tabs = [
-    { id: 0, label: "IndividualPRO", subtitle: "Uso solo" },
-    { id: 1, label: "Conta Mestre", subtitle: "MultiPRO" },
-    { id: 2, label: "Subconta Compras", subtitle: "MultiPRO" },
-    { id: 3, label: "Subconta Cozinha", subtitle: "MultiPRO" },
-    { id: 4, label: "Sessões conectadas", subtitle: "Segurança" },
-  ];
-
   return (
     <>
       {/* Global Style Injections */}
@@ -1068,8 +885,12 @@ export default function SalesPage() {
 
             {/* Dynamic Background */}
             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+              {/* Grid de pontos sutil */}
+              <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, #165A5218 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
+              {/* Blobs de cor */}
               <div className="absolute top-0 left-[-10%] w-[60%] lg:w-[40%] h-[600px] lg:h-[800px] bg-[#D4C3FD] rounded-full blur-[100px] opacity-40 mix-blend-multiply" />
               <div className="absolute top-0 right-[-10%] w-[60%] lg:w-[40%] h-[600px] lg:h-[800px] bg-[#FFE0C8] rounded-full blur-[100px] opacity-50 mix-blend-multiply" />
+              <div className="absolute top-[25%] left-1/2 -translate-x-1/2 w-[55%] h-[350px] bg-[#A8D5BA] rounded-full blur-[120px] opacity-20 mix-blend-multiply" />
               <div className="absolute top-[60%] left-1/2 -translate-x-1/2 w-full h-[400px] bg-gradient-to-b from-transparent to-white z-10" />
             </div>
 
@@ -1081,8 +902,9 @@ export default function SalesPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="inline-block px-4 py-1.5 border border-principal/20 text-principal font-bold text-[10px] rounded-full tracking-widest uppercase mb-6 shadow-sm bg-white/50 backdrop-blur-sm"
+                  className="inline-flex items-center gap-2 px-4 py-1.5 border border-principal/20 text-principal font-bold text-[10px] rounded-full tracking-widest uppercase mb-6 shadow-sm bg-white/60 backdrop-blur-sm"
                 >
+                  <Sparkles className="w-3 h-3 text-principal" />
                   Gestão doméstica inteligente
                 </motion.span>
 
@@ -1092,7 +914,9 @@ export default function SalesPage() {
                   transition={{ delay: 0.2, duration: 0.6 }}
                   className="font-fraunces text-4xl md:text-5xl lg:text-7xl font-bold text-texto-principal leading-[1.05] mb-5 tracking-tight text-balance"
                 >
-                  A casa que se organiza com você.
+                  A casa que se{' '}
+                  <span className="text-principal">organiza</span>{' '}
+                  com você.
                 </motion.h1>
 
                 <motion.p
@@ -1105,11 +929,36 @@ export default function SalesPage() {
                 </motion.p>
               </div>
 
+              {/* Social Proof Bar */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.42, duration: 0.5 }}
+                className="flex items-center gap-3 mb-8"
+              >
+                <div className="flex -space-x-2">
+                  {['👩', '👨', '👩', '👦'].map((avatar, i) => (
+                    <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1B3A2D] to-[#2D6A4F] border-2 border-white flex items-center justify-center text-sm shadow-sm">
+                      {avatar}
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-3 h-3 fill-[#F4A261] text-[#F4A261]" />
+                    ))}
+                    <span className="text-[11px] font-bold text-texto-principal ml-1">4.9</span>
+                  </div>
+                  <p className="text-[10px] text-texto-secundario font-medium">+500 famílias já organizam a casa</p>
+                </div>
+              </motion.div>
+
               {/* Phone Mockup with real app elements */}
               <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.7 }}
+                transition={{ delay: 0.5, duration: 0.7 }}
                 className="relative w-[320px] lg:w-[380px] h-[580px] lg:h-[680px] mb-8"
               >
                 <HeroPhoneMockup />
@@ -1119,14 +968,22 @@ export default function SalesPage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7, duration: 0.5 }}
-                className="flex flex-col items-center gap-4 mb-6"
+                transition={{ delay: 0.75, duration: 0.5 }}
+                className="flex flex-col items-center gap-3 mb-6"
               >
-                <Link to="/auth" className="bg-principal text-white px-10 py-4 rounded-full text-center transition-all shadow-lg hover:-translate-y-1 hover:shadow-xl font-bold text-base">
+                <Link
+                  to="/auth"
+                  className="relative overflow-hidden bg-gradient-to-r from-[#165A52] to-[#2D6A4F] text-white px-10 py-4 rounded-full text-center transition-all shadow-[0_8px_30px_-8px_rgba(22,90,82,0.55)] hover:-translate-y-1 hover:shadow-[0_12px_40px_-8px_rgba(22,90,82,0.65)] font-bold text-base flex items-center gap-2"
+                >
                   Começar agora — é grátis por 7 dias
+                  <ChevronRight className="w-4 h-4" />
                 </Link>
 
-                <div className="flex items-center gap-3 bg-white/60 backdrop-blur-sm border border-borda rounded-full px-5 py-2.5 shadow-sm">
+                <p className="text-[11px] text-texto-secundario font-medium">
+                  Sem cartão de crédito • Cancela quando quiser
+                </p>
+
+                <div className="flex items-center gap-3 bg-white/60 backdrop-blur-sm border border-borda rounded-full px-5 py-2.5 shadow-sm mt-1">
                   <Globe className="w-4 h-4 text-principal shrink-0" />
                   <p className="text-sm font-medium text-texto-secundario">
                     <span className="text-texto-principal font-bold">WebApp</span> — funciona direto no navegador, em <span className="text-texto-principal font-bold">Android</span> e <span className="text-texto-principal font-bold">iOS</span>
@@ -1287,96 +1144,11 @@ export default function SalesPage() {
                 </motion.p>
               </div>
 
-              <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 items-center">
-
-                {/* Left: Tab navigation for MultiPRO views */}
-                <div className="w-full lg:w-[360px] flex flex-col gap-2 z-10">
-                  <p className="text-[10px] font-bold text-[#52B788]/60 uppercase tracking-widest mb-2 px-1">Modos de visualização</p>
-                  {tabs.map((tab, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`w-full text-left p-4 rounded-xl transition-all border outline-none focus-visible:ring-2 focus-visible:ring-white flex items-center justify-between group ${activeTab === tab.id
-                        ? 'bg-verde-escuro border-verde-claro shadow-lg'
-                        : 'bg-transparent border-white/10 hover:bg-white/5 hover:border-white/20'
-                        }`}
-                    >
-                      <div>
-                        <p className={`text-[9px] uppercase font-bold tracking-widest mb-0.5 ${activeTab === tab.id ? 'text-verde-claro' : 'text-gray-500'}`}>{tab.subtitle}</p>
-                        <h4 className={`text-base font-bold ${activeTab === tab.id ? 'text-white' : 'text-gray-400 group-hover:text-gray-200'}`}>{tab.label}</h4>
-                      </div>
-                      <ChevronRight className={`w-4 h-4 transition-transform ${activeTab === tab.id ? 'text-white translate-x-1' : 'text-gray-600'}`} />
-                    </button>
-                  ))}
-                </div>
-
-                {/* Center: Interactive Demo Phone */}
-                <div className="flex-1 flex justify-center items-center">
-                  <div className="relative">
-                    <InteractiveDemoPhone />
-
-                    {/* Glow effect behind phone */}
-                    <div className="absolute inset-0 -z-10 blur-[60px] opacity-20" style={{ background: 'radial-gradient(ellipse at center, #52B788 0%, transparent 70%)' }} />
-                  </div>
-                </div>
-
-                {/* Right: MultiPRO view in second phone */}
-                <div className="hidden lg:flex flex-col items-center">
-                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-4">Visão MultiPRO</p>
-                  <div className="w-[260px] h-[520px] rounded-[2.5rem] border-[6px] border-[#2A3A33] shadow-2xl overflow-hidden bg-white relative">
-                    {/* Notch */}
-                    <div className="absolute top-1 inset-x-0 h-4 bg-transparent flex justify-center z-50 pointer-events-none">
-                      <div className="w-[70px] h-4 bg-[#2A3A33] rounded-b-xl"></div>
-                    </div>
-                    <div className="w-full h-full overflow-hidden">
-                      <AnimatePresence mode="popLayout">
-                        <motion.div
-                          key={activeTab}
-                          initial={{ opacity: 0, scale: 0.92, y: 20 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.92, y: -20 }}
-                          transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-                          className="w-full h-full"
-                        >
-                          {activeTab === 0 && <DemoIndividual />}
-                          {activeTab === 1 && <DemoMestre />}
-                          {activeTab === 2 && <DemoCompras />}
-                          {activeTab === 3 && <DemoCozinha />}
-                          {activeTab === 4 && <DemoSessoes />}
-                        </motion.div>
-                      </AnimatePresence>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Mobile: show second phone below on small screens */}
-              <div className="lg:hidden mt-10">
-                <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-4 text-center">Visão MultiPRO</p>
-                <div className="flex justify-center">
-                  <div className="w-full max-w-[300px] h-[520px] rounded-[2.5rem] border-[6px] border-[#2A3A33] shadow-2xl overflow-hidden bg-white relative">
-                    <div className="absolute top-1 inset-x-0 h-4 bg-transparent flex justify-center z-50 pointer-events-none">
-                      <div className="w-[70px] h-4 bg-[#2A3A33] rounded-b-xl"></div>
-                    </div>
-                    <div className="w-full h-full overflow-hidden">
-                      <AnimatePresence mode="popLayout">
-                        <motion.div
-                          key={activeTab}
-                          initial={{ opacity: 0, scale: 0.92, y: 20 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.92, y: -20 }}
-                          transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-                          className="w-full h-full"
-                        >
-                          {activeTab === 0 && <DemoIndividual />}
-                          {activeTab === 1 && <DemoMestre />}
-                          {activeTab === 2 && <DemoCompras />}
-                          {activeTab === 3 && <DemoCozinha />}
-                          {activeTab === 4 && <DemoSessoes />}
-                        </motion.div>
-                      </AnimatePresence>
-                    </div>
-                  </div>
+              <div className="flex justify-center">
+                <div className="relative">
+                  <InteractiveDemoPhone />
+                  {/* Glow effect behind phone */}
+                  <div className="absolute inset-0 -z-10 blur-[60px] opacity-20" style={{ background: 'radial-gradient(ellipse at center, #52B788 0%, transparent 70%)' }} />
                 </div>
               </div>
             </div>
