@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, {
   createContext,
   useContext,
@@ -620,6 +622,20 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       setShoppingList((prev) =>
         prev.map((i) => (i.id === id ? { ...i, isCompleted: next } : i)));
+
+      // Notify other household members when an item is purchased
+      if (next) {
+        const buyerName = onboardingData?.name || user.email?.split("@")[0] || "Alguém";
+        supabase.functions.invoke("send-push-notification", {
+          body: {
+            home_id: homeId,
+            title: "🛒 Kaza — Compra realizada",
+            body: `${buyerName} comprou ${item.name}`,
+            data: { type: "purchase", item_id: id, item_name: item.name },
+            exclude_user_id: user.id,
+          },
+        }).catch(() => {}); // Best effort — don't block UI
+      }
     } catch (err) {
       showError("Erro ao atualizar item", err);
     }

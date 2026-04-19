@@ -594,18 +594,17 @@ export function Onboarding() {
 
       await Promise.all([
         // subscriptions table — canonical plan/trial source
-        supabase.from("subscriptions").upsert(
+        // Row already exists from bootstrap_user() trigger; just update it.
+        supabase.from("subscriptions").update(
           {
-            user_id: uid,
             plan_tier: selectedPlan,
-            plan_label: selectedPlan === "multiPRO" ? "MultiPRO" : "Individual",
+            plan_label: selectedPlan === "multiPRO" ? "MultiPRO" : "IndividualPRO",
             is_active: false,
             trial_started_at: now,
             trial_ends_at: trialEnd,
             plan: "free",
-          },
-          { onConflict: "user_id" }
-        ),
+          }
+        ).eq("user_id", uid),
         // profiles table — fallback used by SubscriptionContext
         supabase.from("profiles").update({ trial_start_date: now }).eq("user_id", uid),
       ]);

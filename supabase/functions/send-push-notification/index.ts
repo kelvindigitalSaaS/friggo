@@ -23,7 +23,8 @@ function json(body: unknown, status = 200) {
 }
 
 interface PushPayload {
-  group_id: string;
+  group_id?: string;
+  home_id?: string;
   title: string;
   body: string;
   data?: Record<string, string>;
@@ -37,34 +38,48 @@ serve(async (req) => {
 
   try {
     const payload: PushPayload = await req.json();
-    const { group_id, title, body, data, exclude_user_id } = payload;
+    const { group_id, home_id, title, body, data, exclude_user_id } = payload;
 
-    if (!group_id || !title || !body) {
-      return json({ error: "Missing required fields: group_id, title, body" }, 400);
+    if ((!group_id && !home_id) || !title || !body) {
+      return json({ error: "Missing required fields: (group_id or home_id), title, body" }, 400);
     }
 
-    // Get all active members of the group
-    let membersQuery = supabase
-      .from("sub_account_members")
-      .select("user_id")
-      .eq("group_id", group_id)
-      .eq("is_active", true);
+    let userIds: string[] = [];
 
-    if (exclude_user_id) {
-      membersQuery = membersQuery.neq("user_id", exclude_user_id);
+    if (home_id) {
+      // Home-based members (shopping list, consumables, etc.)
+      let homeQuery = supabase
+        .from("home_members")
+        .select("user_id")
+        .eq("home_id", home_id);
+
+      if (exclude_user_id) {
+        homeQuery = homeQuery.neq("user_id", exclude_user_id);
+      }
+
+      const { data: homeMembers, error: homeError } = await homeQuery;
+      if (homeError) return json({ error: homeError.message }, 500);
+      userIds = (homeMembers || []).map((m) => m.user_id);
+    } else if (group_id) {
+      // Group-based members (subscription group)
+      let membersQuery = supabase
+        .from("sub_account_members")
+        .select("user_id")
+        .eq("group_id", group_id)
+        .eq("is_active", true);
+
+      if (exclude_user_id) {
+        membersQuery = membersQuery.neq("user_id", exclude_user_id);
+      }
+
+      const { data: members, error: membersError } = await membersQuery;
+      if (membersError) return json({ error: membersError.message }, 500);
+      userIds = (members || []).map((m) => m.user_id);
     }
 
-    const { data: members, error: membersError } = await membersQuery;
-
-    if (membersError) {
-      return json({ error: membersError.message }, 500);
-    }
-
-    if (!members || members.length === 0) {
+    if (userIds.length === 0) {
       return json({ success: true, sent: 0 });
     }
-
-    const userIds = members.map((m) => m.user_id);
 
     // Get push subscriptions for these users
     const { data: subscriptions, error: subsError } = await supabase

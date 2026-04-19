@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useSubscription, PLAN_DETAILS } from "@/contexts/SubscriptionContext";
 import { SubAccountMember, SubAccountInvite } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
@@ -142,8 +142,10 @@ export function useGroupMembers() {
     };
   }, [groupId, user]);
 
-  // Calculate slots
-  const maxSlots = subscription?.subscription?.max_members ?? 1;
+  // Calculate slots — derive maxSlots from PLAN_DETAILS based on effective plan
+  const effectivePlan = subscription?.plan ?? "free";
+  const planMax = PLAN_DETAILS[effectivePlan as keyof typeof PLAN_DETAILS]?.maxAccounts ?? 1;
+  const maxSlots = Math.max(planMax, 1);
   const filledSlots = members.filter((m) => m.is_active).length;
   const pendingSlots = pendingInvites.filter((i) => i.status === "pending").length;
   const freeSlots = maxSlots - filledSlots - pendingSlots;

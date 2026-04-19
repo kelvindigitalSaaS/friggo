@@ -36,13 +36,13 @@ const PLANS: Record<PlanId, { url: string; maxAccounts: number; price: string; p
   individualPRO: {
     url: "https://pay.cakto.com.br/356go8z",
     maxAccounts: 1,
-    price: "R$ 14,99",
+    price: "R$ 19,90",
     period: "/mês",
   },
   multiPRO: {
     url: "https://pay.cakto.com.br/wbjq4ne_846287",
     maxAccounts: 3,
-    price: "R$ 27,00",
+    price: "R$ 37,90",
     period: "/mês",
   },
 };

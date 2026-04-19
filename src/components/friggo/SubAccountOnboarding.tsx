@@ -572,4 +572,48 @@ export async function completeInviteSetup(userId: string, inviteToken: string) {
       { onConflict: "user_id" }
     );
   if (profileErr) throw profileErr;
+
+  // Insert selected consumables into the shared home
+  if (Array.isArray(saved.consumables) && saved.consumables.length > 0) {
+    // Find the home the user just joined
+    const { data: membership } = await supabase
+      .from("home_members")
+      .select("home_id")
+      .eq("user_id", userId)
+      .limit(1)
+      .maybeSingle();
+
+    if (membership?.home_id) {
+      const DEFAULT_CONSUMABLES_MAP: Record<string, { icon: string; category: string }> = {
+        "Papel Higiênico": { icon: "🧻", category: "hygiene" },
+        "Papel Toalha": { icon: "🧺", category: "cleaning" },
+        "Detergente": { icon: "🧴", category: "cleaning" },
+        "Sabonete": { icon: "🧼", category: "hygiene" },
+        "Pasta de Dente": { icon: "🪥", category: "hygiene" },
+        "Shampoo": { icon: "🧴", category: "hygiene" },
+        "Desodorante": { icon: "🚿", category: "hygiene" },
+        "Álcool em Gel": { icon: "🧴", category: "hygiene" },
+      };
+
+      const rows = saved.consumables.map((name: string) => {
+        const info = DEFAULT_CONSUMABLES_MAP[name] || { icon: "📦", category: "other" };
+        return {
+          home_id: membership.home_id,
+          name,
+          icon: info.icon,
+          category: info.category,
+          current_stock: 1,
+          unit: "un",
+          daily_consumption: 0,
+          min_stock: 1,
+          usage_interval: "weekly",
+        };
+      });
+
+      // Upsert to avoid duplicates if the home already has some of these
+      await supabase
+        .from("consumables")
+        .upsert(rows, { onConflict: "home_id,name" });
+    }
+  }
 }
