@@ -180,40 +180,16 @@ function AuthGuard({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-/** Phone mockup frame — visível apenas em browsers de desktop (≥768 px).
- *  Em mobile e no app nativo os wrappers viram pass-throughs via CSS.
- *  Só aplicamos a moldura nas rotas /app/ */
+/** Layout wrapper — sem moldura de telefone no desktop, tela cheia sempre. */
 function MobileFrame({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
 
-  const isFrameRoute = pathname.startsWith("/app") || pathname.startsWith("/auth");
-
   useEffect(() => {
-    if (!isNative && isFrameRoute && window.innerWidth >= 768) {
-      document.body.classList.add("desktop-mobile-frame-active");
-    } else {
-      document.body.classList.remove("desktop-mobile-frame-active");
-    }
+    // Remove qualquer classe de frame antigo
+    document.body.classList.remove("desktop-mobile-frame-active");
+  }, [pathname]);
 
-    return () => {
-      document.body.classList.remove("desktop-mobile-frame-active");
-    };
-  }, [pathname, isFrameRoute]);
-
-  if (isNative || !isFrameRoute) return <>{children}</>;
-
-  return (
-    <div className="mobile-frame-bg">
-      <div className="mobile-frame-device">
-        <div className="mobile-frame-notch" aria-hidden />
-        <div className="mobile-frame-screen">
-          {children}
-        </div>
-        <div className="mobile-frame-home-bar" aria-hidden />
-      </div>
-      <span className="mobile-frame-label">friggo</span>
-    </div>
-  );
+  return <>{children}</>;
 }
 
 /** Só exibe o guia de instalação PWA dentro do /app — nunca na página de vendas */
@@ -223,8 +199,16 @@ function AppPWAInstallGuide() {
   return <PWAInstallGuide />;
 }
 
-/** Rota raiz: redireciona usuários autenticados direto para o app; outros veem a página de vendas */
+/** Rota raiz: redireciona logados para /app/home, outros para /auth */
 function RootRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return <SplashLoader />;
+  if (user) return <Navigate to="/app/home" replace />;
+  return <Navigate to="/auth" replace />;
+}
+
+/** Rota /pagina-de-vendas: logados vão para /app/home; visitantes veem a page de vendas */
+function SalesPageGuard() {
   const { user, loading } = useAuth();
   if (loading) return <SplashLoader />;
   if (user) return <Navigate to="/app/home" replace />;
@@ -313,7 +297,7 @@ const App = () => {
                               <Route path="/sucesso" element={<SuccessPage />} />
                               <Route path="/success" element={<SuccessPage />} />
                               <Route path="/invite" element={<InvitePage />} />
-                              <Route path="/pagina-de-vendas" element={<SalesPage />} />
+                              <Route path="/pagina-de-vendas" element={<SalesPageGuard />} />
                               <Route path="/pagina-de-vendas/termos-de-uso" element={<SalesTermsPage />} />
                               <Route path="/pagina-de-vendas/privacidade" element={<SalesPrivacyPage />} />
 

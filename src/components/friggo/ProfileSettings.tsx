@@ -64,7 +64,7 @@ export function ProfileSettings({ open, onClose }: ProfileSettingsProps) {
  toast.success(successMsg[language]);
  onClose();
  } catch (error) {
- console.error('Error saving profile:', error);
+ if (import.meta.env.DEV) console.error('[DEV] Error saving profile:', error);
  } finally {
  setSaving(false);
  }
@@ -186,7 +186,7 @@ export function ProfileSettings({ open, onClose }: ProfileSettingsProps) {
  setAvatarUrl(publicUrl);
  toast.success(l.photoUpdated);
  } catch (error) {
- console.error('Upload error:', error);
+ if (import.meta.env.DEV) console.error('[DEV] Upload error:', error);
  // Fallback to base64
  const reader = new FileReader();
  reader.onloadend = () => {

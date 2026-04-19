@@ -81,6 +81,30 @@ export default function Auth() {
     if (user && !authLoading) navigate("/app/home");
   }, [user, authLoading, navigate]);
 
+  // ── Handle PKCE email confirmation: Supabase SDK (detectSessionInUrl+flowType:pkce)
+  //    exchanges the code automatically via getSession(). We only need to:
+  //    1. Clean the code from the URL so it doesn't linger
+  //    2. Show the right toast when SIGNED_IN fires after email confirmation ──
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get("code");
+    const type = url.searchParams.get("type");
+    if (!code) return;
+    url.searchParams.delete("code");
+    url.searchParams.delete("type");
+    window.history.replaceState({}, "", url.toString());
+    // SDK handles the exchange; we listen via onAuthStateChange below
+    if (type === "signup") {
+      // Show confirmation toast after SDK resolves the session
+      const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+        if (event === "SIGNED_IN") {
+          toast.success("Email confirmado! Bem-vindo ao KAZA!");
+          sub.subscription.unsubscribe();
+        }
+      });
+    }
+  }, []);
+
   // ── Handlers ──
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,7 +135,7 @@ export default function Auth() {
       } else {
         const redirectUrl = isNative
           ? "kaza://auth/callback"
-          : window.location.origin;
+          : `${window.location.origin}/auth`;
         const { data, error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
@@ -140,7 +164,7 @@ export default function Auth() {
           setView("login");
           return;
         }
-        toast.success("Conta criada! Bem-vindo ao kaza App!");
+        toast.success("Conta criada! Bem-vindo ao KAZA!");
         navigate("/app/home");
       }
     } catch (error: any) {

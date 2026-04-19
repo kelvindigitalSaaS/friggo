@@ -17,16 +17,12 @@ export async function initNativeUI() {
     if (isAndroid) {
       await StatusBar.setBackgroundColor({ color: "#22c55e" });
     }
-  } catch (e) {
-    console.warn("[StatusBar] init error", e);
-  }
+  } catch (_e) { /* StatusBar unavailable */ }
 
   // Hide splash screen after the app is rendered
   try {
     await SplashScreen.hide({ fadeOutDuration: 300 });
-  } catch (e) {
-    console.warn("[SplashScreen] hide error", e);
-  }
+  } catch (_e) { /* SplashScreen unavailable */ }
 
   // Keyboard: scroll the focused input into view on iOS
   try {
@@ -36,9 +32,7 @@ export async function initNativeUI() {
     Keyboard.addListener("keyboardWillHide", () => {
       document.body.classList.remove("keyboard-open");
     });
-  } catch (e) {
-    console.warn("[Keyboard] listener error", e);
-  }
+  } catch (_e) { /* Keyboard unavailable */ }
 }
 
 /**

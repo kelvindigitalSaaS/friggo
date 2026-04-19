@@ -25,29 +25,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    console.log("[AUTH] getSession: start");
+    const t0 = performance.now();
 
-    // Listen for auth changes
+    // onAuthStateChange fires INITIAL_SESSION synchronously before getSession
+    // resolves, so we let it drive the initial state and skip the redundant
+    // setUser from getSession when a session is already known.
+    let initialSessionResolved = false;
+
     const {
       data: { subscription }
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (import.meta.env.DEV) { console.log("[DEV] Auth state changed:", event, !!session); }
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[AUTH] onAuthStateChange:", event, "hasSession=", !!session);
+      if (event === "INITIAL_SESSION") {
+        initialSessionResolved = true;
+      }
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
 
+      // After email confirmation or first sign-in, ensure profile name is synced
+      // from auth user_metadata (set during signUp) to the profiles table.
+      // IMPORTANT: defer Supabase calls out of this callback — running them
+      // inside onAuthStateChange holds the auth mutex and deadlocks every
+      // other Supabase query in the app.
+      if ((event === "SIGNED_IN" || event === "USER_UPDATED") && session?.user) {
+        const metaName = session.user.user_metadata?.name;
+        const userId = session.user.id;
+        if (metaName) {
+          setTimeout(async () => {
+            try {
+              const { data: profile } = await supabase
+                .from("profiles")
+                .select("name")
+                .eq("user_id", userId)
+                .maybeSingle();
+              if (profile && !profile.name) {
+                await supabase
+                  .from("profiles")
+                  .update({ name: metaName })
+                  .eq("user_id", userId);
+              }
+            } catch { /* best-effort */ }
+          }, 0);
+        }
+      }
+
       // Redirect to login if signed out — only for protected /app/* routes
-      if (event === "SIGNED_OUT" || !session) {
+      if (event === "SIGNED_OUT" && !session) {
         const path = window.location.pathname;
-        if (path.startsWith("/app") && path !== "/auth") {
+        if (path.startsWith("/app")) {
           window.location.href = "/auth";
         }
       }
+    });
+
+    // getSession is a fallback: if INITIAL_SESSION already fired and resolved
+    // the session, skip redundant state updates to prevent double fetchData.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("[AUTH] getSession: done in", (performance.now() - t0).toFixed(0), "ms, hasSession=", !!session);
+      if (!initialSessionResolved) {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    }).catch((err) => {
+      console.error("[AUTH] getSession: ERROR", err);
+      if (!initialSessionResolved) setLoading(false);
     });
 
     return () => subscription.unsubscribe();

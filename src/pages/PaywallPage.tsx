@@ -10,17 +10,17 @@ function PaywallPage() {
   const labels: Record<string, any> = {
     "pt-BR": {
       title: "Seu trial de 7 dias encerrou",
-      subtitle: "Escolha um plano para continuar usando o Friggo",
+      subtitle: "Escolha um plano para continuar usando o KAZA",
       logout: "Sair da conta",
     },
     en: {
       title: "Your 7-day trial has ended",
-      subtitle: "Choose a plan to continue using Friggo",
+      subtitle: "Choose a plan to continue using KAZA",
       logout: "Sign out",
     },
     es: {
       title: "Tu prueba de 7 días ha terminado",
-      subtitle: "Elige un plan para continuar usando Friggo",
+      subtitle: "Elige un plan para continuar usando KAZA",
       logout: "Cerrar sesión",
     },
   };
@@ -32,7 +32,7 @@ function PaywallPage() {
       id: "individual",
       label: "Individual",
       tagline: language === "pt-BR" ? "Para 1 dispositivo" : language === "es" ? "Para 1 dispositivo" : "For 1 device",
-      price: "R$ 14,99",
+      price: "R$ 19,90",
       period: language === "pt-BR" ? "/mês" : "/mo",
       url: "https://pay.cakto.com.br/356go8z",
       features: [
@@ -46,7 +46,7 @@ function PaywallPage() {
       id: "trio",
       label: "Trio",
       tagline: language === "pt-BR" ? "Para até 3 dispositivos" : language === "es" ? "Para hasta 3 dispositivos" : "Up to 3 devices",
-      price: "R$ 27,00",
+      price: "R$ 37,90",
       period: language === "pt-BR" ? "/mês" : "/mo",
       url: "https://pay.cakto.com.br/wbjq4ne_846287",
       features: [

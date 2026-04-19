@@ -171,17 +171,25 @@ export function KazaProvider({ children }: { children: ReactNode }) {
 
   const fetchData = useCallback(async () => {
     if (!user) {
+      console.log("[FRIGGO] no user, using demo");
       setItems(DEMO_ITEMS);
       setShoppingList([]);
+      setConsumables([]);
+      setFavoriteRecipes([]);
+      setMealPlan([]);
       setOnboardingData(null);
+      setOnboardingCompleted(false);
       setHomeId(null);
       setLoading(false);
       return;
     }
 
+    const t0 = performance.now();
+    console.log("[FRIGGO] fetchData: start for", user.id);
     try {
       setLoading(true);
 
+      console.log("[FRIGGO] querying home_members...");
       const { data: membership, error: memberErr } = await supabase
         .from("home_members")
         .select("home_id, role")
@@ -189,36 +197,45 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         .order("joined_at", { ascending: true })
         .limit(1)
         .maybeSingle();
+      console.log("[FRIGGO] home_members done in", (performance.now() - t0).toFixed(0), "ms, hid=", membership?.home_id);
       if (memberErr) throw memberErr;
 
       const hid = membership?.home_id ?? null;
       setHomeId(hid);
 
       if (!hid) {
-        // Post-email-confirmation: complete pending invite setup stored in localStorage
-        const pendingRaw = localStorage.getItem("pending_invite_setup");
-        if (pendingRaw) {
+        // Post-email-confirmation: complete pending invite setup.
+        // Primary: invite_token stored in user_metadata at signUp (DB-backed, reliable).
+        // Fallback: legacy localStorage key for users who signed up before this migration.
+        const metaToken: string | undefined = (user as any).user_metadata?.invite_token;
+        const legacyRaw = localStorage.getItem("pending_invite_setup");
+        const legacyToken: string | undefined = legacyRaw
+          ? (() => { try { return JSON.parse(legacyRaw).inviteToken; } catch { return undefined; } })()
+          : undefined;
+
+        const inviteToken = metaToken ?? legacyToken;
+        if (inviteToken) {
           try {
-            const pending = JSON.parse(pendingRaw);
-            localStorage.removeItem("pending_invite_setup");
-            await supabase.rpc("accept_invite", { invite_token: pending.inviteToken });
-            await supabase
-              .from("profiles")
-              .update({ name: pending.name, cpf: pending.cpf, onboarding_completed: true })
-              .eq("user_id", user.id);
+            const { completeInviteSetup } = await import("@/components/friggo/SubAccountOnboarding");
+            await completeInviteSetup(user.id, inviteToken);
+            if (legacyRaw) localStorage.removeItem("pending_invite_setup");
             // Re-run now that home_members entry exists
             await fetchData();
             return;
           } catch (err) {
-            if (import.meta.env.DEV) console.error("[DEV] Pending invite setup failed:", err);
+            if (import.meta.env.DEV) console.error("[DEV] Invite setup failed:", err);
+            // Clear stale legacy key so we don't retry indefinitely
+            if (legacyRaw) localStorage.removeItem("pending_invite_setup");
           }
         }
+
         setItems([]);
         setShoppingList([]);
         setConsumables([]);
         setFavoriteRecipes([]);
         setMealPlan([]);
         setOnboardingData(buildDefaultOnboarding());
+        setOnboardingCompleted(false);
         setLoading(false);
         return;
       }
@@ -297,6 +314,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         })
       );
     } catch (err: any) {
+      console.error("[FRIGGO] fetchData error:", err);
       const msg = err?.message || String(err);
       const isAuthError = msg.includes("JWT") || msg.includes("auth") || msg.includes("token") || err?.code === "PGRST301";
       if (!isAuthError) {
@@ -306,11 +324,18 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       setShoppingList([]);
       setOnboardingData(null);
     } finally {
+      console.log("[FRIGGO] fetchData: done in", (performance.now() - t0).toFixed(0), "ms");
       setLoading(false);
     }
   }, [user]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  // Debounce fetchData: multiple auth events (SIGNED_IN, INITIAL_SESSION,
+  // getSession) fire in quick succession and all update `user`, each
+  // re-creating fetchData. Without debounce, 3 concurrent fetches run.
+  useEffect(() => {
+    const t = setTimeout(() => { fetchData(); }, 80);
+    return () => clearTimeout(t);
+  }, [fetchData]);
 
   // ── alerts ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -906,12 +931,12 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Blindagem: só gravar name/cpf se ainda não existirem no perfil.
       const profileUpdate: any = {
         avatar_url: data.avatarUrl,
         onboarding_completed: true,
       };
-      if (!onboardingData?.name && data.name) profileUpdate.name = data.name;
+      if (data.name) profileUpdate.name = data.name;
+      // CPF: blindado no banco por trigger único — só grava se ainda não preenchido
       if (!onboardingData?.cpf && rawCpf.length > 0) profileUpdate.cpf = rawCpf;
 
       const results = await Promise.all([
@@ -974,11 +999,11 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           .from("profiles")
           .update({ onboarding_completed: false })
           .eq("user_id", user.id);
-      } catch (err) {
-        console.error("Error resetting onboarding:", err);
-      }
+      } catch (_err) { /* silent */ }
     }
-    setOnboardingData(buildDefaultOnboarding({}));
+    // Preserve the current name so it doesn't get wiped on reconfigure
+    const preservedName = onboardingData?.name || user?.user_metadata?.name || "";
+    setOnboardingData(buildDefaultOnboarding({ name: preservedName }));
     setOnboardingCompleted(false);
   };
 
@@ -993,8 +1018,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       const homePatch: any = {};
       const settingsPatch: any = {};
 
-      // Nome é blindado: só pode ser definido uma vez. Se já existe, ignora silenciosamente.
-      if (data.name !== undefined && !onboardingData?.name) profilePatch.name = data.name;
+      if (data.name !== undefined) profilePatch.name = data.name;
       if (data.avatarUrl !== undefined) profilePatch.avatar_url = data.avatarUrl;
       // CPF também é blindado (trigger no banco também bloqueia em última instância).
       if ((data as any).cpf !== undefined && !onboardingData?.cpf) {

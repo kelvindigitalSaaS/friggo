@@ -102,26 +102,21 @@ export default function CheckoutSuccessPage() {
                         }
                       });
                     }
-                  } catch (inviteError) {
-                    console.warn(`Failed to send invite to ${member.email}:`, inviteError);
-                  }
+                  } catch (_inviteError) { /* silent */ }
                 }
               }
             }
             // Clear stored members after sending invites
             try { localStorage.removeItem("trio_members"); } catch {}
           }
-        } catch (inviteProcessError) {
-          console.warn("Error processing invites:", inviteProcessError);
-        }
+        } catch (_inviteProcessError) { /* silent */ }
 
         toast.success(l.thanks);
 
         // Aguardar um pouco e depois ir para home
         await new Promise((resolve) => setTimeout(resolve, 10000));
         navigate("/app/home");
-      } catch (error) {
-        console.error("Erro ao verificar pagamento:", error);
+      } catch (_error) {
         toast.error("Erro ao ativar assinatura");
       } finally {
         setLoading(false);

@@ -199,7 +199,7 @@ export function BarcodeScanner({ open, onClose }: BarcodeScannerProps) {
         searchProduct(code);
       }
     } catch (error) {
-      console.error("Native scan error:", error);
+      if (import.meta.env.DEV) console.error("[DEV] Native scan error:", error);
       toast.error("Erro ao escanear. Use o modo manual.");
       setMode("manual");
     } finally {
@@ -219,7 +219,7 @@ export function BarcodeScanner({ open, onClose }: BarcodeScannerProps) {
         videoRef.current.srcObject = stream;
       }
     } catch (error) {
-      console.error("Camera error:", error);
+      if (import.meta.env.DEV) console.error("[DEV] Camera error:", error);
       toast.error("Não foi possível acessar a câmera");
       setMode("manual");
     } finally {

@@ -8,7 +8,9 @@
       "Bash(git add *)",
       "Bash(git commit -m 'fix: load saved CPF and profile data in onboarding flow *)",
       "Bash(sed \"s/.*\\\\.from\\('//\")",
-      "Bash(sed \"s/'\\).*//\")"
+      "Bash(sed \"s/'\\).*//\")",
+      "Bash(npx vite *)",
+      "Bash(npm run *)"
     ]
   }
 }

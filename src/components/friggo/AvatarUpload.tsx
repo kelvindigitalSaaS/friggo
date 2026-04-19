@@ -46,7 +46,7 @@ export default function AvatarUpload({ currentUrl, size = 100, className }: Avat
         const message = String(uploadError.message || uploadError.error || uploadError);
         if (message.toLowerCase().includes("row-level") || message.toLowerCase().includes("policy")) {
           toast.error("Permissão negada: o upload foi bloqueado pela política do storage. O arquivo deve ser enviado para a pasta com seu user id (ex: userId/avatar.png).");
-          console.error("Upload error (RLS):", uploadError);
+          if (import.meta.env.DEV) console.error("[DEV] Upload error (RLS):", uploadError);
           return;
         }
         throw uploadError;
@@ -64,7 +64,7 @@ export default function AvatarUpload({ currentUrl, size = 100, className }: Avat
       toast.success("Foto de perfil atualizada!");
     } catch (error: any) {
       toast.error(error.message || "Erro ao fazer upload da imagem.");
-      console.error("Upload error:", error);
+      if (import.meta.env.DEV) console.error("[DEV] Upload error:", error);
     } finally {
       setUploading(false);
     }

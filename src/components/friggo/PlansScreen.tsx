@@ -2,36 +2,47 @@ import { useState } from "react";
 import {
   Check,
   Crown,
-  Sparkles,
-  Star,
+  Users,
+  User,
   X,
   Loader2,
-  CreditCard
+  ArrowRight,
+  Sparkles,
+  Shield,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   useSubscription,
   PLAN_DETAILS,
   SubscriptionPlan
 } from "@/contexts/SubscriptionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from '@/hooks/useAuth';
-import { openExternalUrl } from '@/lib/nativeBrowser';
-import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { openExternalUrl } from "@/lib/nativeBrowser";
 import { toast } from "sonner";
 import { MiniCheckout } from "./MiniCheckout";
+import { motion } from "framer-motion";
 
 interface PlansScreenProps {
   onClose?: () => void;
 }
+
+const INDIVIDUAL_FEATURES = [
+  "1 conta · uso pessoal",
+  "Itens e receitas ilimitados",
+  "Lista de compras ilimitada",
+  "Alertas inteligentes sem restrição",
+  "Planejador de refeições semanal",
+  "Histórico completo de consumo",
+];
+
+const MULTI_FEATURES = [
+  "Até 3 sub-contas no mesmo plano",
+  "Geladeira e estoque compartilhados",
+  "Lista de compras em tempo real",
+  "Configurações e notificações independentes",
+  "Notificar outros membros da casa",
+  "Conta mestre gerencia acesso",
+];
 
 export function PlansScreen({ onClose }: PlansScreenProps) {
   const {
@@ -41,79 +52,71 @@ export function PlansScreen({ onClose }: PlansScreenProps) {
     refreshSubscription,
     upgradePlan,
     trialDaysRemaining,
-    registrationDate
   } = useSubscription();
   const { language } = useLanguage();
   const { user } = useAuth();
   const [loading, setLoading] = useState<SubscriptionPlan | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [checkoutPlan, setCheckoutPlan] = useState<SubscriptionPlan | null>(
-    null
-  );
+  const [checkoutPlan, setCheckoutPlan] = useState<SubscriptionPlan | null>(null);
 
-  const plans: SubscriptionPlan[] = ["basic", "standard", "premium"];
-
-  const labels = {
+  const l = {
     "pt-BR": {
-      title: "Escolha seu Plano",
-      subtitle: "Desbloqueie todo o potencial do Kaza",
+      title: "Escolha seu plano",
+      subtitle: "Sem limitações. Sem complicações.",
       currentPlan: "Plano atual",
-      free: "Grátis",
-      active: "Ativo",
-      mostPopular: "Mais Popular",
-      subscribe: "Assinar Agora",
-      currentPlanBtn: "Plano Atual",
-      manageSub: "Gerenciar Assinatura",
-      footer:
-        "Cancele a qualquer momento. Pagamentos processados de forma segura.",
-      googlePay: "Google Pay",
-      applePay: "Apple Pay",
-      cards: "Cartões",
+      subscribe: "Começar agora",
+      currentPlanBtn: "Plano ativo",
+      manageSub: "Gerenciar assinatura",
+      footer: "Cancele quando quiser · Pagamento seguro",
       processing: "Processando...",
       errorCheckout: "Erro ao iniciar checkout",
-      perMonth: "/mês"
+      perMonth: "/mês",
+      trial: "dias de teste restantes",
+      popular: "Mais popular",
+      individual: "individualPRO",
+      multi: "multiPRO",
+      individualTagline: "Para uso pessoal",
+      multiTagline: "Para toda a família",
     },
     en: {
-      title: "Choose Your Plan",
-      subtitle: "Unlock the full potential of Kaza",
+      title: "Choose your plan",
+      subtitle: "No limits. No complications.",
       currentPlan: "Current plan",
-      free: "Free",
-      active: "Active",
-      mostPopular: "Most Popular",
-      subscribe: "Subscribe Now",
-      currentPlanBtn: "Current Plan",
-      manageSub: "Manage Subscription",
-      footer: "Cancel anytime. Payments securely processed.",
-      googlePay: "Google Pay",
-      applePay: "Apple Pay",
-      cards: "Cards",
+      subscribe: "Get started",
+      currentPlanBtn: "Active plan",
+      manageSub: "Manage subscription",
+      footer: "Cancel anytime · Secure payment",
       processing: "Processing...",
       errorCheckout: "Error starting checkout",
-      perMonth: "/mo"
+      perMonth: "/mo",
+      trial: "trial days left",
+      popular: "Most popular",
+      individual: "individualPRO",
+      multi: "multiPRO",
+      individualTagline: "For personal use",
+      multiTagline: "For the whole family",
     },
     es: {
-      title: "Elige tu Plan",
-      subtitle: "Desbloquea todo el potencial de Kaza",
+      title: "Elige tu plan",
+      subtitle: "Sin límites. Sin complicaciones.",
       currentPlan: "Plan actual",
-      free: "Gratis",
-      active: "Activo",
-      mostPopular: "Más Popular",
-      subscribe: "Suscribirse Ahora",
-      currentPlanBtn: "Plan Actual",
-      manageSub: "Gestionar Suscripción",
-      footer: "Cancela cuando quieras. Pagos procesados de forma segura.",
-      googlePay: "Google Pay",
-      applePay: "Apple Pay",
-      cards: "Tarjetas",
+      subscribe: "Empezar ahora",
+      currentPlanBtn: "Plan activo",
+      manageSub: "Gestionar suscripción",
+      footer: "Cancela cuando quieras · Pago seguro",
       processing: "Procesando...",
       errorCheckout: "Error al iniciar checkout",
-      perMonth: "/mes"
-    }
+      perMonth: "/mes",
+      trial: "días de prueba restantes",
+      popular: "Más popular",
+      individual: "individualPRO",
+      multi: "multiPRO",
+      individualTagline: "Para uso personal",
+      multiTagline: "Para toda la familia",
+    },
   };
+  const t = l[language as keyof typeof l] || l["pt-BR"];
 
-  const l = labels[language];
-
-  // Show inline checkout
   if (checkoutPlan) {
     return (
       <MiniCheckout
@@ -123,11 +126,7 @@ export function PlansScreen({ onClose }: PlansScreenProps) {
           await refreshSubscription();
           setCheckoutPlan(null);
           toast.success(
-            language === "pt-BR"
-              ? "Assinatura ativada!"
-              : language === "en"
-                ? "Subscription activated!"
-                : "¡Suscripción activada!"
+            language === "pt-BR" ? "Assinatura ativada!" : "Subscription activated!"
           );
         }}
         onCancel={() => setCheckoutPlan(null)}
@@ -140,16 +139,13 @@ export function PlansScreen({ onClose }: PlansScreenProps) {
     setLoading(plan);
     try {
       await startCheckout(plan);
-    } catch (err) {
-      toast.error(language === "pt-BR" ? l.errorCheckout : l.errorCheckout);
-      // Fallback: open direct payment link with email (CPF handled server-side if available)
+    } catch (_err) {
+      toast.error(t.errorCheckout);
       try {
         const base = "https://pay.cakto.com.br/wbjq4ne_846287";
         const emailParam = user?.email ? `?email=${encodeURIComponent(user.email)}` : "";
         await openExternalUrl(`${base}${emailParam}`);
-      } catch (e) {
-        // ignore fallback errors
-      }
+      } catch (_e) { /* silent */ }
     } finally {
       setLoading(null);
     }
@@ -159,228 +155,209 @@ export function PlansScreen({ onClose }: PlansScreenProps) {
     setPortalLoading(true);
     try {
       await openCustomerPortal();
-    } catch (error) {
+    } catch (_error) {
       toast.error("Error opening portal");
     } finally {
       setPortalLoading(false);
     }
   };
 
-  const getPlanIcon = (plan: SubscriptionPlan) => {
-    switch (plan) {
-      case "basic":
-        return <Star className="h-6 w-6" />;
-      case "standard":
-        return <Sparkles className="h-6 w-6" />;
-      case "premium":
-        return <Crown className="h-6 w-6" />;
-      default:
-        return null;
-    }
-  };
-
-  const getPlanStyles = (plan: SubscriptionPlan) => {
-    switch (plan) {
-      case "basic":
-        return {
-          card: "border-border bg-card",
-          header: "text-foreground",
-          badge: "bg-muted text-muted-foreground",
-          button: "bg-primary text-primary-foreground hover:bg-primary/90"
-        };
-      case "standard":
-        return {
-          card: "border-primary/50 shadow-sm ",
-          header: "text-primary",
-          badge: "bg-primary/20 text-primary",
-          button: "bg-primary text-primary-foreground hover:bg-primary/90"
-        };
-      case "premium":
-        return {
-          card: "border-amber-500/50 shadow-sm ",
-          header: "text-amber-600 dark:text-amber-400",
-          badge: "bg-amber-500 text-white",
-          button: "bg-amber-500 hover:bg-amber-600 text-white"
-        };
-      default:
-        return { card: "", header: "", badge: "", button: "" };
-    }
-  };
+  const isIndividualActive = subscription?.plan === "individualPRO" || subscription?.plan === "premium";
+  const isMultiActive = subscription?.plan === "multiPRO";
+  const hasPaidPlan = isIndividualActive || isMultiActive;
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-24">
-      <div className="mx-auto max-w-lg">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{l.title}</h1>
-            <p className="text-sm text-gray-500">{l.subtitle}</p>
-          </div>
-          {onClose && (
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-5 w-5" />
-            </Button>
-          )}
+    <div className="min-h-screen bg-[#FAF8F4] pb-24 font-sans">
+      {/* Header */}
+      <div className="px-5 pt-6 pb-2 flex items-center justify-between">
+        <div>
+          <h1 className="text-[26px] font-black text-[#1a1a1a] tracking-tight">{t.title}</h1>
+          <p className="text-[14px] text-black/50 font-medium mt-0.5">{t.subtitle}</p>
         </div>
-
-        {trialDaysRemaining > 0 && (
-          <div className="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-emerald-800">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-semibold">Teste Gratuito</div>
-                <div className="text-xs">Seu trial termina em {trialDaysRemaining} dia{trialDaysRemaining > 1 ? 's' : ''}.</div>
-              </div>
-              <div className="text-sm font-bold">Aproveite agora</div>
-            </div>
-          </div>
-        )}
-
-        {subscription && (
-          <Card className="mb-6 border-dashed">
-            <CardContent className="flex items-center justify-between p-4">
-              <div>
-                <p className="text-sm text-gray-500">{l.currentPlan}</p>
-                <p className="font-semibold text-foreground">
-                  {PLAN_DETAILS[subscription.plan].name}
-                </p>
-              </div>
-              <Badge variant="outline">
-                {subscription.plan === "free" ? l.free : l.active}
-              </Badge>
-            </CardContent>
-          </Card>
-        )}
-
-        {subscription && subscription.plan !== "free" && (
-          <Button
-            variant="outline"
-            className="w-full mb-4 gap-2"
-            onClick={handleManageSubscription}
-            disabled={portalLoading}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="h-10 w-10 rounded-xl bg-black/5 flex items-center justify-center text-[#1a1a1a] active:scale-90 transition-all"
           >
-            {portalLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <CreditCard className="h-4 w-4" />
-            )}
-            {l.manageSub}
-          </Button>
+            <X className="h-5 w-5" />
+          </button>
         )}
+      </div>
 
-        <div className="mb-6 flex items-center justify-center gap-4">
-          {[l.googlePay, l.applePay, l.cards].map((label) => (
-            <div
-              key={label}
-              className="flex items-center gap-2 rounded-md bg-muted px-3 py-2"
-            >
-              <span className="text-xs font-medium text-gray-500">{label}</span>
+      {/* Trial banner */}
+      {trialDaysRemaining > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mx-5 mt-3 rounded-2xl bg-emerald-50 border border-emerald-200/80 px-4 py-3 flex items-center gap-3"
+        >
+          <Sparkles className="h-4 w-4 text-emerald-600 shrink-0" />
+          <p className="text-[13px] font-semibold text-emerald-800">
+            {trialDaysRemaining} {t.trial}
+          </p>
+        </motion.div>
+      )}
+
+      <div className="px-5 mt-5 space-y-4">
+        {/* individualPRO — white card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className={`relative rounded-[2rem] bg-white border p-6 shadow-sm ${
+            isIndividualActive
+              ? "border-emerald-400 ring-2 ring-emerald-400/30"
+              : "border-black/[0.07]"
+          }`}
+        >
+          {isIndividualActive && (
+            <div className="absolute top-5 right-5 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full">
+              {t.currentPlanBtn}
             </div>
-          ))}
-        </div>
+          )}
 
-        <div className="space-y-4">
-          {plans.map((plan) => {
-            const details = PLAN_DETAILS[plan];
-            const styles = getPlanStyles(plan);
-            const isCurrentPlan = subscription?.plan === plan;
-            const isPopular = plan === "standard";
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-11 w-11 rounded-2xl bg-emerald-50 flex items-center justify-center">
+              <User className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div>
+              <h2 className="text-[18px] font-black text-[#1a1a1a]">{t.individual}</h2>
+              <p className="text-[12px] text-black/50 font-medium">{t.individualTagline}</p>
+            </div>
+          </div>
 
-            return (
-              <Card
-                key={plan}
-                className={cn(
-                  "relative overflow-hidden transition-all duration-300",
-                  styles.card,
-                  isCurrentPlan && "ring-2 ring-primary"
-                )}
+          <div className="flex items-baseline gap-1 mb-5">
+            <span className="text-[36px] font-black text-[#1a1a1a] leading-none">
+              R$ {PLAN_DETAILS.individualPRO.price.toFixed(2).replace(".", ",")}
+            </span>
+            <span className="text-[14px] text-black/50 font-semibold">{t.perMonth}</span>
+          </div>
+
+          <ul className="space-y-2.5 mb-6">
+            {INDIVIDUAL_FEATURES.map((f, i) => (
+              <li key={i} className="flex items-center gap-2.5 text-[13px] text-[#1a1a1a] font-medium">
+                <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                {f}
+              </li>
+            ))}
+          </ul>
+
+          {hasPaidPlan ? (
+            <button
+              onClick={handleManageSubscription}
+              disabled={portalLoading}
+              className="w-full h-12 rounded-2xl bg-black/5 text-[14px] font-black text-[#1a1a1a] flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+            >
+              {portalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {t.manageSub}
+            </button>
+          ) : (
+            <button
+              onClick={() => handleSelectPlan("individualPRO")}
+              disabled={Boolean(loading)}
+              className="w-full h-12 rounded-2xl text-[14px] font-black text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+              style={{
+                background: "linear-gradient(135deg, #0F3D38 0%, #165A52 100%)",
+                boxShadow: "0 6px 20px rgba(22,90,82,0.30)",
+              }}
+            >
+              {loading === "individualPRO" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  {t.subscribe}
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
+          )}
+        </motion.div>
+
+        {/* multiPRO — dark card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="relative rounded-[2rem] overflow-hidden"
+          style={{
+            background: "linear-gradient(135deg, #0F3D38 0%, #165A52 60%, #1a7a6e 100%)",
+            boxShadow: "0 20px 50px rgba(22,90,82,0.40)",
+          }}
+        >
+          {/* Blobs */}
+          <div className="absolute top-0 right-0 w-40 h-40 bg-white/[0.05] rounded-full blur-3xl -translate-y-10 translate-x-10 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-28 h-28 bg-emerald-300/10 rounded-full blur-2xl translate-y-6 -translate-x-6 pointer-events-none" />
+
+          {/* Popular badge */}
+          <div className="absolute top-5 right-5 bg-emerald-400 text-[#0F3D38] text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full">
+            {isMultiActive ? t.currentPlanBtn : t.popular}
+          </div>
+
+          <div className="relative p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-11 w-11 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-sm">
+                <Users className="h-5 w-5 text-emerald-300" />
+              </div>
+              <div>
+                <h2 className="text-[18px] font-black text-white">{t.multi}</h2>
+                <p className="text-[12px] text-emerald-300/80 font-medium">{t.multiTagline}</p>
+              </div>
+            </div>
+
+            <div className="flex items-baseline gap-1 mb-5">
+              <span className="text-[36px] font-black text-white leading-none">
+                R$ {PLAN_DETAILS.multiPRO.price.toFixed(2).replace(".", ",")}
+              </span>
+              <span className="text-[14px] text-white/60 font-semibold">{t.perMonth}</span>
+            </div>
+
+            <ul className="space-y-2.5 mb-6">
+              {MULTI_FEATURES.map((f, i) => (
+                <li key={i} className="flex items-center gap-2.5 text-[13px] text-white font-medium">
+                  <Check className="h-4 w-4 text-emerald-300 shrink-0" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+
+            {hasPaidPlan ? (
+              <button
+                onClick={handleManageSubscription}
+                disabled={portalLoading}
+                className="w-full h-12 rounded-2xl bg-white/10 border border-white/20 text-[14px] font-black text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-all backdrop-blur-sm"
               >
-                {isPopular && (
-                  <div className="absolute right-0 top-0">
-                    <Badge
-                      className={cn(
-                        "rounded-bl-lg rounded-tr-lg rounded-br-none rounded-tl-none",
-                        styles.badge
-                      )}
-                    >
-                      {l.mostPopular}
-                    </Badge>
-                  </div>
+                {portalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {t.manageSub}
+              </button>
+            ) : (
+              <button
+                onClick={() => handleSelectPlan("multiPRO")}
+                disabled={Boolean(loading)}
+                className="w-full h-12 rounded-2xl bg-emerald-400 text-[14px] font-black text-[#0F3D38] flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-lg shadow-emerald-400/20"
+              >
+                {loading === "multiPRO" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Crown className="h-4 w-4" />
+                    {t.subscribe}
+                  </>
                 )}
-                {plan === "premium" && (
-                  <div className="absolute left-0 top-0">
-                    <Badge className="rounded-br-lg rounded-tl-lg bg-emerald-600 text-white">
-                      Oferta exclusiva
-                    </Badge>
-                  </div>
-                )}
-                {plan === "premium" && (
-                  <div className="absolute inset-0 pointer-events-none" />
-                )}
+              </button>
+            )}
+          </div>
+        </motion.div>
 
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={cn(
-                        "rounded-md p-2",
-                        plan === "premium"
-                          ? " text-white"
-                          : "bg-primary/10 text-primary"
-                      )}
-                    >
-                      {getPlanIcon(plan)}
-                    </div>
-                    <div>
-                      <CardTitle className={cn("text-lg", styles.header)}>
-                        {details.name}
-                      </CardTitle>
-                      <CardDescription>
-                        <span className="text-2xl font-bold text-foreground">
-                          R$ {details.price.toFixed(2)}
-                        </span>
-                        <span className="text-gray-500">{l.perMonth}</span>
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="space-y-4">
-                  <ul className="space-y-2">
-                    {details.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-sm">
-                        <Check
-                          className={cn(
-                            "h-4 w-4 flex-shrink-0",
-                            plan === "premium"
-                              ? "text-amber-500"
-                              : "text-primary"
-                          )}
-                        />
-                        <span className="text-gray-500">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    className={cn(
-                      "w-full gap-2",
-                      plan === "premium" ? "bg-emerald-600 hover:bg-emerald-700 text-white" : styles.button
-                    )}
-                    disabled={isCurrentPlan || Boolean(loading)}
-                    onClick={() => handleSelectPlan(plan)}
-                  >
-                    {loading === plan ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : isCurrentPlan ? (
-                      l.currentPlanBtn
-                    ) : (
-                      l.subscribe
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        <p className="mt-6 text-center text-xs text-gray-500">{l.footer}</p>
+        {/* Footer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.18 }}
+          className="flex items-center justify-center gap-2 pt-2"
+        >
+          <Shield className="h-3.5 w-3.5 text-black/30" />
+          <p className="text-[11px] text-black/40 font-medium text-center">{t.footer}</p>
+        </motion.div>
       </div>
     </div>
   );

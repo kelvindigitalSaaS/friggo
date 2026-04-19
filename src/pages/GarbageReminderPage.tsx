@@ -45,6 +45,7 @@ export default function GarbageReminderPage() {
   const [reminderTime, setReminderTime] = useState("20:00");
   const [garbageLocation, setGarbageLocation] = useState<"street" | "building">("street");
   const [buildingFloor, setBuildingFloor] = useState("");
+  const [vibrationEnabled, setVibrationEnabled] = useState(true);
 
   const LS_KEY = "kaza-garbage-reminder";
 
@@ -55,6 +56,7 @@ export default function GarbageReminderPage() {
     setReminderTime(data.reminder_time ?? data.reminderTime ?? "20:00");
     setGarbageLocation(data.garbage_location ?? data.garbageLocation ?? "street");
     setBuildingFloor(data.building_floor ?? data.buildingFloor ?? "");
+    setVibrationEnabled(data.vibration_enabled ?? data.vibrationEnabled ?? true);
   };
 
   // 1. Carrega do localStorage imediatamente (cache rápido)
@@ -114,7 +116,9 @@ export default function GarbageReminderPage() {
       in: "Em",
       days: "dias",
       reminderMsg: "Não esqueça de colocar o lixo para fora!",
-      reminderMsgBuilding: "Não esqueça de descer o lixo!"
+      reminderMsgBuilding: "Não esqueça de descer o lixo!",
+      vibration: "Vibração",
+      vibrationDesc: "Vibrar por até 10 segundos até desativar"
     },
     en: {
       title: "Garbage Reminder",
@@ -137,7 +141,9 @@ export default function GarbageReminderPage() {
       in: "In",
       days: "days",
       reminderMsg: "Don't forget to take out the trash!",
-      reminderMsgBuilding: "Don't forget to take the trash down!"
+      reminderMsgBuilding: "Don't forget to take the trash down!",
+      vibration: "Vibration",
+      vibrationDesc: "Vibrate for up to 10 seconds until dismissed"
     },
     es: {
       title: "Recordatorio de Basura",
@@ -160,7 +166,9 @@ export default function GarbageReminderPage() {
       in: "En",
       days: "días",
       reminderMsg: "¡No olvides sacar la basura!",
-      reminderMsgBuilding: "¡No olvides bajar la basura!"
+      reminderMsgBuilding: "¡No olvides bajar la basura!",
+      vibration: "Vibración",
+      vibrationDesc: "Vibrar hasta 10 segundos hasta desactivar"
     }
   };
 
@@ -168,7 +176,7 @@ export default function GarbageReminderPage() {
   const weekdays = WEEKDAYS[language === "pt-BR" ? "pt-BR" : language === "es" ? "es" : "en"];
 
   const handleSave = async () => {
-    const cfg = { enabled, selectedDays, reminderTime, garbageLocation, buildingFloor };
+    const cfg = { enabled, selectedDays, reminderTime, garbageLocation, buildingFloor, vibrationEnabled };
 
     // DB é a fonte de verdade — grava primeiro
     if (homeId && user) {
@@ -182,10 +190,9 @@ export default function GarbageReminderPage() {
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Sao_Paulo",
           garbage_location: garbageLocation,
           building_floor: buildingFloor || null,
+          vibration_enabled: vibrationEnabled,
         }, { onConflict: "home_id,user_id" });
-      } catch (e) {
-        console.warn("[garbage] save to DB failed", e);
-      }
+      } catch (_e) { /* silent — DB save optional */ }
     }
 
     // Atualiza cache local para o scheduler de notificações (lê do localStorage)
@@ -351,6 +358,29 @@ export default function GarbageReminderPage() {
                 </button>
               </div>
             </div>
+
+            <Card className="border-none bg-muted/30 shadow-none">
+              <CardContent className="flex items-center justify-between py-6">
+                <div className="flex items-center gap-4">
+                  <div className="rounded-xl bg-primary/10 p-3">
+                    <Bell className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <Label className="text-base font-bold">
+                      {l.vibration}
+                    </Label>
+                    <p className="text-xs text-muted-foreground font-medium">
+                      {l.vibrationDesc}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={vibrationEnabled}
+                  onCheckedChange={setVibrationEnabled}
+                  className="data-[state=checked]:bg-primary"
+                />
+              </CardContent>
+            </Card>
 
             {selectedDays.length > 0 && (
               <div className="bg-primary/10 rounded-2xl p-6 flex items-center justify-between border border-primary/20">

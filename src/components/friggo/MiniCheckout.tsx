@@ -155,7 +155,7 @@ export function MiniCheckout({ plan, onSuccess, onCancel }: MiniCheckoutProps) {
         window.location.href = data.url;
       }
     } catch (error: any) {
-      console.error("Checkout error:", error);
+      if (import.meta.env.DEV) console.error("[DEV] Checkout error:", error);
       const msg =
         error?.message &&
         error.message !== "Edge Function returned a non-2xx status code"

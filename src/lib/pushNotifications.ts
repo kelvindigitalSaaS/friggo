@@ -19,12 +19,14 @@ function detectBrowser() {
 
 // ── Vibration patterns ───────────────────────────────────────────────────────
 const VIBRATE_DEFAULT = [100, 50, 100]; // short double buzz
-// 3-second alarm pattern: 500ms on + 100ms off repeated ~5 times ≈ 3s total
-// NOTE: Web Vibration API (navigator.vibrate) only works in foreground tab on Android Chrome.
-// iOS Safari does not support navigator.vibrate at all. On native (Capacitor) the OS handles
-// vibration natively via the Haptics plugin — add @capacitor/haptics for full 3s alarm support.
 const VIBRATE_URGENT = [500, 100, 500, 100, 500, 100, 500, 100, 500]; // ~3s alarm pattern
 const VIBRATE_GENTLE = [80]; // single gentle tap
+// 10-second continuous garbage alarm: 400ms on + 100ms off repeated to reach ~10s
+const VIBRATE_GARBAGE = [
+  400, 100, 400, 100, 400, 100, 400, 100, 400, 100,
+  400, 100, 400, 100, 400, 100, 400, 100, 400, 100,
+  400, 100, 400, 100, 400, 100, 400, 100, 400, 100,
+]; // ~10s alarm pattern
 
 /**
  * Triggers a 3-second vibration alarm (best-effort across platforms).
@@ -89,7 +91,7 @@ const CATEGORY_CONFIGS: Record<NotifCategory, NotifCategoryConfig> = {
     ]
   },
   "garbage": {
-    vibrate: VIBRATE_DEFAULT,
+    vibrate: VIBRATE_GARBAGE,
     requireInteraction: true,
     actions: [
       { action: "done", title: "✅ Já coloquei!" },
@@ -163,9 +165,76 @@ export async function saveWebPushSubscription(): Promise<void> {
       is_active: true,
       last_seen_at: new Date().toISOString(),
     }, { onConflict: "user_id,endpoint" });
-  } catch (e) {
-    console.warn("[push] saveWebPushSubscription failed", e);
+  } catch (_e) { /* best-effort */ }
+}
+
+// ── Web Audio notification sounds ────────────────────────────────────────────
+
+type SoundType = "default" | "urgent" | "gentle" | "garbage" | "checkup";
+
+let _audioCtx: AudioContext | null = null;
+function getAudioCtx(): AudioContext | null {
+  if (typeof AudioContext === "undefined" && typeof (window as any).webkitAudioContext === "undefined") return null;
+  if (!_audioCtx || _audioCtx.state === "closed") {
+    _audioCtx = new (AudioContext || (window as any).webkitAudioContext)();
   }
+  return _audioCtx;
+}
+
+/**
+ * Plays a notification sound using Web Audio API — no audio file required.
+ * Best-effort: silently ignored if AudioContext is unavailable (e.g. iOS background).
+ */
+export function playNotificationSound(type: SoundType = "default") {
+  try {
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    // Resume if suspended (browser autoplay policy)
+    if (ctx.state === "suspended") ctx.resume();
+
+    const now = ctx.currentTime;
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+
+    const playTone = (freq: number, start: number, dur: number, vol: number, rampDown = true) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.connect(g);
+      g.connect(gain);
+      osc.frequency.value = freq;
+      osc.type = type === "urgent" || type === "garbage" ? "square" : "sine";
+      g.gain.setValueAtTime(vol, now + start);
+      if (rampDown) g.gain.exponentialRampToValueAtTime(0.001, now + start + dur);
+      osc.start(now + start);
+      osc.stop(now + start + dur + 0.01);
+    };
+
+    switch (type) {
+      case "urgent":
+      case "garbage":
+        // Three short alarm beeps
+        gain.gain.setValueAtTime(0.3, now);
+        playTone(880, 0, 0.15, 0.3);
+        playTone(880, 0.2, 0.15, 0.3);
+        playTone(1100, 0.4, 0.2, 0.35);
+        break;
+      case "checkup":
+        // Gentle two-tone chime
+        gain.gain.setValueAtTime(0.2, now);
+        playTone(523, 0, 0.3, 0.2);    // C5
+        playTone(659, 0.25, 0.4, 0.2); // E5
+        break;
+      case "gentle":
+        gain.gain.setValueAtTime(0.15, now);
+        playTone(660, 0, 0.25, 0.15);
+        break;
+      default:
+        // Two-note ding
+        gain.gain.setValueAtTime(0.2, now);
+        playTone(523, 0, 0.2, 0.2);    // C5
+        playTone(784, 0.15, 0.3, 0.2); // G5
+    }
+  } catch (_e) { /* AudioContext unavailable */ }
 }
 
 /**
@@ -189,6 +258,32 @@ export async function sendWebNotification(
     return;
 
   const category = options?.category ?? "general";
+
+  // Check if vibration is enabled for garbage notifications
+  let vibrationEnabled = true;
+  if (category === "garbage") {
+    try {
+      const garbageCfg = localStorage.getItem("kaza-garbage-reminder");
+      if (garbageCfg) {
+        const cfg = JSON.parse(garbageCfg);
+        vibrationEnabled = cfg.vibrationEnabled !== false;
+      }
+    } catch { /* use default */ }
+  }
+
+  if (!vibrationEnabled) {
+    // Skip vibration and sound for disabled garbage notifications
+    if (category === "garbage") {
+      playNotificationSound("gentle");
+    } else if (category === "consume-today") {
+      playNotificationSound("urgent");
+    }
+  } else {
+    if (category === "garbage" || category === "consume-today") {
+      playNotificationSound("urgent");
+    }
+  }
+
   const config = CATEGORY_CONFIGS[category];
   // Personalize notification options per browser for best compatibility
   const browser = detectBrowser();
@@ -211,7 +306,9 @@ export async function sendWebNotification(
   };
 
   // Vibrate and requireInteraction may be ignored by some browsers; attach when useful
-  baseOptions.vibrate = config.vibrate;
+  if (vibrationEnabled || category !== "garbage") {
+    baseOptions.vibrate = config.vibrate;
+  }
   baseOptions.requireInteraction = config.requireInteraction;
 
   // Actions are best supported in Chromium-based browsers. Avoid sending actions to Safari/Firefox where support is spotty.
@@ -276,7 +373,6 @@ export function registerNotificationHandlers() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FRIGGO_SOUND = "friggo_notification.wav";
 const CHANNEL_ID = "kaza_default";
 const CHANNEL_URGENT = "kaza_urgent";
 const NOTIFICATION_GROUP_DEFAULT = "kaza_updates";
@@ -339,7 +435,7 @@ function buildNativeNotification(
     largeBody: `${body}\n\nAbra o Kaza para ver os detalhes.`,
     summaryText: CATEGORY_SUMMARY[category],
     channelId: isUrgent ? CHANNEL_URGENT : CHANNEL_ID,
-    sound: FRIGGO_SOUND,
+    sound: "default",
     smallIcon: "ic_stat_icon",
     largeIcon: "ic_launcher",
     iconColor: getNotificationColor(category),
@@ -446,24 +542,17 @@ export async function initPushNotifications() {
   registerLocalNotificationListeners();
 
   const permResult = await PushNotifications.requestPermissions();
-  if (permResult.receive !== "granted") {
-    console.warn("[Push] Permission not granted");
-    return;
-  }
+  if (permResult.receive !== "granted") return;
 
   await PushNotifications.register();
 
-  PushNotifications.addListener("registration", (token) => {
-    console.log("[Push] Device token:", token.value);
-    // TODO: send token.value to your backend (supabase profiles.push_token)
+  PushNotifications.addListener("registration", (_token) => {
+    // TODO: send _token.value to your backend (supabase profiles.push_token)
   });
 
-  PushNotifications.addListener("registrationError", (err) => {
-    console.error("[Push] Registration error:", err.error);
-  });
+  PushNotifications.addListener("registrationError", (_err) => { /* silent */ });
 
   PushNotifications.addListener("pushNotificationReceived", (notification) => {
-    console.log("[Push] Received in foreground:", notification);
     // Show a local notification so the user sees it while in-app
     LocalNotifications.schedule({
       notifications: [
@@ -481,7 +570,6 @@ export async function initPushNotifications() {
   });
 
   PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
-    console.log("[Push] Action performed:", action);
     const url = action.notification.data?.url;
     if (isAndroid && typeof url === "string") {
       window.location.href = url;
@@ -500,10 +588,7 @@ export async function initLocalNotifications() {
   await ensureNotificationChannels();
   registerLocalNotificationListeners();
 
-  const perm = await LocalNotifications.requestPermissions();
-  if (perm.display !== "granted") {
-    console.warn("[LocalNotif] Permission not granted");
-  }
+  await LocalNotifications.requestPermissions();
 }
 
 /**

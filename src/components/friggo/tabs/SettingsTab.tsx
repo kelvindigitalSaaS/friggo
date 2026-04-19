@@ -816,8 +816,6 @@ export function SettingsTab() {
               onClick={async () => {
                 setConfirmReconfigureOpen(false);
                 await resetOnboarding();
-                // Preserve name typed by user when restarting onboarding
-                updateOnboardingData({ name: localName });
                 navigate("/app/home");
                 toast.success(language === "pt-BR" ? "Configuração reiniciada" : language === "es" ? "Configuración reiniciada" : "Configuration reset");
               }}

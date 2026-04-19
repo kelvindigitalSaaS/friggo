@@ -43,6 +43,7 @@ const TAB_STORAGE_KEY = "friggo-active-tab";
 const tabSpring = { type: "spring" as const, stiffness: 350, damping: 30, mass: 0.8 };
 
 function KazaApp() {
+  // ── ALL hooks must be declared before any early returns ───────────────────
   const { loading: friggoLoading, isOnboarded } = useKaza();
   const { user, loading: authLoading, requireAuth } = useAuth();
   const [activeTab, setActiveTab] = useState(() => {
@@ -54,13 +55,20 @@ function KazaApp() {
     }
   });
   const [prevTab, setPrevTab] = useState(activeTab);
+  // Reset to false whenever the user id changes so the loading screen shows
+  // correctly for new sign-ins after logout within the same browser session.
+  const prevUserId = useRef<string | undefined>(undefined);
   const hasLoadedOnce = useRef(false);
 
   useEffect(() => {
-    if (!authLoading && !friggoLoading) {
+    if (user?.id !== prevUserId.current) {
+      hasLoadedOnce.current = false;
+      prevUserId.current = user?.id;
+    }
+    if (!authLoading && !friggoLoading && user) {
       hasLoadedOnce.current = true;
     }
-  }, [authLoading, friggoLoading]);
+  }, [authLoading, friggoLoading, user]);
 
   const handleTabChange = useCallback((tab: string) => {
     setPrevTab(activeTab);
@@ -81,45 +89,36 @@ function KazaApp() {
     return () => window.removeEventListener("navigateTab", handleNavigateTab);
   }, [handleTabChange]);
 
-  // Verificar autenticação
   useEffect(() => {
-    if (!authLoading) {
-      requireAuth();
-    }
+    if (!authLoading) requireAuth();
   }, [authLoading, requireAuth]);
-
-  // Redirecionar se não estiver autenticado
-  if (!authLoading && !user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  const [showLocalLoading, setShowLocalLoading] = useState(false);
-
-  useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    if ((authLoading || friggoLoading) && !hasLoadedOnce.current) {
-      timeout = setTimeout(() => setShowLocalLoading(true), 300);
-    } else {
-      setShowLocalLoading(false);
-    }
-    return () => clearTimeout(timeout);
-  }, [authLoading, friggoLoading]);
-
-  // Only show loading on first load, not when returning from background
-  if ((authLoading || friggoLoading) && !hasLoadedOnce.current && showLocalLoading) {
-    return <LoadingScreen />;
-  }
-
-  // Mandatory Onboarding
-  if (!isOnboarded) {
-    return <Onboarding />;
-  }
 
   const getTabDirection = (): number => {
     const currentIndex = TAB_ORDER.indexOf(activeTab);
     const prevIndex = TAB_ORDER.indexOf(prevTab);
     return currentIndex > prevIndex ? 1 : -1;
   };
+
+  // ── Early returns after all hooks ─────────────────────────────────────────
+  if (!authLoading && !user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Show loading while auth/data resolves. Skip after first successful load
+  // to avoid flicker when coming back from background.
+  if ((authLoading || friggoLoading) && !hasLoadedOnce.current) {
+    return <LoadingScreen />;
+  }
+
+  // Wait for user+data before showing onboarding vs main app.
+  if (!user || friggoLoading) {
+    return <LoadingScreen />;
+  }
+
+  // Mandatory Onboarding — key resets component state when user changes.
+  if (!isOnboarded) {
+    return <Onboarding key={user.id} />;
+  }
 
   return (
     <div className="min-h-[100dvh] bg-[#fafafa] dark:bg-[#091f1c] pb-nav-safe overflow-hidden">

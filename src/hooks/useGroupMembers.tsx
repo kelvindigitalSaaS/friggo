@@ -69,7 +69,7 @@ export function useGroupMembers() {
 
         setPendingInvites(invitesData || []);
       } catch (err) {
-        console.error("Error fetching group members:", err);
+        if (import.meta.env.DEV) console.error("[DEV] Error fetching group members:", err);
       } finally {
         setLoading(false);
       }
@@ -213,7 +213,7 @@ export function useGroupMembers() {
           }
 
           toast.error(errorMsg);
-          console.error("Error sending invite:", error);
+          if (import.meta.env.DEV) console.error("[DEV] Error sending invite:", error);
           return false;
         }
 
@@ -225,7 +225,7 @@ export function useGroupMembers() {
         toast.success(`Convite enviado para ${email}! ✓`);
         return true;
       } catch (err) {
-        console.error("Error sending invite:", err);
+        if (import.meta.env.DEV) console.error("[DEV] Error sending invite:", err);
         toast.error(err instanceof Error ? err.message : "Erro ao enviar convite");
         return false;
       }
@@ -262,7 +262,7 @@ export function useGroupMembers() {
 
         toast.success(`${memberName} foi removido do plano`);
       } catch (err) {
-        console.error("Error removing member:", err);
+        if (import.meta.env.DEV) console.error("[DEV] Error removing member:", err);
         toast.error("Erro ao remover membro");
       }
     },
@@ -282,7 +282,7 @@ export function useGroupMembers() {
         setPendingInvites((prev) => prev.filter((i) => i.id !== inviteId));
         toast.success("Convite cancelado");
       } catch (err) {
-        console.error("Error cancelling invite:", err);
+        if (import.meta.env.DEV) console.error("[DEV] Error cancelling invite:", err);
         toast.error("Erro ao cancelar convite");
       }
     },
@@ -293,7 +293,25 @@ export function useGroupMembers() {
     async (inviteId: string, email: string) => {
       if (!groupId) return;
       try {
-        // Delete the old invite first so the duplicate check passes
+        // Try to resend the Supabase confirmation email first (covers the case
+        // where the user already signed up via the invite and is waiting on
+        // the confirmation link).
+        const { data: confData } = await supabase.functions.invoke(
+          "resend-confirmation-email",
+          {
+            body: {
+              email,
+              redirect_to: `${window.location.origin}/auth`,
+            },
+          }
+        );
+
+        if (confData?.success) {
+          toast.success(`Email de confirmação reenviado para ${email}`);
+          return;
+        }
+
+        // Otherwise recreate the invite so a fresh token is issued
         const { error } = await supabase
           .from("sub_account_invites")
           .delete()
@@ -301,10 +319,9 @@ export function useGroupMembers() {
           .eq("group_id", groupId);
         if (error) throw error;
         setPendingInvites((prev) => prev.filter((i) => i.id !== inviteId));
-        // Send a fresh invite with a new token
         await inviteByEmail(email);
       } catch (err) {
-        console.error("Error resending invite:", err);
+        if (import.meta.env.DEV) console.error("[DEV] Error resending invite:", err);
         toast.error("Erro ao reenviar convite");
       }
     },

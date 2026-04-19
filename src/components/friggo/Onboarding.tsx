@@ -6,6 +6,7 @@ import { useKaza } from "@/contexts/FriggoContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { LogOut } from "lucide-react";
 import { isValidCPF, formatCPF } from "@/lib/utils/validation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -326,6 +327,7 @@ const onboardingLabels = {
 
 const steps = [
   "welcome",
+  "planSelection",
   "personalize",
   "cpf",
   "homeType",
@@ -431,6 +433,8 @@ export function Onboarding() {
   const [[page, direction], setPage] = useState([0, 0]);
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<"individualPRO" | "multiPRO">("individualPRO");
+  const trialDays = 7;
   const [data, setData] = useState<Partial<OnboardingData & { cpf?: string }>>(() => ({
     name: onboardingData?.name || "",
     homeType: onboardingData?.homeType || "apartment",
@@ -582,6 +586,30 @@ export function Onboarding() {
       setConsumablesBulk(onboardingConsumables);
     }
     try {
+      // Save selected plan + trial to DB
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const uid = authUser?.id;
+      const now = new Date().toISOString();
+      const trialEnd = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString();
+
+      await Promise.all([
+        // subscriptions table — canonical plan/trial source
+        supabase.from("subscriptions").upsert(
+          {
+            user_id: uid,
+            plan_tier: selectedPlan,
+            plan_label: selectedPlan === "multiPRO" ? "MultiPRO" : "Individual",
+            is_active: false,
+            trial_started_at: now,
+            trial_ends_at: trialEnd,
+            plan: "free",
+          },
+          { onConflict: "user_id" }
+        ),
+        // profiles table — fallback used by SubscriptionContext
+        supabase.from("profiles").update({ trial_start_date: now }).eq("user_id", uid),
+      ]);
+
       await completeOnboarding(data as OnboardingData);
     } catch (e: any) {
       setIsSubmitting(false); // Only reset if failed so user can fix
@@ -651,6 +679,109 @@ export function Onboarding() {
             </motion.div>
           </motion.div>
         );
+
+      case "planSelection": {
+        const plans = [
+          {
+            id: "individualPRO" as const,
+            label: "Individual",
+            price: "R$ 19,90",
+            period: "/mês",
+            tagline: "Para 1 usuário",
+            features: ["Itens e receitas ilimitados", "Alertas inteligentes", "Lista de compras", "Planejador semanal"],
+          },
+          {
+            id: "multiPRO" as const,
+            label: "MultiPRO",
+            price: "R$ 37,90",
+            period: "/mês",
+            tagline: "1 conta principal + 3 convidados",
+            features: ["Tudo do Individual", "Conta principal convida até 3", "Casa compartilhada em tempo real", "Gestão de membros"],
+            popular: true,
+          },
+        ];
+        return (
+          <motion.div
+            variants={staggerContainer}
+            initial="enter"
+            animate="center"
+            className="flex flex-1 flex-col justify-center px-5"
+          >
+            <motion.div variants={staggerItem} className="text-center mb-6">
+              <div
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold mb-3"
+                style={{ background: "rgba(22,90,82,0.10)", color: "#165A52" }}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                7 dias grátis, sem cartão
+              </div>
+              <h2 className="text-2xl font-black text-foreground mb-1">Escolha seu plano</h2>
+              <p className="text-sm text-muted-foreground">Você pode mudar a qualquer momento</p>
+            </motion.div>
+
+            <motion.div variants={staggerItem} className="space-y-3">
+              {plans.map((plan) => {
+                const isSelected = selectedPlan === plan.id;
+                return (
+                  <button
+                    key={plan.id}
+                    type="button"
+                    onClick={() => setSelectedPlan(plan.id)}
+                    className={cn(
+                      "w-full rounded-2xl border-2 p-4 text-left transition-all duration-200 relative overflow-hidden",
+                      isSelected
+                        ? "border-primary bg-primary/5"
+                        : "border-black/10 dark:border-white/10 bg-white dark:bg-white/5"
+                    )}
+                  >
+                    {(plan as any).popular && (
+                      <span
+                        className="absolute top-3 right-3 text-[10px] font-black px-2 py-0.5 rounded-full"
+                        style={{ background: "#165A52", color: "#fff" }}
+                      >
+                        POPULAR
+                      </span>
+                    )}
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={cn(
+                          "mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                          isSelected ? "border-primary bg-primary" : "border-black/20 dark:border-white/20"
+                        )}
+                      >
+                        {isSelected && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2 mb-0.5">
+                          <span className="text-base font-black text-foreground">{plan.label}</span>
+                          <span className="text-xs text-muted-foreground">{plan.tagline}</span>
+                        </div>
+                        <div className="flex items-baseline gap-1 mb-2">
+                          <span className="text-xl font-black text-primary">{plan.price}</span>
+                          <span className="text-xs text-muted-foreground">{plan.period}</span>
+                          <span className="text-xs text-muted-foreground ml-1">após o trial</span>
+                        </div>
+                        <ul className="space-y-0.5">
+                          {plan.features.map((f) => (
+                            <li key={f} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <Check className="h-3 w-3 text-primary shrink-0" />
+                              {f}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </motion.div>
+
+            <motion.p variants={staggerItem} className="text-center text-xs text-muted-foreground mt-3">
+              Sem cartão. Cancele quando quiser.
+            </motion.p>
+          </motion.div>
+        );
+      }
 
       case "personalize":
         return (

@@ -124,10 +124,10 @@ export function InvitePage() {
       <>
         <AlertDialog open={showWelcomeModal} onOpenChange={setShowWelcomeModal}>
           <AlertDialogContent>
-            <AlertDialogTitle>Bem-vindo ao Friggo!</AlertDialogTitle>
+            <AlertDialogTitle>Bem-vindo ao KAZA!</AlertDialogTitle>
             <AlertDialogDescription>
               Você foi convidado por <strong>{inviteInfo.master_name}</strong> e agora faz parte
-              do plano Friggo PRO Trio. Você pode compartilhar o planejador de refeições,
+              do plano KAZA MultiPRO. Você pode compartilhar o planejador de refeições,
               consumíveis e alertas com os membros do seu grupo.
             </AlertDialogDescription>
             <AlertDialogAction onClick={handleWelcomeClose}>Continuar</AlertDialogAction>

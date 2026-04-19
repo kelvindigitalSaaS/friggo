@@ -118,7 +118,7 @@ export default function PaymentGatewayPanel({
     try {
       await onPaymentSelect(paymentId);
     } catch (error) {
-      console.error("Erro ao processar pagamento:", error);
+      if (import.meta.env.DEV) console.error("[DEV] Erro ao processar pagamento:", error);
       setProcessing(false);
       setSelectedPayment(null);
     }

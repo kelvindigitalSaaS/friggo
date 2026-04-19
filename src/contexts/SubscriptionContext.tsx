@@ -115,7 +115,7 @@ export const PLAN_DETAILS: Record<
   /** Compat: usuários antigos com plan="premium" — mapeados para individualPRO */
   premium: {
     name: "individualPRO",
-    price: 14.99,
+    price: 19.90,
     itemsLimit: -1,
     recipesPerDay: -1,
     shoppingListLimit: -1,
@@ -134,7 +134,7 @@ export const PLAN_DETAILS: Record<
   },
   individualPRO: {
     name: "individualPRO",
-    price: 14.99,
+    price: 19.90,
     itemsLimit: -1,
     recipesPerDay: -1,
     shoppingListLimit: -1,
@@ -153,7 +153,7 @@ export const PLAN_DETAILS: Record<
   },
   multiPRO: {
     name: "multiPRO",
-    price: 27.00,
+    price: 37.90,
     itemsLimit: -1,
     recipesPerDay: -1,
     shoppingListLimit: -1,
@@ -213,11 +213,17 @@ export function SubscriptionProvider({
 
   const fetchSubscription = useCallback(async () => {
     if (!user) {
+      console.log("[SUB] no user, clearing");
       setSubscription(null);
+      setIsLocked(false);
+      setTrialDaysRemaining(7);
+      setRegistrationDate(null);
       setLoading(false);
       return;
     }
 
+    const t0 = performance.now();
+    console.log("[SUB] fetchSubscription: start for", user.id);
     try {
       const { data: profile } = await supabase
         .from("profiles")
@@ -321,15 +327,17 @@ export function SubscriptionProvider({
         setSubscription(null);
       }
     } catch (error: any) {
-      if (import.meta.env.DEV) { console.error("[DEV] subscription fetch error:", error); }
+      console.error("[SUB] fetch error:", error);
       setSubscription(null);
     } finally {
+      console.log("[SUB] fetchSubscription: done in", (performance.now() - t0).toFixed(0), "ms");
       setLoading(false);
     }
   }, [user]);
 
   useEffect(() => {
-    fetchSubscription();
+    const t = setTimeout(() => { fetchSubscription(); }, 80);
+    return () => clearTimeout(t);
   }, [fetchSubscription]);
 
   // Verificar assinatura ao retornar do checkout

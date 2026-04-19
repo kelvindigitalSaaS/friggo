@@ -190,9 +190,7 @@ export async function syncGarbageReminderToDb(homeId: string | null | undefined)
       garbage_location: cfg.garbageLocation,
       building_floor: cfg.buildingFloor ?? null,
     }, { onConflict: "home_id,user_id" });
-  } catch (e) {
-    console.warn("[garbage] syncGarbageReminderToDb failed", e);
-  }
+  } catch (_e) { /* silent — DB sync optional */ }
 }
 
 /**

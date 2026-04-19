@@ -24,7 +24,9 @@ export function PWAProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const handler = (e: Event) => {
       e.preventDefault();
-      console.log("PWA: beforeinstallprompt event fired");
+      // Only allow install prompt on /auth and /app routes, never on sales/marketing pages
+      const path = window.location.pathname;
+      if (!path.startsWith("/app") && !path.startsWith("/auth")) return;
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
 
@@ -35,9 +37,7 @@ export function PWAProvider({ children }: { children: ReactNode }) {
 
     window.addEventListener("beforeinstallprompt", handler);
 
-    // Watch for app installed event
     const installedHandler = () => {
-      console.log("PWA: App installed successfully");
       setDeferredPrompt(null);
     };
     window.addEventListener("appinstalled", installedHandler);
@@ -55,8 +55,6 @@ export function PWAProvider({ children }: { children: ReactNode }) {
     }
 
     if (!deferredPrompt) {
-      console.warn("PWA: No installation prompt available");
-      // Fallback for browsers that don't support beforeinstallprompt but are installable (like Chrome on Android sometimes)
       setShowGuide(true);
       return;
     }
@@ -64,14 +62,10 @@ export function PWAProvider({ children }: { children: ReactNode }) {
     try {
       await deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      console.log(`PWA: Installation choice: ${outcome}`);
-      
       if (outcome === "accepted") {
         setDeferredPrompt(null);
       }
-    } catch (error) {
-      console.error("PWA: Error during installation prompt", error);
-    }
+    } catch (_error) { /* prompt failed silently */ }
   };
 
   return (

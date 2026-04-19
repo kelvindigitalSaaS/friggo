@@ -127,7 +127,7 @@ export default function StripeCheckout({
       });
 
       if (functionError) {
-        console.error("[Checkout] functionError", functionError);
+        if (import.meta.env.DEV) console.error("[DEV][Checkout] functionError", functionError);
         const detail =
           (functionError as any).details || (functionError as any).hint || "";
         const message = `${functionError.message}${
@@ -137,7 +137,7 @@ export default function StripeCheckout({
       }
 
       if (!data?.clientSecret) {
-        console.error("[Checkout] missing clientSecret", data);
+        if (import.meta.env.DEV) console.error("[DEV][Checkout] missing clientSecret", data);
         throw new Error("Sessão de checkout não foi criada corretamente");
       }
 
@@ -152,7 +152,7 @@ export default function StripeCheckout({
 
       setStage("payment");
     } catch (err: any) {
-      console.error("[Checkout] Erro:", err);
+      if (import.meta.env.DEV) console.error("[DEV][Checkout] Erro:", err);
       const errorMsg = err?.message || "Erro ao iniciar checkout";
       setError(errorMsg);
       toast.error(errorMsg);
