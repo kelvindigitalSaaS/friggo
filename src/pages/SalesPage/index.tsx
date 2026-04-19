@@ -6,8 +6,8 @@ import {
   Settings, Smartphone, LayoutDashboard, Calendar, ShoppingCart,
   ChefHat, Sparkles, Box, ListChecks, ChevronRight, AlertCircle, PlayCircle, Lock, Globe, Monitor, Mail, Eye,
   Home, Refrigerator, Clock, AlertTriangle, BarChart3, Moon, Plus, TrendingDown, ChevronDown,
-  Package, Timer, Flame, Star, Heart, Trash2, UtensilsCrossed, CheckCircle2,
-  Zap, Shield, Rocket, ArrowRight, Menu, Quote
+  Package, Timer, Star, Trash2, CheckCircle2,
+  ArrowRight, Menu, Quote
 } from "lucide-react";
 
 import LogoImage from "@/assets/logo inicial black pagina de vendas.svg";
@@ -759,6 +759,16 @@ function FadeInSection({ children, className = "", delay = 0 }: { children: Reac
 
 
 // ═══════════════════════════════════════════════
+const TRUSTED_FEATURES = [
+  { icon: Refrigerator, label: "Controle de Dispensa" },
+  { icon: AlertTriangle, label: "Monitoramento dos itens e do vencimento" },
+  { icon: ChefHat, label: "Receitas baseadas nos seus itens" },
+  { icon: Bell, label: "Notificações multi-usuário" },
+  { icon: TrendingDown, label: "Relatório de economia mensal" },
+  { icon: Trash2, label: "Controle de Lixo" },
+];
+
+// ═══════════════════════════════════════════════
 // MAIN PAGE COMPONENT
 // ═══════════════════════════════════════════════
 
@@ -1050,14 +1060,7 @@ export default function SalesPage() {
             <div className="max-w-7xl mx-auto px-6">
               <p className="text-center text-[11px] font-bold text-[#1B3A2D]/30 uppercase tracking-[0.2em] mb-6">Funcionalidades que você pode confiar</p>
               <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 items-center">
-                {[
-                  { icon: ShieldCheck, label: "Seguro" },
-                  { icon: Users, label: "MultiPRO" },
-                  { icon: Zap, label: "Rápido" },
-                  { icon: Bell, label: "Alertas" },
-                  { icon: Heart, label: "Feito com ♥" },
-                  { icon: Globe, label: "WebApp" },
-                ].map((item, i) => (
+                {TRUSTED_FEATURES.map((item, i) => (
                   <div key={i} className="flex items-center gap-2 text-[#1B3A2D]/35">
                     <item.icon className="w-4 h-4" />
                     <span className="text-[13px] font-bold tracking-wide">{item.label}</span>

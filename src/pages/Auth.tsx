@@ -47,6 +47,11 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [splashDone, setSplashDone] = useState(false);
   const [splashProgress, setSplashProgress] = useState(0);
+  // True while exchanging the OAuth/email-confirmation code from the callback URL
+  const [exchangingCode, setExchangingCode] = useState(() => {
+    const p = new URLSearchParams(window.location.search);
+    return p.has("code") || p.has("error");
+  });
 
   const [formData, setFormData] = useState({
     email: "",
@@ -81,28 +86,52 @@ export default function Auth() {
     if (user && !authLoading) navigate("/app/home");
   }, [user, authLoading, navigate]);
 
-  // ── Handle PKCE email confirmation: Supabase SDK (detectSessionInUrl+flowType:pkce)
-  //    exchanges the code automatically via getSession(). We only need to:
-  //    1. Clean the code from the URL so it doesn't linger
-  //    2. Show the right toast when SIGNED_IN fires after email confirmation ──
+  // ── Handle OAuth / email-confirmation PKCE callback ──
+  // detectSessionInUrl is disabled in the Supabase client, so we exchange the
+  // code explicitly here. This avoids any race condition where the SDK tries
+  // to read window.location.search after we have already cleaned the URL.
   useEffect(() => {
     const url = new URL(window.location.href);
+
+    // OAuth provider returned an error (e.g. user denied consent, mismatched redirect URL)
+    const oauthError = url.searchParams.get("error");
+    if (oauthError) {
+      const desc = url.searchParams.get("error_description") ?? "Erro na autenticação com Google";
+      toast.error(decodeURIComponent(desc.replace(/\+/g, " ")), { duration: 6000 });
+      url.searchParams.delete("error");
+      url.searchParams.delete("error_description");
+      window.history.replaceState({}, "", url.toString());
+      setExchangingCode(false);
+      return;
+    }
+
     const code = url.searchParams.get("code");
     const type = url.searchParams.get("type");
     if (!code) return;
+
+    // Clean the URL before the exchange so the code never lingers
     url.searchParams.delete("code");
     url.searchParams.delete("type");
     window.history.replaceState({}, "", url.toString());
-    // SDK handles the exchange; we listen via onAuthStateChange below
-    if (type === "signup") {
-      // Show confirmation toast after SDK resolves the session
-      const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-        if (event === "SIGNED_IN") {
+
+    supabase.auth.exchangeCodeForSession(code)
+      .then(({ error }) => {
+        if (error) {
+          console.error("[AUTH] code exchange failed:", error);
+          const msg = type === "signup"
+            ? "Link de confirmação inválido ou expirado. Solicite um novo."
+            : "Erro ao autenticar com Google. Tente novamente.";
+          toast.error(msg, { duration: 6000 });
+        } else if (type === "signup") {
           toast.success("Email confirmado! Bem-vindo ao KAZA!");
-          sub.subscription.unsubscribe();
         }
-      });
-    }
+        // On OAuth success the SIGNED_IN event fires via onAuthStateChange → navigate
+      })
+      .catch((err) => {
+        console.error("[AUTH] code exchange error:", err);
+        toast.error("Erro ao autenticar. Tente novamente.", { duration: 6000 });
+      })
+      .finally(() => setExchangingCode(false));
   }, []);
 
   // ── Handlers ──
@@ -322,8 +351,10 @@ export default function Auth() {
     </div>
   );
 
+  // Show dedicated loader while exchanging the OAuth code — avoids flash of
+  // the landing page before the session is established
+  if (exchangingCode || authLoading) return <PremiumSplash />;
   if (!splashDone) return <PremiumSplash />;
-  if (authLoading) return <PremiumSplash />;
 
   // ── Input shared style ──
   const inputStyle = {

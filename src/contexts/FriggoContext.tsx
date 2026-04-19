@@ -940,7 +940,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       if (!onboardingData?.cpf && rawCpf.length > 0) profileUpdate.cpf = rawCpf;
 
       const results = await Promise.all([
-        supabase.from("profiles").update(profileUpdate).eq("user_id", user.id),
+        supabase.from("profiles").upsert({ user_id: user.id, ...profileUpdate }, { onConflict: "user_id" }),
         supabase.from("homes").update({
           home_type: data.homeType || "apartment",
           residents: data.residents || 1

@@ -52,23 +52,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if ((event === "SIGNED_IN" || event === "USER_UPDATED") && session?.user) {
         const metaName = session.user.user_metadata?.name;
         const userId = session.user.id;
-        if (metaName) {
-          setTimeout(async () => {
-            try {
-              const { data: profile } = await supabase
+        setTimeout(async () => {
+          try {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("name")
+              .eq("user_id", userId)
+              .maybeSingle();
+            if (!profile) {
+              // New OAuth user — create profile so subsequent loads work correctly
+              await supabase.from("profiles").upsert(
+                { user_id: userId, name: metaName ?? null, onboarding_completed: false },
+                { onConflict: "user_id" }
+              );
+            } else if (!profile.name && metaName) {
+              await supabase
                 .from("profiles")
-                .select("name")
-                .eq("user_id", userId)
-                .maybeSingle();
-              if (profile && !profile.name) {
-                await supabase
-                  .from("profiles")
-                  .update({ name: metaName })
-                  .eq("user_id", userId);
-              }
-            } catch { /* best-effort */ }
-          }, 0);
-        }
+                .update({ name: metaName })
+                .eq("user_id", userId);
+            }
+          } catch { /* best-effort */ }
+        }, 0);
       }
 
       // Redirect to login if signed out — only for protected /app/* routes

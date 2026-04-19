@@ -371,24 +371,24 @@ export function SubscriptionProvider({
   const isMultiPro = planTier === "multiPRO";
 
   const canAddItem = useCallback(() => {
-    if (!subscription) return false;
+    if (!subscription) return trialDaysRemaining > 0;
     if (subscription.itemsLimit === -1) return true;
     return true;
-  }, [subscription]);
+  }, [subscription, trialDaysRemaining]);
 
   const canUseRecipe = useCallback(() => {
-    if (!subscription) return false;
+    if (!subscription) return trialDaysRemaining > 0;
     if (subscription.recipesPerDay === -1) return true;
     return subscription.recipesUsedToday < subscription.recipesPerDay;
-  }, [subscription]);
+  }, [subscription, trialDaysRemaining]);
 
   const canAddShoppingItem = useCallback(
     (currentCount: number) => {
-      if (!subscription) return false;
+      if (!subscription) return trialDaysRemaining > 0;
       if (subscription.shoppingListLimit === -1) return true;
       return currentCount < subscription.shoppingListLimit;
     },
-    [subscription]
+    [subscription, trialDaysRemaining]
   );
 
   const canChangeNotification = useCallback(() => {
