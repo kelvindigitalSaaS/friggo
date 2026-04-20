@@ -110,6 +110,7 @@ export default defineConfig(({ mode }: { mode: string }) => ({
       }
     })
   ].filter(Boolean),
+  esbuild: mode === "production" ? { drop: ["console", "debugger"] as ("console" | "debugger")[] } : undefined,
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src")

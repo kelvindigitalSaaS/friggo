@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
 
@@ -61,14 +61,24 @@ serve(async (req) => {
       if (sub?.group_id) {
         group_id = sub.group_id;
       } else {
-        // User has multiPRO subscription but no group yet â€” create one now
+        // Check trial status
+        const { data: access } = await supabase
+          .from("v_user_access")
+          .select("in_trial, trial_days_left")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const inTrial = access?.in_trial || (access?.trial_days_left && access.trial_days_left > 0);
+
+        // User has multiPRO subscription but no group yet -> create one now
         const isPro =
-          (sub?.plan_tier === "multiPRO" || sub?.plan_tier === "individualPRO" || sub?.plan === "premium" || sub?.plan === "multiPRO") &&
-          sub?.is_active;
+          inTrial ||
+          ((sub?.plan_tier === "multiPRO" || sub?.plan_tier === "individualPRO" || sub?.plan === "premium" || sub?.plan === "multiPRO") &&
+          sub?.is_active);
 
         if (!isPro) {
           return json(
-            { error: "VocÃª precisa de um plano PRO para convidar membros." },
+            { error: "Você precisa de um plano PRO para convidar membros." },
             403
           );
         }
