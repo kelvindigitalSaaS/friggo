@@ -1,11 +1,17 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
+import { validateAuth } from "../_shared/auth.ts";
+
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type"
 };
+
 
 // --- Samsung SmartThings ---
 const SAMSUNG_BASE = "https://api.smartthings.com/v1";
@@ -111,7 +117,21 @@ serve(async (req) => {
     });
 
   try {
+    const user = await validateAuth(req);
+    
+    // Verifica se o usuário tem acesso (Trial ou Pro)
+    const { data: access } = await supabase
+      .from("v_user_access")
+      .select("has_access")
+      .eq("user_id", user.id)
+      .maybeSingle();
+      
+    if (!access?.has_access) {
+      return respond({ error: "Assinatura Pro necessária para integrar geladeiras inteligentes." }, 403);
+    }
+
     const { action, brand, token, deviceId, commands } = await req.json();
+
 
     // ---- Samsung SmartThings ----
     if (brand === "samsung") {
@@ -180,6 +200,11 @@ serve(async (req) => {
     );
   } catch (err: any) {
     console.error("smart-fridge error:", err);
-    return respond({ error: err.message ?? "Erro desconhecido." }, 500);
+    
+    // Explicit 401 for unauthorized curl attempts
+    const isAuthError = err.name === "AuthError" || (err instanceof Error && err.message.includes("Auth"));
+    
+    return respond({ error: err.message ?? "Erro desconhecido." }, isAuthError ? 401 : 500);
   }
 });
+

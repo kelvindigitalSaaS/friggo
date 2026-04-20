@@ -96,7 +96,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }).catch((err) => {
       if (import.meta.env.DEV) console.error("[AUTH] getSession: ERROR", err);
-      if (!initialSessionResolved) setLoading(false);
+      // Force sign out on critical auth errors (like invalid refresh token)
+      // to clear stale localStorage and stop console noise.
+      const errMsg = err?.message?.toLowerCase() || "";
+      if (errMsg.includes("invalid") || errMsg.includes("not found") || errMsg.includes("found")) {
+        supabase.auth.signOut();
+      }
+      if (!initialSessionResolved) {
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();

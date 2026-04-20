@@ -205,7 +205,7 @@ export function SubscriptionProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [trialDaysRemaining, setTrialDaysRemaining] = useState<number>(7);
@@ -213,6 +213,8 @@ export function SubscriptionProvider({
   const [registrationDate, setRegistrationDate] = useState<Date | null>(null);
 
   const fetchSubscription = useCallback(async () => {
+    if (authLoading) return; // Wait for auth to initialize
+    
     if (!user) {
       console.log("[SUB] no user, clearing");
       setSubscription(null);

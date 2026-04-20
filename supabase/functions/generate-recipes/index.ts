@@ -1,4 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
+import { validateAuth } from "../_shared/auth.ts";
+
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,8 +16,24 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
+    const user = await validateAuth(req);
+    
+    // Verifica se o usuário tem acesso (Trial ou Pro)
+    const { data: access } = await supabase
+      .from("v_user_access")
+      .select("has_access")
+      .eq("user_id", user.id)
+      .maybeSingle();
+      
+    if (!access?.has_access) {
+      return new Response(JSON.stringify({ error: "Assinatura Pro necessária para gerar receitas com IA." }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { ingredients = [], expiringItems = [], type, days = 1, useMealPlan = false } = await req.json();
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!LOVABLE_API_KEY) {
@@ -109,12 +131,17 @@ Seja criativo mas realista. As receitas devem ser práticas para o dia a dia bra
     });
   } catch (error) {
     console.error("Error generating recipes:", error);
+    
+    // Explicit 401 for unauthorized curl attempts
+    const isAuthError = error.name === "AuthError" || (error instanceof Error && error.message.includes("Auth"));
+    
     return new Response(JSON.stringify({
       error: error instanceof Error ? error.message : "Unknown error",
       recipes: []
     }), {
-      status: 500,
+      status: isAuthError ? 401 : 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
+

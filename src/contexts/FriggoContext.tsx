@@ -122,7 +122,7 @@ const DEMO_ITEMS: KazaItem[] = [
 ];
 
 export function KazaProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const { language } = useLanguage();
 
@@ -333,13 +333,16 @@ export function KazaProvider({ children }: { children: ReactNode }) {
 
   // Fetch initial data when user changes
   useEffect(() => {
+    if (authLoading) return; // Wait for auth to initialize before making assumptions
+    
     if (user?.id) {
       fetchData();
-    } else if (!user) {
-      // Re-run fetchData to clear state and show demo
+    } else {
+      // No user session -> Reset state to show demo items
       fetchData();
     }
-  }, [user?.id]);
+  }, [user?.id, authLoading, fetchData]);
+
 
   // ── alerts ───────────────────────────────────────────────────────────────
   useEffect(() => {

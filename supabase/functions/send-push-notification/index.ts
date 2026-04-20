@@ -6,7 +6,10 @@ const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const webPushVapidPublic = Deno.env.get("WEB_PUSH_VAPID_PUBLIC")!;
 const webPushVapidPrivate = Deno.env.get("WEB_PUSH_VAPID_PRIVATE")!;
 
+import { validateAuth, verifyMembership } from "../_shared/auth.ts";
+
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -37,8 +40,11 @@ serve(async (req) => {
   }
 
   try {
+    // ── Auth & Permissions ──────────────────────────────────────────────────
+    const user = await validateAuth(req);
+    
     const payload: PushPayload = await req.json();
-    console.log("[PUSH] Received payload:", JSON.stringify(payload));
+    console.log("[PUSH] Received payload from user", user.id, ":", JSON.stringify(payload));
     const { group_id, home_id, title, body, data, exclude_user_id } = payload;
 
     if ((!group_id && !home_id) || !title || !body) {
@@ -47,9 +53,13 @@ serve(async (req) => {
       if (!title) missing.push("title");
       if (!body) missing.push("body");
       
-      console.error("[PUSH] Missing fields:", missing.join(", "));
       return json({ error: `Missing required fields: ${missing.join(", ")}` }, 400);
     }
+
+    // Valida se o usuário autenticado tem permissão para enviar para este destino
+    await verifyMembership(supabase, user.id, home_id, group_id);
+    // ────────────────────────────────────────────────────────────────────────
+
 
     let userIds: string[] = [];
 
@@ -126,11 +136,18 @@ serve(async (req) => {
 
     return json({ success: true, sent: sentCount });
   } catch (error) {
-    console.error(error);
+    console.error("[PUSH ERROR]", error);
+    
+    // Explicit 401 for unauthorized curl attempts
+    if (error.name === "AuthError" || error.message.includes("Access denied")) {
+      return json({ error: error.message }, 401);
+    }
+
     return json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       500
     );
   }
 });
+
 
