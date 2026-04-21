@@ -7,53 +7,51 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { SubscriptionProvider, useSubscription } from "@/contexts/SubscriptionContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import { KazaProvider, useKaza } from "@/contexts/FriggoContext";
+import { KazaProvider, useKaza } from "@/contexts/KazaContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { PWAProvider } from "@/contexts/PWAContext";
 import {
   listenForDeepLinks,
-  parseStripeRedirect,
   closeInAppBrowser
 } from "@/lib/nativeBrowser";
 import { registerBackButton } from "@/lib/nativeUI";
 import { isNative } from "@/lib/capacitor";
 import { supabase } from "@/integrations/supabase/client";
 import { Sentry } from "@/lib/sentry";
-import { OfflineOverlay } from "@/components/friggo/OfflineOverlay";
-import PWAInstallGuide from "@/components/friggo/PWAInstallGuide";
-import { AccountSessionTracker } from "@/components/friggo/AccountSessionTracker";
+import { OfflineOverlay } from "@/components/kaza/OfflineOverlay";
+import PWAInstallGuide from "@/components/kaza/PWAInstallGuide";
+import { AccountSessionTracker } from "@/components/kaza/AccountSessionTracker";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 
-const Index = lazy(() => import("./pages/Index"));
+const Index = lazy(() => import("./pages/Home"));
 const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const SuccessPage = lazy(() => import("@/pages/SuccessPage"));
-const Checkout = lazy(() => import("./pages/Checkout"));
-const MonthlyReportPage = lazy(() => import("@/pages/MonthlyReportPage"));
-const NightCheckupPage = lazy(() => import("@/pages/NightCheckupPage"));
-const PlansPage = lazy(() => import("./pages/PlansPage"));
-const TrioSetupPage = lazy(() => import("./pages/TrioSetupPage"));
-const CheckoutSuccessPage = lazy(() => import("./pages/CheckoutSuccessPage"));
-const CheckoutCancelPage = lazy(() => import("./pages/CheckoutCancelPage"));
-const AddItemPage = lazy(() => import("./pages/AddItemPage"));
-const ConsumePage = lazy(() => import("./pages/ConsumePage"));
-const RecipePage = lazy(() => import("./pages/RecipePage"));
-const ConsumableTrackerPage = lazy(() => import("./pages/ConsumableTrackerPage"));
-const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
-const ProfilePage = lazy(() => import("./pages/ProfilePage"));
-const HistoryPage = lazy(() => import("./pages/HistoryPage"));
-const GarbageReminderPage = lazy(() => import("./pages/GarbageReminderPage"));
-const InstallGuidePage = lazy(() => import("./pages/InstallGuidePage"));
-const SubscriptionPage = lazy(() => import("./pages/SubscriptionPage"));
-const SubscriptionsManagePage = lazy(() => import("./pages/SubscriptionsManagePage"));
-const FAQPage = lazy(() => import("./pages/FAQPage"));
-const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
-const MealPlannerPage = lazy(() => import("./pages/MealPlannerPage"));
+const SuccessPage = lazy(() => import("./pages/Success"));
+const MonthlyReportPage = lazy(() => import("./pages/MonthlyReport"));
+const NightCheckupPage = lazy(() => import("./pages/NightCheckup"));
+const PlansPage = lazy(() => import("./pages/Plans"));
+const TrioSetupPage = lazy(() => import("./pages/TrioSetup"));
+const CheckoutSuccessPage = lazy(() => import("./pages/CheckoutSuccess"));
+const CheckoutCancelPage = lazy(() => import("./pages/CheckoutCancel"));
+const AddItemPage = lazy(() => import("./pages/AddItem"));
+const ConsumePage = lazy(() => import("./pages/Consume"));
+const RecipePage = lazy(() => import("./pages/Recipe"));
+const ConsumableTrackerPage = lazy(() => import("./pages/ConsumableTracker"));
+const NotificationsPage = lazy(() => import("./pages/Notifications"));
+const ProfilePage = lazy(() => import("./pages/Profile"));
+const HistoryPage = lazy(() => import("./pages/History"));
+const GarbageReminderPage = lazy(() => import("./pages/GarbageReminder"));
+const InstallGuidePage = lazy(() => import("./pages/InstallGuide"));
+const SubscriptionPage = lazy(() => import("./pages/Subscription"));
+const SubscriptionsManagePage = lazy(() => import("./pages/SubscriptionsManage"));
+const FAQPage = lazy(() => import("./pages/FAQ"));
+const PrivacyPage = lazy(() => import("./pages/Privacy"));
+const MealPlannerPage = lazy(() => import("./pages/MealPlanner"));
 const SalesPage = lazy(() => import("./pages/SalesPage"));
 const SalesTermsPage = lazy(() => import("./pages/SalesPage/TermsPage"));
 const SalesPrivacyPage = lazy(() => import("./pages/SalesPage/PrivacyPage"));
-const InvitePage = lazy(() => import("./pages/InvitePage").then(m => ({ default: m.InvitePage })));
+const InvitePage = lazy(() => import("./pages/Invite").then(m => ({ default: m.InvitePage })));
 
 const queryClient = new QueryClient();
 
@@ -113,7 +111,7 @@ function SplashLoader() {
 function ProtectedRoute({ element, allowLocked = false, allowOnboarding = false }: { element: JSX.Element, allowLocked?: boolean, allowOnboarding?: boolean }) {
   const { user, loading: authLoading, requireAuth } = useAuth();
   const { isLocked, loading: subLoading } = useSubscription();
-  const { isOnboarded, loading: friggoLoading } = useKaza();
+  const { isOnboarded, loading: kazaLoading } = useKaza();
   const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
@@ -124,18 +122,18 @@ function ProtectedRoute({ element, allowLocked = false, allowOnboarding = false 
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
-    if (authLoading || subLoading || friggoLoading) {
+    if (authLoading || subLoading || kazaLoading) {
       timeout = setTimeout(() => {
-        if (authLoading || subLoading || friggoLoading) {
+        if (authLoading || subLoading || kazaLoading) {
           setTimedOut(true);
           window.dispatchEvent(new CustomEvent("force-offline"));
         }
       }, 12000);
     }
     return () => clearTimeout(timeout);
-  }, [authLoading, subLoading, friggoLoading]);
+  }, [authLoading, subLoading, kazaLoading]);
 
-  if ((authLoading || subLoading || friggoLoading) && !timedOut) {
+  if ((authLoading || subLoading || kazaLoading) && !timedOut) {
     return <SplashLoader />;
   }
 
@@ -211,21 +209,18 @@ function RootRoute() {
 
 /** Rota /pagina-de-vendas: logados vão para /app/home; visitantes veem a page de vendas */
 function SalesPageGuard() {
-  const { user, loading } = useAuth();
-  if (loading) return <SplashLoader />;
-  if (user) return <Navigate to="/app/home" replace />;
   return <Suspense fallback={<PageSkeleton />}><SalesPage /></Suspense>;
 }
 
 const App = () => {
-  // Listen for deep-link returns (auth callback, Stripe checkout)
+  // Listen for deep-link returns (auth callback)
   useEffect(() => {
     listenForDeepLinks(async (url) => {
       // Handle OAuth callback (Google/Apple sign-in return)
       if (url.includes("auth/callback") || url.includes("auth%2Fcallback")) {
         await closeInAppBrowser();
         try {
-          const normalized = url.replace("kaza://", "https://kaza.app/").replace("friggo://", "https://kaza.app/");
+          const normalized = url.replace("kaza://", "https://kaza.app/").replace("kaza://", "https://kaza.app/");
           const urlObj = new URL(normalized);
 
           // PKCE flow: exchange code for session
@@ -252,20 +247,6 @@ const App = () => {
           // Auth callback failed silently — user will be prompted to log in again
         }
         return;
-      }
-
-      // Handle Stripe checkout redirect
-      const result = parseStripeRedirect(url);
-      if (result) {
-        await closeInAppBrowser();
-        const params = new URLSearchParams(window.location.search);
-        params.set("subscription", result);
-        window.history.replaceState(
-          {},
-          "",
-          `${window.location.pathname}?${params}`
-        );
-        window.dispatchEvent(new PopStateEvent("popstate"));
       }
     });
 
@@ -308,11 +289,7 @@ const App = () => {
                               {/* App interno — todas as rotas protegidas sob /app */}
                               <Route
                                 path="/app/home"
-                                element={<ProtectedRoute element={<Index />} />}
-                              />
-                              <Route
-                                path="/app/checkout"
-                                element={<ProtectedRoute element={<Checkout />} />}
+                                element={<ProtectedRoute element={<Index />} allowLocked={true} />}
                               />
                               <Route
                                 path="/app/monthly-report"

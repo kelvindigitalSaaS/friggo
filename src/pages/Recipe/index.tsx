@@ -1,0 +1,431 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Recipe } from '@/types/kaza';
+import { Clock, Users, Check, ArrowLeft, ArrowRight, Leaf, Play, Pause, ShoppingCart, Timer, TimerOff, Bell } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useKaza } from '@/contexts/KazaContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Heart, CalendarDays, Minus, Plus } from 'lucide-react';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { format, addDays, startOfWeek } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { PageTransition } from '@/components/PageTransition';
+import { getCategoryEmoji } from '@/pages/Home/components/RecipeCard';
+
+// Use unified app icon for notifications
+const NOTIF_ICON = '/icon.png';
+
+import { useRecipeLogic } from './logic/useRecipeLogic';
+
+export default function RecipePage() {
+    const {
+        recipe,
+        currentStep,
+        cookingMode,
+        setCookingMode,
+        completedSteps,
+        toggleStep,
+        nextStep,
+        prevStep,
+        progress,
+        timer,
+        timerMinutes,
+        setTimerMinutes,
+        showTimerSetup,
+        setShowTimerSetup,
+        servings,
+        setServings,
+        plannerOpen,
+        setPlannerOpen,
+        selectedDate,
+        setSelectedDate,
+        selectedMeal,
+        setSelectedMeal,
+        isFavorite,
+        toggleFavoriteRecipe,
+        scaleQuantity,
+        missingIngredients,
+        handleAddMissingToShoppingList,
+        addToMealPlan,
+        language,
+        navigate
+    } = useRecipeLogic();
+
+    if (!recipe) {
+        return (
+            <PageTransition direction="left" className="min-h-[100dvh] bg-[#fafafa] dark:bg-[#091f1c] p-6 flex flex-col items-center justify-center">
+                <p>Receita não encontrada.</p>
+                <Button onClick={() => navigate(-1)} className="mt-4">Voltar</Button>
+            </PageTransition>
+        );
+    }
+
+    return (
+        <PageTransition direction="up" className="min-h-[100dvh] bg-[#fafafa] dark:bg-[#091f1c] pb-6">
+            {/* Compact Header */}
+            <header className="sticky top-0 z-50 flex items-center gap-3 border-b border-black/[0.04] dark:border-white/[0.06] bg-[#fafafa]/80 dark:bg-[#091f1c]/80 px-4 py-3 backdrop-blur-2xl">
+                <button onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-xl text-foreground active:scale-[0.97] transition-all">
+                    <ArrowLeft className="h-5 w-5" />
+                </button>
+                <span className="text-2xl">{getCategoryEmoji(recipe.category)}</span>
+                <h1 className="flex-1 text-base font-bold text-foreground truncate">{recipe.name}</h1>
+                <div className="flex items-center gap-2">
+                    {recipe.usesExpiringItems && (
+                        <span className="flex items-center gap-1 rounded-full bg-warning px-2.5 py-1 text-warning-foreground text-[10px] font-bold uppercase">
+                            <Leaf className="h-3 w-3" />Pri
+                        </span>
+                    )}
+                    <button 
+                        onClick={() => toggleFavoriteRecipe(recipe.id)}
+                        className={cn(
+                            "flex h-10 w-10 items-center justify-center rounded-2xl transition-all active:scale-90",
+                            isFavorite ? "bg-red-500/10 text-red-500" : "bg-white/80 dark:bg-white/10 text-foreground"
+                        )}
+                    >
+                        <Heart className={cn("h-5 w-5", isFavorite && "fill-current")} />
+                    </button>
+                </div>
+            </header>
+
+            <main className="px-6 py-6 max-w-lg mx-auto">
+                <header className="mb-6">
+                    <h1 className="text-2xl font-bold leading-tight text-foreground">{recipe.name}</h1>
+                    {recipe.description && (
+                        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{recipe.description}</p>
+                    )}
+                </header>
+
+                {/* Stats */}
+                <div className="mb-6 flex gap-3">
+                    <div className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/[0.04] dark:border-white/[0.06] px-3 py-3 shadow-sm">
+                        <Clock className="h-5 w-5 text-primary" />
+                        <span className="text-sm font-bold text-foreground">{recipe.prepTime} min</span>
+                    </div>
+                    <div className="flex flex-1 items-center justify-between gap-2 rounded-2xl bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/[0.04] dark:border-white/[0.06] px-4 py-3 shadow-sm">
+                        <button 
+                            onClick={() => setServings(Math.max(1, servings - 1))}
+                            className="h-8 w-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary active:scale-90"
+                        >
+                            <Minus className="h-4 w-4" />
+                        </button>
+                        <div className="flex items-center gap-2">
+                            <Users className="h-5 w-5 text-primary" />
+                            <span className="text-sm font-bold text-foreground">{servings} {servings === 1 ? 'porção' : 'porções'}</span>
+                        </div>
+                        <button 
+                            onClick={() => setServings(servings + 1)}
+                            className="h-8 w-8 flex items-center justify-center rounded-lg bg-primary/10 text-primary active:scale-90"
+                        >
+                            <Plus className="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Planner & Shopping */}
+                <div className="mb-6 flex gap-3">
+                    <Dialog open={plannerOpen} onOpenChange={setPlannerOpen}>
+                        <DialogTrigger asChild>
+                            <Button
+                                variant="outline"
+                                className="flex-1 gap-2 rounded-2xl py-6 border-primary/20 text-primary hover:bg-primary/5 font-bold"
+                            >
+                                <CalendarDays className="h-5 w-5" />
+                                Agendar
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="rounded-3xl max-w-[90vw] mx-auto">
+                            <DialogHeader>
+                                <DialogTitle>Agendar Refeição</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 pt-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold">Dia da semana</label>
+                                    <Select value={selectedDate} onValueChange={setSelectedDate}>
+                                        <SelectTrigger className="rounded-xl h-12">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl">
+                                            {Array.from({ length: 7 }).map((_, i) => {
+                                                const d = addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), i);
+                                                return (
+                                                    <SelectItem key={i} value={format(d, 'yyyy-MM-dd')}>
+                                                        {format(d, 'eeee', { locale: ptBR })} ({format(d, 'dd/MM')})
+                                                    </SelectItem>
+                                                );
+                                            })}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold">Refeição</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {[
+                                            { id: 'breakfast', label: 'Café', emoji: '☕' },
+                                            { id: 'lunch', label: 'Almoço', emoji: '🍽️' },
+                                            { id: 'dinner', label: 'Jantar', emoji: '🌙' },
+                                            { id: 'snack', label: 'Lanche', emoji: '🥪' }
+                                        ].map(meal => (
+                                            <button
+                                                key={meal.id}
+                                                onClick={() => setSelectedMeal(meal.id as any)}
+                                                className={cn(
+                                                    "p-3 rounded-xl border text-sm font-bold flex items-center gap-2 transition-all",
+                                                    selectedMeal === meal.id 
+                                                        ? "bg-primary text-white border-primary" 
+                                                        : "bg-white dark:bg-white/5 border-border"
+                                                )}
+                                            >
+                                                <span>{meal.emoji}</span>
+                                                {meal.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <Button 
+                                    className="w-full h-12 rounded-xl mt-4 font-bold"
+                                    onClick={() => {
+                                        addToMealPlan({
+                                            recipe_id: recipe.id,
+                                            recipe_name: recipe.name,
+                                            planned_date: selectedDate,
+                                            meal_type: selectedMeal
+                                        });
+                                        setPlannerOpen(false);
+                                    }}
+                                >
+                                    Confirmar Agendamento
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+
+                    {missingIngredients.length > 0 && (
+                        <Button
+                            onClick={handleAddMissingToShoppingList}
+                            variant="outline"
+                            className="flex-1 gap-2 rounded-2xl py-6 border-warning/30 text-warning hover:bg-warning/10 font-bold"
+                        >
+                            <ShoppingCart className="h-5 w-5" />
+                            Lista
+                        </Button>
+                    )}
+                </div>
+
+                {/* Cooking Mode Toggle */}
+                <Button
+                    onClick={() => setCookingMode(!cookingMode)}
+                    variant={cookingMode ? "default" : "outline"}
+                    className="mb-8 w-full gap-2 rounded-2xl py-6 font-bold shadow-sm shadow-primary/25 transition-all"
+                >
+                    {cookingMode ? (
+                        <>
+                            <Pause className="h-5 w-5" />
+                            Sair do Modo Cozinha
+                        </>
+                    ) : (
+                        <>
+                            <Play className="h-5 w-5 text-primary" />
+                            Iniciar Modo Cozinha
+                        </>
+                    )}
+                </Button>
+
+                {cookingMode ? (
+                    /* Cooking Mode - Step by Step */
+                    <div className="space-y-6 animate-fade-in">
+                        {/* Progress Bar */}
+                        <div>
+                            <div className="mb-2 flex justify-between text-xs font-bold text-muted-foreground">
+                                <span>Progresso</span>
+                                <span>{Math.round(progress)}%</span>
+                            </div>
+                            <div className="relative h-2.5 overflow-hidden rounded-full bg-muted">
+                                <div
+                                    className="absolute left-0 top-0 h-full bg-primary transition-all duration-500 ease-out"
+                                    style={{ width: `${progress}%` }}
+                                />
+                            </div>
+                            <p className="mt-3 text-center text-sm font-semibold text-muted-foreground">
+                                Passo {currentStep + 1} de {(recipe.instructions ?? []).length}
+                            </p>
+                        </div>
+
+                        {/* Timer */}
+                        <div className="rounded-2xl border border-primary/15 bg-white/80 dark:bg-white/5 backdrop-blur-xl p-4 shadow-sm">
+                            {timer.initialSeconds > 0 ? (
+                                <div className="flex flex-col items-center gap-3">
+                                    <div className="relative flex items-center justify-center">
+                                        <svg className="h-24 w-24 -rotate-90" viewBox="0 0 100 100">
+                                            <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" className="text-muted/30" strokeWidth="6" />
+                                            <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" className="text-primary" strokeWidth="6" strokeLinecap="round"
+                                                strokeDasharray={`${2 * Math.PI * 44}`}
+                                                strokeDashoffset={`${2 * Math.PI * 44 * (1 - timer.progress / 100)}`}
+                                                style={{ transition: 'stroke-dashoffset 1s linear' }}
+                                            />
+                                        </svg>
+                                        <span className="absolute text-2xl font-black tabular-nums text-foreground">{timer.formatTime()}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button size="sm" variant="outline" className="rounded-xl gap-1.5 font-bold" onClick={timer.toggle}>
+                                            {timer.isRunning ? <><Pause className="h-4 w-4" />Pausar</> : <><Play className="h-4 w-4" />Continuar</>}
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="rounded-xl gap-1.5 font-bold text-destructive" onClick={timer.stop}>
+                                            <TimerOff className="h-4 w-4" />Cancelar
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : showTimerSetup ? (
+                                <div className="flex flex-col items-center gap-3">
+                                    <p className="text-sm font-bold text-foreground">⏱️ Definir Timer (minutos)</p>
+                                    <div className="flex items-center gap-2">
+                                        {[1, 3, 5, 10, 15, 20, 30].map(m => (
+                                            <button key={m} onClick={() => { timer.start(m); setShowTimerSetup(false); }}
+                                                className="h-10 min-w-[40px] rounded-xl bg-primary/10 text-primary text-sm font-bold transition-all active:scale-95 hover:bg-primary/20 px-2">
+                                                {m}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <input type="number" min="1" placeholder="Min" value={timerMinutes} onChange={e => setTimerMinutes(e.target.value)}
+                                            className="h-10 w-20 rounded-xl bg-muted/50 text-center text-sm font-bold border-none focus:ring-2 focus:ring-primary/30" />
+                                        <Button size="sm" className="rounded-xl font-bold" disabled={!timerMinutes || Number(timerMinutes) <= 0}
+                                            onClick={() => { timer.start(Number(timerMinutes)); setShowTimerSetup(false); setTimerMinutes(''); }}>
+                                            Iniciar
+                                        </Button>
+                                        <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => setShowTimerSetup(false)}>Fechar</Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button onClick={() => setShowTimerSetup(true)}
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary/5 py-3 text-sm font-bold text-primary transition-all active:scale-[0.98] hover:bg-primary/10">
+                                    <Timer className="h-4 w-4" />
+                                    {language === 'en' ? 'Set Cooking Timer' : language === 'es' ? 'Configurar Temporizador' : 'Definir Timer de Cozimento'}
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Current Step */}
+                        <div className="rounded-2xl border border-primary/15 bg-primary/5 dark:bg-primary/10 p-6 shadow-sm">
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-xl font-bold text-primary-foreground shadow-lg shadow-primary/25">
+                                {currentStep + 1}
+                            </div>
+                            <p className="text-lg font-medium leading-relaxed text-foreground">
+                                {(recipe.instructions ?? [])[currentStep]}
+                            </p>
+                        </div>
+
+                        {/* Navigation */}
+                        <div className="flex gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={prevStep}
+                                disabled={currentStep === 0}
+                                className="flex-1 rounded-2xl py-6 font-bold"
+                            >
+                                <ArrowLeft className="mr-2 h-5 w-5" />
+                                Anterior
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    toggleStep(currentStep);
+                                    nextStep();
+                                }}
+                                className="flex-1 rounded-2xl py-6 font-bold shadow-sm shadow-primary/25"
+                                disabled={currentStep === (recipe.instructions ?? []).length - 1 && completedSteps.includes(currentStep)}
+                            >
+                                {currentStep === (recipe.instructions ?? []).length - 1 ? (
+                                    <>
+                                        <Check className="mr-2 h-5 w-5" />
+                                        Concluir
+                                    </>
+                                ) : (
+                                    <>
+                                        Próximo
+                                        <ArrowRight className="ml-2 h-5 w-5" />
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                ) : (
+                    /* Normal View */
+                    <div className="animate-fade-in space-y-8">
+                        {/* Ingredients */}
+                        <section>
+                            <h3 className="mb-4 text-lg font-bold text-foreground">Ingredientes</h3>
+                            <div className="space-y-2.5">
+                                {recipe.ingredients.map((ingredient, index) => (
+                                    <div
+                                        key={index}
+                                        className="flex items-center gap-3 rounded-2xl border border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 backdrop-blur-xl px-4 py-3.5 shadow-sm"
+                                    >
+                                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                                            <div className="h-2 w-2 rounded-full bg-primary" />
+                                        </div>
+                                        <span className="text-sm font-medium text-foreground">{scaleQuantity(ingredient)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* Instructions */}
+                        <section>
+                            <h3 className="mb-4 text-lg font-bold text-foreground">Modo de Preparo</h3>
+                            <div className="space-y-3">
+                                {(recipe.instructions ?? []).map((instruction, index) => (
+                                    <div
+                                        key={index}
+                                        onClick={() => toggleStep(index)}
+                                        className={cn(
+                                            'flex cursor-pointer gap-4 rounded-2xl border p-4 transition-all active:scale-[0.99] shadow-sm',
+                                            completedSteps.includes(index)
+                                                ? 'border-primary/20 bg-primary/5 dark:bg-primary/10'
+                                                : 'border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 backdrop-blur-xl'
+                                        )}
+                                    >
+                                        <div className={cn(
+                                            'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-bold transition-all',
+                                            completedSteps.includes(index)
+                                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                                : 'bg-muted/50 text-muted-foreground'
+                                        )}>
+                                            {completedSteps.includes(index) ? (
+                                                <Check className="h-4 w-4" />
+                                            ) : (
+                                                index + 1
+                                            )}
+                                        </div>
+                                        <p className={cn(
+                                            'text-sm leading-relaxed pt-1.5',
+                                            completedSteps.includes(index)
+                                                ? 'text-muted-foreground line-through'
+                                                : 'text-foreground font-medium'
+                                        )}>
+                                            {instruction}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    </div>
+                )}
+            </main>
+        </PageTransition>
+    );
+}

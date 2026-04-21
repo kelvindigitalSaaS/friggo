@@ -1,4 +1,4 @@
-import { Recipe } from "@/types/friggo";
+import { Recipe } from "@/types/kaza";
 
 type RecipeEntry = Omit<Recipe, "id" | "usesExpiringItems">;
 

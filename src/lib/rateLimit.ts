@@ -5,7 +5,7 @@ interface RateLimitEntry {
   resetAt: number;
 }
 
-const STORAGE_PREFIX = "friggo_rl_";
+const STORAGE_PREFIX = "Kaza_rl_";
 
 export function checkRateLimit(
   key: string,

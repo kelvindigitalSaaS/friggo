@@ -1,4 +1,4 @@
-// Friggo DB schema v2.0 — multi-tenant by home_id.
+// Kaza DB schema v2.0 — multi-tenant by home_id.
 // Apenas os shapes usados pelo app. Colunas opcionais ficam com `| null`.
 
 export type Json =

@@ -106,8 +106,15 @@ serve(async (req) => {
     if (event === "purchase_approved") {
       console.log("💳 Processando compra aprovada...");
 
+      const productId = transaction?.product?.id || "";
+      const isMulti = productId.includes("wbjq4ne") || productId.includes("846287");
+      const planTier = isMulti ? "multiPRO" : "individualPRO";
+      const planLabel = isMulti ? "multiPRO" : "individualPRO";
+
+      console.log(`📦 Plano detectado: ${planTier} (Product ID: ${productId})`);
+
       const { error: updateErr } = await supabase.from("profiles").update({
-        plan_type: "premium",
+        plan_type: planTier,
         subscription_status: "active",
         last_payment_date: new Date().toISOString(),
         payment_method: transaction.paymentMethod || "credit_card",
@@ -117,7 +124,7 @@ serve(async (req) => {
       if (updateErr) {
         console.error("❌ Erro ao atualizar perfil:", updateErr);
       } else {
-        console.log("✅ Perfil atualizado para premium");
+        console.log(`✅ Perfil atualizado para ${planTier}`);
       }
 
       // Salvar no histórico
@@ -133,27 +140,50 @@ serve(async (req) => {
       // Atualizar subscriptions com period/next_billing e registrar evento
       const now = new Date();
       const nextBilling = new Date(now.getTime() + 30 * 24 * 3600 * 1000);
-      await supabase.from("subscriptions").upsert({
+      
+      const subUpdate: any = {
         user_id: profile.user_id,
-        plan: "premium",
+        plan: planTier,
+        plan_tier: planTier,
+        plan_label: planLabel,
         is_active: true,
         current_period_end: nextBilling.toISOString(),
         next_billing_at: nextBilling.toISOString(),
         payment_status: "paid",
-        plan_label: "Premium",
         auto_renew: true,
         cancel_at_period_end: false,
-      }, { onConflict: "user_id" });
+      };
+
+      // Se for Multi, garantir que o grupo de contas esteja pronto
+      if (isMulti) {
+        // Tenta buscar ou criar um sub_account_group para o mestre
+        const { data: group } = await supabase.from("sub_account_groups")
+          .select("id")
+          .eq("master_user_id", profile.user_id)
+          .maybeSingle();
+
+        if (!group) {
+          const { data: newGroup } = await supabase.from("sub_account_groups")
+            .insert({ master_user_id: profile.user_id, plan_tier: "multiPRO", max_members: 3 })
+            .select("id")
+            .single();
+          if (newGroup) subUpdate.group_id = newGroup.id;
+        } else {
+          subUpdate.group_id = group.id;
+        }
+      }
+
+      await supabase.from("subscriptions").upsert(subUpdate, { onConflict: "user_id" });
 
       await supabase.from("subscription_events").insert({
         user_id: profile.user_id,
         event_type: "payment_succeeded",
         amount: transaction.amount || 0,
         currency: "BRL",
-        metadata: { cakto_transaction_id: transactionId },
+        metadata: { cakto_transaction_id: transactionId, plan_tier: planTier },
       });
 
-      resultMsg = "Purchase approved - user upgraded to premium";
+      resultMsg = `Purchase approved - user upgraded to ${planTier}`;
 
     // ── refund / subscription_canceled (nota: Cakto usa 1 'l') ──
     } else if (event === "refund" || event === "subscription_canceled" || event === "subscription_cancelled") {

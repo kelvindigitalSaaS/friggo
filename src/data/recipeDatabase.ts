@@ -1,4 +1,4 @@
-import { Recipe } from "@/types/friggo";
+import { Recipe } from "@/types/kaza";
 import recipesData from "./recipes.json";
 
 // Typed constant for the consolidated recipes

@@ -1,4 +1,4 @@
-import { Recipe } from "@/types/friggo";
+import { Recipe } from "@/types/kaza";
 type R = Omit<Recipe, "id" | "usesExpiringItems">;
 function g(b: string, v: string[], c: string, t: Recipe["type"], i: string[], ins: string[], p: number, ck: number, s: number, d: Recipe["difficulty"]): R[] {
   return v.map(x => ({ name: `${b} ${x}`, emoji: "🍽️", region: "INT", estimatedCost: "low",  description: `${b} preparado com ${x.toLowerCase()} - delicioso e irresistível`, category: c, type: t, ingredients: [...i, x.toLowerCase()], instructions: ins, prepTime: p, cookTime: ck, servings: s, difficulty: d }));

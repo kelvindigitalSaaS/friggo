@@ -1,4 +1,4 @@
-import { Recipe } from "@/types/friggo";
+import { Recipe } from "@/types/kaza";
 
 // Banco de dados com centenas de receitas brasileiras
 export const brazilianRecipes: Omit<Recipe, "id" | "usesExpiringItems">[] = [

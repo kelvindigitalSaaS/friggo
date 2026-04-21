@@ -1,4 +1,4 @@
-import { Recipe } from "@/types/friggo";
+import { Recipe } from "@/types/kaza";
 
 // Mega pack of trending, delicious recipes with full descriptions
 // Categories: International, Comfort Food, Street Food, Gourmet, Quick & Easy

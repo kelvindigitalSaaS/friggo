@@ -1,7 +1,7 @@
-import { Recipe } from '@/types/friggo';
+import { Recipe } from '@/types/kaza';
 
 // In-memory only. Nada é persistido em localStorage.
-// Receitas favoritas ficam no banco (recipes.is_favorite) via FriggoContext.
+// Receitas favoritas ficam no banco (recipes.is_favorite) via KazaContext.
 
 const CACHE_DURATION = 24 * 60 * 60 * 1000;
 

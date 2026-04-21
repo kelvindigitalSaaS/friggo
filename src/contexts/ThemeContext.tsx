@@ -11,7 +11,7 @@ interface ThemeContextType {
   setTheme: (theme: Theme) => void;
 }
 
-const LS_KEY = 'friggo-theme';
+const LS_KEY = 'Kaza-theme';
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 

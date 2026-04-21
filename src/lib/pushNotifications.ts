@@ -7,7 +7,7 @@ import { isAndroid, isNative } from "./capacitor";
 const ICON_192 = "/icon.png";
 const ICON_512 = "/icon.png";
 const BADGE_ICON = "/icons/badge-96.svg";
-const FRIGGO_SOUND = "default";
+const Kaza_SOUND = "default";
 
 interface NotificationAction {
   action: string;
@@ -519,7 +519,7 @@ async function ensureNotificationChannels() {
       name: "Kaza",
       description: "Atualizações da sua geladeira e despensa",
       importance: 4, // HIGH
-      sound: FRIGGO_SOUND,
+      sound: Kaza_SOUND,
       vibration: true,
       lights: true,
       lightColor: "#22c55e"
@@ -529,7 +529,7 @@ async function ensureNotificationChannels() {
       name: "Kaza — Urgente",
       description: "Itens vencendo hoje ou com urgência",
       importance: 5, // MAX
-      sound: FRIGGO_SOUND,
+      sound: Kaza_SOUND,
       vibration: true,
       lights: true,
       lightColor: "#ef4444"

@@ -1,4 +1,4 @@
-import { Recipe } from "@/types/friggo";
+import { Recipe } from "@/types/kaza";
 
 export const receitasCafeDaManha: Omit<Recipe, "id" | "usesExpiringItems">[] = [
   {

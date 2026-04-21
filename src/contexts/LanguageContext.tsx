@@ -287,7 +287,7 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-const LS_KEY = 'friggo-language';
+const LS_KEY = 'Kaza-language';
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();

@@ -45,36 +45,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // After email confirmation or first sign-in, ensure profile name is synced
-      // from auth user_metadata (set during signUp) to the profiles table.
-      // IMPORTANT: defer Supabase calls out of this callback — running them
-      // inside onAuthStateChange holds the auth mutex and deadlocks every
-      // other Supabase query in the app.
-      if ((event === "SIGNED_IN" || event === "USER_UPDATED") && session?.user) {
-        const metaName = session.user.user_metadata?.name;
-        const userId = session.user.id;
-        setTimeout(async () => {
-          try {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("name")
-              .eq("user_id", userId)
-              .maybeSingle();
-            if (!profile) {
-              // New OAuth user — create profile so subsequent loads work correctly
-              await supabase.from("profiles").upsert(
-                { user_id: userId, name: metaName ?? null, onboarding_completed: false },
-                { onConflict: "user_id" }
-              );
-            } else if (!profile.name && metaName) {
-              await supabase
-                .from("profiles")
-                .update({ name: metaName })
-                .eq("user_id", userId);
-            }
-          } catch { /* best-effort */ }
-        }, 0);
-      }
+      // After email confirmation or first sign-in, the profiles table is 
+      // automatically populated by the DB trigger 'on_auth_user_created'.
+      // No manual frontend writes needed (Zero Leakage).
 
       // Redirect to login if signed out — only for protected /app/* routes
       if (event === "SIGNED_OUT" && !session) {

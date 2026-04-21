@@ -458,85 +458,34 @@ export function SubscriptionProvider({
   const startCheckout = useCallback(async (plan: SubscriptionPlan) => {
     if (plan === "free") return;
 
-    const maxRetries = 3;
-    let lastError: any = null;
+    const CAKTO_LINKS = {
+      individualPRO: "https://pay.cakto.com.br/356go8z",
+      multiPRO: "https://pay.cakto.com.br/wbjq4ne_846287"
+    };
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        if (import.meta.env.DEV) {
-          console.log(`[DEV] [Checkout] Attempt ${attempt}/${maxRetries} for plan ${plan}`);
-        }
+    // Mapear planos legados para os novos da Cakto
+    const effectivePlan = (plan === "premium" || plan === "individualPRO") ? "individualPRO" : "multiPRO";
+    let checkoutUrl = CAKTO_LINKS[effectivePlan as keyof typeof CAKTO_LINKS];
 
-        let cpf: string | null = null;
-        try {
-          const { data: profileSensitive } = await supabase
-            .from("profile_sensitive")
-            .select("cpf")
-            .eq("user_id", user?.id)
-            .maybeSingle();
-          // @ts-expect-error -- supabase generated types incomplete
-          cpf = profileSensitive?.cpf ?? null;
-        } catch {
-          // Non-critical
-        }
-
-        const { data, error } = await supabase.functions.invoke(
-          "create-checkout",
-          {
-            body: { plan, email: user?.email ?? null, cpf },
-            headers: { "Content-Type": "application/json" }
-          }
-        );
-
-        if (error) {
-          let errorMessage = "Erro desconhecido";
-          try {
-            const ctx = (error as any).context;
-            if (ctx && ctx instanceof Response) {
-              try {
-                const bodyJson = await ctx.json();
-                errorMessage = bodyJson?.error || bodyJson?.message || String(error);
-              } catch {
-                errorMessage = await ctx.text();
-              }
-            } else if (error?.message) {
-              errorMessage = String(error.message);
-            } else if (typeof error === "string") {
-              errorMessage = error;
-            } else {
-              errorMessage = JSON.stringify(error);
-            }
-          } catch {
-            errorMessage = String(error);
-          }
-
-          lastError = new Error(errorMessage);
-          if (attempt < maxRetries) {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-            continue;
-          } else {
-            throw lastError;
-          }
-        }
-
-        if (data?.url) {
-          window.location.href = data.url;
-          return;
-        } else {
-          throw new Error("Sessão de pagamento não foi criada");
-        }
-      } catch (error: any) {
-        lastError = error;
-        if (attempt < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-        }
-      }
+    if (!checkoutUrl) {
+      throw new Error("Plano de pagamento não configurado.");
     }
 
-    const finalErrorMsg = lastError?.message ? String(lastError.message) : "Erro desconhecido";
-    throw new Error(
-      finalErrorMsg || "Não foi possível iniciar o pagamento. Verifique sua conexão e tente novamente."
-    );
+    // Tenta anexar o email para preenchimento automático na Cakto (padrão comum ?email=)
+    if (user?.email) {
+      const glue = checkoutUrl.includes("?") ? "&" : "?";
+      checkoutUrl += `${glue}email=${encodeURIComponent(user.email)}`;
+    }
+
+    try {
+      if (import.meta.env.DEV) {
+        console.log(`[SUB] Redirecting to Cakto: ${checkoutUrl}`);
+      }
+      await openExternalUrl(checkoutUrl);
+    } catch (error) {
+      console.error("[SUB] Checkout error:", error);
+      throw new Error("Não foi possível abrir a página de pagamento.");
+    }
   }, [user]);
 
   const openCustomerPortal = useCallback(async () => {

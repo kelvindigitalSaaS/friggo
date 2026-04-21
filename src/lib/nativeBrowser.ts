@@ -3,7 +3,7 @@ import { App as CapApp } from "@capacitor/app";
 import { isNative } from "./capacitor";
 
 /**
- * Opens a URL using in-app browser on native (needed for Stripe Checkout),
+ * Opens a URL using in-app browser on native (needed for Checkout),
  * or window.open on web.
  * Returns a Promise that resolves when the browser is closed (native only).
  */
@@ -18,7 +18,7 @@ export async function openExternalUrl(url: string): Promise<void> {
 }
 
 /**
- * Closes the in-app browser (after Stripe redirect, for example).
+ * Closes the in-app browser (after OAuth or checkout redirect).
  */
 export async function closeInAppBrowser(): Promise<void> {
   if (isNative) {
@@ -31,7 +31,7 @@ export async function closeInAppBrowser(): Promise<void> {
 }
 
 /**
- * Listens for the Stripe redirect back to the app via deep link.
+ * Listens for deep links (auth callbacks, etc) back to the app.
  * Call this once at app startup on native platforms.
  */
 export function listenForDeepLinks(callback: (url: string) => void) {
@@ -40,29 +40,4 @@ export function listenForDeepLinks(callback: (url: string) => void) {
   CapApp.addListener("appUrlOpen", (event) => {
     callback(event.url);
   });
-}
-
-/**
- * Handles the Stripe redirect URL and extracts query params.
- * Expected patterns:
- *   friggo://checkout?subscription=success
- *   friggo://checkout?subscription=canceled
- *   com.friggo.app://checkout?subscription=success
- *   com.friggo.app://checkout?subscription=canceled
- */
-export function parseStripeRedirect(
-  url: string
-): "success" | "canceled" | null {
-  try {
-    // Mobile deep links may use custom scheme
-    const normalized = url
-        .replace("com.friggo.app://", "https://kaza.app/")
-        .replace("friggo://", "https://kaza.app/");
-    const parsed = new URL(normalized);
-    const result = parsed.searchParams.get("subscription");
-    if (result === "success" || result === "canceled") return result;
-  } catch {
-    // ignore parse errors
-  }
-  return null;
 }

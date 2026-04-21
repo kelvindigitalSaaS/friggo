@@ -1,4 +1,4 @@
-import { Recipe } from "@/types/friggo";
+import { Recipe } from "@/types/kaza";
 
 // usesExpiringItems é opcional no tipo Recipe — definido pelo mapper em recipeDatabase.ts
 export const receitasFitness: Recipe[] = [

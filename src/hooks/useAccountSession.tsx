@@ -18,7 +18,7 @@ import type { SubAccountMember, AccountSession } from "@/integrations/supabase/t
 
 // Gera/recupera um device_id estável por dispositivo
 function getDeviceId(): string {
-  const KEY = "friggo_device_id";
+  const KEY = "Kaza_device_id";
   let id = localStorage.getItem(KEY);
   if (!id) {
     id = crypto.randomUUID();

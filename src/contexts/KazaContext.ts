@@ -1,1 +1,0 @@
-export { KazaProvider, useKaza } from "./FriggoContext";
