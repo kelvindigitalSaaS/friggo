@@ -421,7 +421,7 @@ const staggerItem = {
 };
 
 export default function Onboarding() {
-  const { completeOnboarding, setConsumablesBulk, onboardingData } = useKaza();
+  const { completeOnboarding, setConsumablesBulk, onboardingData, saveOnboardingProgress } = useKaza();
   const { language } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { signOut, user } = useAuth();
@@ -603,6 +603,18 @@ export default function Onboarding() {
       setCurrentStep(next);
     }
   };
+  
+  // Debounced auto-save: saves progress automatically after 2 seconds of inactivity
+  useEffect(() => {
+    if (!user) return;
+    const timer = setTimeout(() => {
+      // Only save if we have at least a name or CPF started
+      if (data.name.trim() || data.cpf.trim()) {
+        saveOnboardingProgress(data);
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [data.name, data.cpf, data.homeName, data.homeType, user, saveOnboardingProgress]);
 
   // Se começar num step que deve ser pulado (nome/CPF já definidos), avança
   useEffect(() => {

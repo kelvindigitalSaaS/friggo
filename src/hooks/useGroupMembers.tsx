@@ -177,44 +177,48 @@ export function useGroupMembers() {
         const body: Record<string, string> = { invited_email: email };
         if (groupId) body.group_id = groupId;
 
-        const { data, error } = await supabase.functions.invoke("send-invite-email", {
-          body,
-        });
-
-        if (error) {
-          if (import.meta.env.DEV) console.error("[INVITE] Error calling function:", error);
-          let errorMsg = "Erro ao enviar convite";
-          
-          try {
-            // Try to extract JSON from error context without leaking to console
-            const context = (error as any).context;
-            if (context instanceof Response) {
-              const errorBody = await context.clone().json().catch(() => null);
-              if (errorBody?.error) errorMsg = errorBody.error;
-            }
-          } catch (e) { /* silent fail on parsing */ }
-
-          if (errorMsg === "Erro ao enviar convite") {
-            const msg =
-              typeof error === "object" && error !== null
-                ? (error as any).message ?? ""
-                : String(error);
-
-            if (msg.includes("Unauthorized")) {
-              errorMsg = "Você não tem permissão para enviar convites";
-            } else if (msg.includes("já foi convidado") || msg.includes("já possui um convite")) {
-              errorMsg = "Este email já tem um convite pendente";
-            } else if (msg.includes("plano PRO")) {
-              errorMsg = "Você precisa de um plano PRO para convidar membros";
-            } else if (msg && msg !== "FunctionsHttpError: Edge Function returned a non-2xx status code") {
-              errorMsg = msg;
-            }
-          }
-
-          toast.error(errorMsg);
-          if (import.meta.env.DEV) console.error("[DEV] Error sending invite:", error);
+        // Garantir que temos uma sessão válida antes de tentar
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          toast.error("Sessão expirada. Por favor, faça login novamente.");
           return false;
         }
+
+        // Usar fetch nativo para garantir controle total dos headers e evitar erro 401
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const functionUrl = `${supabaseUrl}/functions/v1/send-invite-email`;
+
+        const response = await fetch(functionUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`,
+            "apikey": supabaseKey,
+            "x-anon-key": supabaseKey,
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          const resText = await response.text();
+          if (import.meta.env.DEV) console.error("[INVITE] Full Error Response:", resText);
+          
+          let errorMsg = `Erro ${response.status}: Falha na requisição`;
+          try {
+            const errorData = JSON.parse(resText);
+            errorMsg = errorData.error || errorMsg;
+          } catch (e) { /* use default msg */ }
+          
+          if (response.status === 401) {
+            toast.error("Erro de Autenticação (401). Tente sair e entrar novamente no app.");
+          } else {
+            toast.error(errorMsg);
+          }
+          return false;
+        }
+
+        const data = await response.json();
 
         if (!data?.success) {
           toast.error("Erro ao enviar convite. Tente novamente.");
@@ -292,33 +296,22 @@ export function useGroupMembers() {
     async (inviteId: string, email: string) => {
       if (!groupId) return;
       try {
-        // Try to resend the Supabase confirmation email first (covers the case
-        // where the user already signed up via the invite and is waiting on
-        // the confirmation link).
-        const { data: confData } = await supabase.functions.invoke(
-          "resend-confirmation-email",
-          {
-            body: {
-              email,
-              redirect_to: `${window.location.origin}/auth`,
-            },
-          }
-        );
-
-        if (confData?.success) {
-          toast.success(`Email de confirmação reenviado para ${email}`);
-          return;
-        }
-
-        // Otherwise recreate the invite so a fresh token is issued
-        const { error } = await supabase
+        // Para convites pendentes, o usuário quer reenviar o CONVITE do Kaza
+        // e não a confirmação de e-mail genérica do Supabase.
+        // Vamos deletar o convite antigo e disparar um novo para garantir que o e-mail
+        // tenha o link correto do app e o nome de quem convidou.
+        
+        const { error: deleteError } = await supabase
           .from("sub_account_invites")
           .delete()
           .eq("id", inviteId)
           .eq("group_id", groupId);
-        if (error) throw error;
-        setPendingInvites((prev) => prev.filter((i) => i.id !== inviteId));
+          
+        if (deleteError) throw deleteError;
+        
+        // Disparar o convite original novamente
         await inviteByEmail(email);
+        toast.success(`Convite reenviado para ${email}`);
       } catch (err) {
         if (import.meta.env.DEV) console.error("[DEV] Error resending invite:", err);
         toast.error("Erro ao reenviar convite");

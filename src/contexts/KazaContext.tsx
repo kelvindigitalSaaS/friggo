@@ -78,6 +78,9 @@ interface KazaContextType {
   mealPlan: MealPlanEntry[];
   addToMealPlan: (entry: Omit<MealPlanEntry, "id">) => Promise<void>;
   removeFromMealPlan: (id: string) => Promise<void>;
+  saveOnboardingProgress: (data: Partial<OnboardingData>) => Promise<void>;
+  checkCpf: (cpf: string) => Promise<boolean>;
+  requestPasswordResetByCpf: (cpf: string) => Promise<boolean>;
 }
 
 const KazaContext = createContext<KazaContextType | undefined>(undefined);
@@ -238,8 +241,19 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         setConsumables([]);
         setFavoriteRecipes([]);
         setMealPlan([]);
-        console.log("[KAZA] Setting default onboarding data and finishing loading.");
-        setOnboardingData(buildDefaultOnboarding());
+        
+        console.log("[KAZA] Fetching partial profile data for onboarding...");
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("name, cpf")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        console.log("[KAZA] Setting persistent onboarding data:", profile);
+        setOnboardingData(buildDefaultOnboarding({
+          name: profile?.name ?? "",
+          cpf: profile?.cpf ?? ""
+        }));
         setOnboardingCompleted(false);
         setLoading(false);
         return;
@@ -928,6 +942,49 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   };
 
   // ── onboarding / profile ─────────────────────────────────────────────────
+  const saveOnboardingProgress = async (data: Partial<OnboardingData>) => {
+    if (!user) return;
+    try {
+      const rawCpf = data.cpf ? String(data.cpf).replace(/\D/g, "") : null;
+      await supabase.rpc("save_onboarding_progress", {
+        p_name: data.name || null,
+        p_cpf: rawCpf
+      });
+      // Sincroniza estado local se necessário
+      if (data.name || data.cpf) {
+        setOnboardingData(prev => prev ? ({ ...prev, ...data }) : buildDefaultOnboarding(data));
+      }
+      
+      // Feedback visual de salvamento passo a passo
+      toast({
+        title: language === "pt-BR" ? "Progresso salvo" : "Progress saved",
+        description: language === "pt-BR" ? "Dados atualizados com segurança." : "Data securely updated.",
+        duration: 2000
+      });
+    } catch (err) {
+      console.warn("[KAZA] Erro ao salvar progresso parcial:", err);
+    }
+  };
+
+  const checkCpf = async (cpf: string) => {
+    const raw = cpf.replace(/\D/g, "");
+    if (!raw) return true;
+    const { data } = await supabase.rpc("check_cpf_availability", { p_cpf: raw });
+    return !!data;
+  };
+
+  const requestPasswordResetByCpf = async (cpf: string) => {
+    const raw = cpf.replace(/\D/g, "");
+    const { data, error } = await supabase.rpc("get_email_by_cpf", { p_cpf: raw });
+    if (data && data.length > 0) {
+      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(data[0].email, {
+        redirectTo: `${window.location.origin}/auth?type=recovery`
+      });
+      return !resetErr;
+    }
+    return false;
+  };
+
   const completeOnboarding = async (data: OnboardingData) => {
     if (!user) {
       setOnboardingData(buildDefaultOnboarding(data));
@@ -941,13 +998,14 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         p_home_name: data.homeName || (data.name ? `Casa da Família ${data.name}` : (language === "pt-BR" ? "Minha Casa" : "My Home")),
         p_user_name: data.name || user.email?.split("@")[0] || "User",
         p_user_cpf: rawCpf,
+        p_selected_plan: (data as any).selectedPlan || "multiPRO",
         p_home_type: data.homeType || "apartment",
         p_residents: data.residents || 1,
         p_fridge_type: data.fridgeType || "regular",
         p_fridge_brand: data.fridgeBrand || null,
         p_cooling_level: data.coolingLevel || 3,
-        p_theme_preference: theme || "system",
-        p_language_preference: language || "pt-BR"
+        p_theme_preference: (data as any).themePreference || "system",
+        p_language_preference: (data as any).languagePreference || language || "pt-BR"
       });
 
       if (error) {
@@ -1033,9 +1091,9 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       // Apagar todos os dados vinculados à casa atual
-      const { error: err1 } = await supabase.from("kaza_items").delete().eq("home_id", homeId);
-      const { error: err2 } = await supabase.from("shopping_list").delete().eq("home_id", homeId);
-      const { error: err3 } = await supabase.from("consumable_inventory").delete().eq("home_id", homeId);
+      const { error: err1 } = await supabase.from("items").delete().eq("home_id", homeId);
+      const { error: err2 } = await supabase.from("shopping_items").delete().eq("home_id", homeId);
+      const { error: err3 } = await supabase.from("consumables").delete().eq("home_id", homeId);
       const { error: err4 } = await supabase.from("item_history").delete().eq("home_id", homeId);
       const { error: err5 } = await supabase.from("meal_plans").delete().eq("home_id", homeId);
       const { error: err6 } = await supabase.from("home_members").delete().eq("user_id", user.id);
@@ -1189,6 +1247,9 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         addConsumable, updateConsumable, removeConsumable,
         clearConsumables, setConsumablesBulk,
         markAllShoppingComplete, clearAllShoppingList,
+        saveOnboardingProgress,
+        checkCpf,
+        requestPasswordResetByCpf,
         completeOnboarding, resetOnboarding, factoryReset, updateProfile, updateOnboardingData,
         defrostItem, dismissAlert, addItemHistory,
         toggleSection: async (id: string) => {

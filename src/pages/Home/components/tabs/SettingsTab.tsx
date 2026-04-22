@@ -995,7 +995,7 @@ export function SettingsTab() {
             <Button
               variant="destructive"
               onClick={async () => {
-                const { factoryReset } = (await import("@/contexts/KazaContext")).useKaza(); 
+                const { factoryReset } = (await import("@/contexts/KazaContext")).useKaza();
                 setConfirmFactoryResetOpen(false);
                 await factoryReset();
               }}

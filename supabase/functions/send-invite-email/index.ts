@@ -1,228 +1,163 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { validateAuth } from "../_shared/auth.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.1";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-anon-key",
+};
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
 
-// Service-role client — bypasses RLS for admin operations
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, apikey, x-client-info",
-};
+async function validateAuth(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) throw new Error("Missing Authorization header");
+  
+  const { data: { user }, error } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+  if (error || !user) throw new Error("Invalid token");
+  return user;
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json", ...CORS },
+    headers: { "Content-Type": "application/json", ...corsHeaders },
   });
-}
-
-interface InviteRequest {
-  group_id?: string;
-  invited_email: string;
 }
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: CORS });
+    return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
   try {
-    // ── Auth ─────────────────────────────────────────────────────────────────
     const user = await validateAuth(req);
+    const { invited_email, group_id: requested_group_id } = await req.json();
 
-    // ── Payload ─────────────────────────────────────────────────────────────────
-    const payload: InviteRequest = await req.json();
-    const { invited_email } = payload;
-    let { group_id } = payload;
+    if (!invited_email) return json({ error: "Email do convidado é obrigatório" }, 400);
 
-    if (!invited_email) return json({ error: "Missing invited_email" }, 400);
+    let groupId = requested_group_id;
 
-    // â”€â”€ Resolve / auto-create group â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    if (!group_id) {
-      // Look up the group via the user's subscription
+    if (!groupId) {
       const { data: sub } = await supabase
         .from("subscriptions")
-        .select("group_id, plan_tier, plan, is_active")
+        .select("group_id, plan_tier, is_active")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (sub?.group_id) {
-        group_id = sub.group_id;
+        groupId = sub.group_id;
       } else {
-        // Check trial status
-        const { data: access } = await supabase
-          .from("v_user_access")
-          .select("in_trial, trial_days_left")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        const { data: access } = await supabase.from("v_user_access").select("in_trial").eq("user_id", user.id).maybeSingle();
+        const isPro = access?.in_trial || (sub?.is_active && (sub.plan_tier === "multiPRO" || sub.plan_tier === "multi"));
 
-        const inTrial = access?.in_trial || (access?.trial_days_left && access.trial_days_left > 0);
+        if (!isPro) return json({ error: "Você precisa de um plano PRO para convidar membros." }, 403);
 
-        // User has multiPRO subscription but no group yet -> create one now
-        const isPro =
-          inTrial ||
-          ((sub?.plan_tier === "multiPRO" || sub?.plan_tier === "individualPRO" || sub?.plan === "premium" || sub?.plan === "multiPRO") &&
-          sub?.is_active);
-
-        if (!isPro) {
-          return json(
-            { error: "Você precisa de um plano PRO para convidar membros." },
-            403
-          );
-        }
-
-        // Create the group
         const { data: newGroup, error: groupErr } = await supabase
           .from("sub_account_groups")
-          .insert({ master_user_id: user.id, plan_tier: "multiPRO", max_members: 3 })
+          .insert({ master_user_id: user.id, plan_tier: "multi", max_members: 3 })
           .select("id")
           .single();
 
-        if (groupErr || !newGroup) {
-          console.error("Failed to auto-create group:", groupErr);
-          return json({ error: "NÃ£o foi possÃ­vel criar o grupo. Tente novamente." }, 500);
-        }
-
-        group_id = newGroup.id;
-
-        // Link group to subscription
-        await supabase
-          .from("subscriptions")
-          .update({ group_id })
-          .eq("user_id", user.id);
+        if (groupErr) throw new Error("Falha ao criar grupo.");
+        groupId = newGroup.id;
+        await supabase.from("subscriptions").update({ group_id: groupId }).eq("user_id", user.id);
       }
     }
 
-    // â”€â”€ Validate caller is master of group â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const { data: group, error: groupError } = await supabase
-      .from("sub_account_groups")
-      .select("id")
-      .eq("id", group_id)
-      .eq("master_user_id", user.id)
-      .single();
+    const { data: group } = await supabase.from("sub_account_groups").select("id").eq("id", groupId).eq("master_user_id", user.id).maybeSingle();
+    if (!group) return json({ error: "Permissão negada para este grupo." }, 403);
 
-    if (groupError || !group) {
-      return json({ error: "VocÃª nÃ£o tem permissÃ£o para convidar neste grupo." }, 403);
-    }
+    const { data: masterProfile } = await supabase.from("profiles").select("name").eq("user_id", user.id).maybeSingle();
+    const masterName = masterProfile?.name || user.email?.split("@")[0] || "Usuário Kaza";
 
-    // â”€â”€ Duplicate invite check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const { data: existingInvite } = await supabase
+    // UPSERT para evitar erro 23505 no reenvio
+    const { data: invite, error: inviteErr } = await supabase
       .from("sub_account_invites")
-      .select("id")
-      .eq("group_id", group_id)
-      .eq("invited_email", invited_email)
-      .eq("status", "pending")
-      .maybeSingle();
-
-    if (existingInvite) {
-      return json(
-        {
-          error: `Este email (${invited_email}) jÃ¡ foi convidado. Aguarde a resposta ou reenvie apÃ³s 7 dias.`,
-        },
-        400
-      );
-    }
-
-    // â”€â”€ Master display name â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const { data: masterProfile } = await supabase
-      .from("profiles")
-      .select("name")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    const masterName =
-      (masterProfile as any)?.name || user.email?.split("@")[0] || "Kaza User";
-
-    // â”€â”€ Create invite record â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const { data: invite, error: inviteError } = await supabase
-      .from("sub_account_invites")
-      .insert({
-        group_id,
-        master_user_id: user.id,
-        master_name: masterName,
-        invited_email,
+      .upsert({ 
+        group_id: groupId, 
+        master_user_id: user.id, 
+        master_name: masterName, 
+        invited_email: invited_email.toLowerCase(),
+        status: 'pending'
+      }, { 
+        onConflict: 'group_id,invited_email',
+        ignoreDuplicates: false 
       })
       .select()
       .single();
 
-    if (inviteError) {
-      // Unique constraint â†’ already invited (race condition)
-      if (inviteError.code === "23505") {
-        return json(
-          { error: `Este email (${invited_email}) jÃ¡ possui um convite pendente.` },
-          400
-        );
-      }
-      return json({ error: inviteError.message }, 400);
-    }
+    if (inviteErr) throw inviteErr;
 
-    // â”€â”€ Send email via Resend (best-effort) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const appUrl =
-      Deno.env.get("PUBLIC_APP_URL") ||
-      supabaseUrl.replace(".supabase.co", "");
+    // -- DISPARO RESEND --
+    const appUrl = Deno.env.get("PUBLIC_APP_URL") || "https://kaza.app";
     const inviteUrl = `${appUrl}/invite?token=${invite.token}`;
+    
+    // Limpeza da variável From para evitar Erro 422
+    let fromValue = Deno.env.get("RESEND_FROM_EMAIL") || "Kaza <onboarding@kazapp.tech>";
+    fromValue = fromValue.replace(/[\^\"\'\\]/g, "").trim(); // Remove lixo de terminal (como ^ ou aspas)
 
-    try {
-      const emailRes = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${resendApiKey}`,
-        },
-        body: JSON.stringify({
-          from: "convites@kaza.app",
-          to: invited_email,
-          subject: `${masterName} te convidou para o Kaza PRO`,
-          html: `
-<!DOCTYPE html>
-<html>
-<body style="font-family:sans-serif;background:#f5fdf9;margin:0;padding:24px">
-  <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(22,90,82,0.10)">
-    <div style="background:#165A52;padding:32px 24px;text-align:center">
-      <h1 style="color:#fff;margin:0;font-size:26px;font-weight:800">Kaza</h1>
-      <p style="color:rgba(255,255,255,0.7);margin:4px 0 0;font-size:14px">Tecnologia para sua rotina</p>
-    </div>
-    <div style="padding:32px 24px">
-      <h2 style="color:#165A52;margin:0 0 12px;font-size:20px">VocÃª foi convidado!</h2>
-      <p style="color:#548A76;margin:0 0 24px;font-size:15px">
-        <strong>${masterName}</strong> te convidou para fazer parte do plano
-        <strong>Kaza multiPRO</strong>.<br>
-        Compartilhe receitas, lista de compras e muito mais.
-      </p>
-      <a href="${inviteUrl}"
-         style="display:inline-block;background:#165A52;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px">
-        Aceitar convite â†’
-      </a>
-      <p style="color:#90AB9C;margin:20px 0 0;font-size:13px">Este link expira em 7 dias.</p>
-    </div>
-  </div>
+    const emailRes = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${resendApiKey}` },
+      body: JSON.stringify({
+        from: fromValue,
+        to: invited_email,
+        subject: `${masterName} te convidou para o Kaza`,
+        html: `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0; padding:0; background-color:#f4f7f6; font-family:Arial, Helvetica, sans-serif; color:#1f2d2a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%; background-color:#f4f7f6;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px; width:100%; background-color:#ffffff; border-radius:20px; overflow:hidden;">
+          <tr>
+            <td align="center" style="padding:28px 24px 12px 24px; background-color:#165a52;">
+              <img src="https://cdn-checkout.cakto.com.br/products/e04d9e2b-3252-44d3-86cc-4f8fb94fb659.png?width=180" alt="Kaza" width="96" style="display:block; width:96px; height:96px; border:0; border-radius:22px; margin:0 auto 16px auto;" />
+              <div style="font-size:24px; line-height:32px; font-weight:700; color:#ffffff;">Kaza</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 28px;">
+              <p style="margin:0 0 14px 0; font-size:24px; line-height:32px; font-weight:700; color:#1f2d2a; text-align:center;">Você recebeu um convite</p>
+              <p style="margin:0 0 24px 0; font-size:15px; line-height:24px; color:#52635f; text-align:center;">
+                <strong>${masterName}</strong> te convidou para compartilhar a rotina no <strong>Kaza</strong>. Clique no botão abaixo para aceitar o convite e começar.
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
+                <tr>
+                  <td align="center" bgcolor="#165a52" style="border-radius:14px;">
+                    <a href="${inviteUrl}" style="display:inline-block; padding:15px 26px; font-size:15px; line-height:20px; font-weight:700; color:#ffffff; text-decoration:none; background-color:#165a52; border-radius:14px;">Aceitar convite</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:24px 0 0 0; font-size:12px; line-height:20px; color:#7b8a87; text-align:center;">Se você não esperava esta mensagem, ignore este e-mail.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
-</html>`,
-        }),
-      });
+</html>`
+      })
+    });
 
-      if (!emailRes.ok) {
-        const errText = await emailRes.text();
-        console.error("Resend error:", errText);
-        // Non-critical â€” invite record is already created
-      }
-    } catch (emailErr) {
-      console.error("Email send failed (non-critical):", emailErr);
+    if (!emailRes.ok) {
+      const errorText = await emailRes.text();
+      return json({ error: `Falha no Resend: ${errorText}` }, 500);
     }
 
-    return json({ success: true, invite_id: invite.id, group_id });
-  } catch (error) {
-    console.error(error);
-    return json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
-      500
-    );
+    return json({ success: true, invite_id: invite.id });
+  } catch (err) {
+    console.error(err);
+    return json({ error: err.message }, 500);
   }
 });
