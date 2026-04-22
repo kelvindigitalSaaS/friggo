@@ -10,37 +10,37 @@
 @layer base {
   :root {
     /* === Kaza Design System — nova paleta 2025 === */
-    --background: 131 45% 90%;
-    /* #DAF1DE — fundo claro mint */
-    --foreground: 174 61% 12%;
-    /* verde escuro para texto */
+    --background: 0 0% 98%;
+    /* #fafafa — fundo neutro premium */
+    --foreground: 0 0% 15%;
+    /* grafite escuro para texto */
 
     --card: 0 0% 100%;
-    --card-foreground: 174 61% 12%;
+    --card-foreground: 0 0% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 174 61% 12%;
+    --popover-foreground: 0 0% 15%;
 
     --primary: 173 61% 22%;
-    /* #165A52 — verde principal */
+    /* #165A52 — mantém o verde oficial para destaques */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 131 45% 90%;
-    /* #DAF1DE — fundo suave */
+    --secondary: 0 0% 96%;
+    /* #f5f5f5 — fundo secundário neutro */
     --secondary-foreground: 173 61% 22%;
 
-    --accent: 158 24% 44%;
-    /* #548A76 — acento verde médio */
-    --accent-foreground: 0 0% 100%;
+    --accent: 0 0% 92%;
+    /* neutro médio */
+    --accent-foreground: 173 61% 22%;
 
-    --muted: 131 25% 85%;
-    --muted-foreground: 158 20% 42%;
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 45%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 131 30% 82%;
-    --input: 131 30% 82%;
+    --border: 0 0% 89%;
+    --input: 0 0% 89%;
     --ring: 173 61% 22%;
 
     --radius: 1.25rem;

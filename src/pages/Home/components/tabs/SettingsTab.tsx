@@ -102,7 +102,7 @@ export function SettingsTab() {
   const labels: Record<string, any> = {
     "pt-BR": {
       title: "Ajustes",
-      profile: "Perfil",
+      profile: "Ajustes",
       editProfile: "Editar informações pessoais",
       shortcuts: "Atalhos Rápidos",
       notifications: "Notificações",
@@ -302,7 +302,7 @@ export function SettingsTab() {
   return (
     <PageTransition
       direction="right"
-      className="min-h-[100dvh] bg-[#FAFAFA] dark:bg-[#091f1c] pb-nav-safe pt-8"
+      className="min-h-[100dvh] bg-[#fafafa] dark:bg-[#091f1c] pb-nav-safe pt-8"
     >
       <main className="space-y-6 px-3">
         {/* Profile — horizontal layout: avatar left, info right */}
@@ -471,10 +471,10 @@ export function SettingsTab() {
                     key={value}
                     onClick={() => setTheme(value as any)}
                     className={cn(
-                      "flex flex-col items-center justify-center gap-0.5 h-12 w-12 rounded-xl text-[9px] font-bold transition-all uppercase tracking-wide",
+                      "flex flex-col items-center justify-center gap-0.5 h-12 w-12 rounded-xl text-[9px] font-black transition-all uppercase tracking-wide border",
                       theme === value
-                        ? "bg-white text-[#091f1c] shadow-sm"
-                        : "bg-[#F0EFE8] text-[#7A7A72] dark:bg-white/10 dark:text-white/50 hover:bg-[#E8E7E0] dark:hover:bg-white/15"
+                        ? "bg-white text-[#165A52] border-[#165A52]/20 shadow-[0_4px_12px_rgba(22,90,82,0.12)]"
+                        : "bg-[#F0EFE8] text-[#7A7A72] border-transparent dark:bg-white/10 dark:text-white/50 hover:bg-[#E8E7E0] dark:hover:bg-white/15"
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -500,10 +500,10 @@ export function SettingsTab() {
                     key={value}
                     onClick={() => setLanguage(value as any)}
                     className={cn(
-                      "flex items-center justify-center h-12 w-12 rounded-xl text-[13px] font-black tracking-wide transition-all uppercase",
+                      "flex items-center justify-center h-12 w-12 rounded-xl text-[13px] font-black tracking-wide transition-all uppercase border",
                       language === value
-                        ? "bg-white text-[#091f1c] shadow-sm"
-                        : "bg-[#F0EFE8] text-[#7A7A72] dark:bg-white/10 dark:text-white/50 hover:bg-[#E8E7E0] dark:hover:bg-white/15"
+                        ? "bg-white text-[#165A52] border-[#165A52]/20 shadow-[0_4px_12px_rgba(22,90,82,0.12)]"
+                        : "bg-[#F0EFE8] text-[#7A7A72] border-transparent dark:bg-white/10 dark:text-white/50 hover:bg-[#E8E7E0] dark:hover:bg-white/15"
                     )}
                   >
                     {label}
@@ -623,7 +623,7 @@ export function SettingsTab() {
                   }, (notifDelay * 1000) + (index * 5000));
                 });
               }}
-              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#F5F5F5] dark:bg-white/10 border border-[#E2E1DC] dark:border-white/10 py-3 text-[#3D6B55] dark:text-emerald-400 font-semibold text-sm transition-all active:scale-[0.97] shadow-sm"
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-secondary dark:bg-white/10 border border-border dark:border-white/10 py-3 text-primary dark:text-emerald-400 font-semibold text-sm transition-all active:scale-[0.97] shadow-sm"
             >
               <BellRing className="h-4 w-4" />
               {l.testNotif}
@@ -636,7 +636,7 @@ export function SettingsTab() {
           <h3 className="text-[11px] font-bold text-[#9A998F] dark:text-white/40 uppercase tracking-[1.5px] px-1 flex items-center gap-1">
             <HelpCircle className="h-3.5 w-3.5" /> {l.helpSupport}
           </h3>
-          <div className="rounded-2xl bg-white dark:bg-[#11302c] border border-[#E2E1DC] dark:border-white/10 overflow-hidden shadow-sm">
+          <div className="rounded-2xl bg-white dark:bg-card border border-border dark:border-white/10 overflow-hidden shadow-sm">
             {[
               { label: l.faq, desc: l.faqDesc, icon: HelpCircle, onClick: () => navigate("/app/settings/faq") },
               { label: "Suporte", desc: "Entre em contato via WhatsApp", icon: MessageCircle, onClick: () => window.open("https://wa.me/5511914878708", "_blank") },
@@ -645,10 +645,10 @@ export function SettingsTab() {
               <button
                 key={label}
                 onClick={onClick}
-                className={cn("w-full flex items-center justify-between px-5 py-4 active:bg-[#F7F6F3] dark:active:bg-white/5 transition-colors group", idx < arr.length - 1 && "border-b border-[#E2E1DC] dark:border-white/10")}
+                className={cn("w-full flex items-center justify-between px-5 py-4 active:bg-secondary dark:active:bg-white/5 transition-colors group", idx < arr.length - 1 && "border-b border-border dark:border-white/10")}
               >
                 <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-[#EDECEA] dark:bg-white/10 p-2.5">
+                  <div className="rounded-xl bg-secondary dark:bg-white/10 p-2.5">
                     <Icon className="h-5 w-5 text-[#3D3D3A] dark:text-white/80" />
                   </div>
                   <div className="text-left">
@@ -665,13 +665,13 @@ export function SettingsTab() {
         {/* Security & Account */}
         <section className="space-y-3">
           <h3 className="text-[11px] font-bold text-[#9A998F] dark:text-white/40 uppercase tracking-[1.5px] px-1">{l.security}</h3>
-          <div className="rounded-2xl bg-white dark:bg-[#11302c] border border-[#E2E1DC] dark:border-white/10 overflow-hidden shadow-sm">
+          <div className="rounded-2xl bg-white dark:bg-card border border-border dark:border-white/10 overflow-hidden shadow-sm">
             <button
               onClick={() => setChangePasswordOpen(true)}
-              className="w-full flex items-center justify-between px-5 py-4 border-b border-[#E2E1DC] dark:border-white/10 active:bg-[#F7F6F3] dark:active:bg-white/5 transition-colors group"
+              className="w-full flex items-center justify-between px-5 py-4 border-b border-border dark:border-white/10 active:bg-secondary dark:active:bg-white/5 transition-colors group"
             >
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-[#EDECEA] dark:bg-white/10 p-2.5">
+                <div className="rounded-xl bg-secondary dark:bg-white/10 p-2.5">
                   <KeyRound className="h-5 w-5 text-[#3D3D3A] dark:text-white/80" />
                 </div>
                 <div className="text-left">
@@ -683,7 +683,7 @@ export function SettingsTab() {
             </button>
             <button
               onClick={() => setDeleteAccountOpen(true)}
-              className="w-full flex items-center justify-between px-5 py-4 border-b border-[#E2E1DC] dark:border-white/10 active:bg-red-50 dark:active:bg-red-500/10 transition-colors group"
+              className="w-full flex items-center justify-between px-5 py-4 border-b border-border dark:border-white/10 active:bg-red-50 dark:active:bg-red-500/10 transition-colors group"
             >
               <div className="flex items-center gap-3">
                 <div className="rounded-xl bg-red-50 dark:bg-red-500/20 p-2.5">
@@ -698,7 +698,7 @@ export function SettingsTab() {
             </button>
             <button
               onClick={() => setConfirmFactoryResetOpen(true)}
-              className="w-full flex items-center justify-between px-5 py-4 border-b border-[#E2E1DC] dark:border-white/10 active:bg-red-50 dark:active:bg-red-500/10 transition-colors group"
+              className="w-full flex items-center justify-between px-5 py-4 border-b border-border dark:border-white/10 active:bg-red-50 dark:active:bg-red-500/10 transition-colors group"
             >
               <div className="flex items-center gap-3">
                 <div className="rounded-xl bg-red-50 dark:bg-red-500/20 p-2.5">

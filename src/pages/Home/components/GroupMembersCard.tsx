@@ -11,6 +11,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useNavigate } from "react-router-dom";
 import { SubAccountInvite } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -22,6 +24,8 @@ export function GroupMembersCard() {
   const { slots, filledSlots, maxSlots, inviteByEmail, removeMember, cancelInvite, resendInvite, loading } =
     useGroupMembers();
   const { language } = useLanguage();
+  const { isMultiPro } = useSubscription();
+  const navigate = useNavigate();
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
@@ -278,17 +282,38 @@ export function GroupMembersCard() {
                 )}
 
                 {slot.type === "empty" && (
-                  <button
-                    onClick={() => setShowInviteDialog(true)}
-                    className={cn(
-                      "w-full flex items-center justify-center gap-2 py-2 rounded-lg border-2 border-dashed",
-                      "text-muted-foreground hover:text-foreground hover:border-primary hover:bg-primary/5",
-                      "transition-colors"
-                    )}
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span className="text-xs font-semibold">{t.invite}</span>
-                  </button>
+                  isMultiPro ? (
+                    <button
+                      onClick={() => setShowInviteDialog(true)}
+                      className={cn(
+                        "w-full flex items-center justify-center gap-2 py-2 rounded-lg border-2 border-dashed",
+                        "text-muted-foreground hover:text-foreground hover:border-primary hover:bg-primary/5",
+                        "transition-colors"
+                      )}
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span className="text-xs font-semibold">{t.invite}</span>
+                    </button>
+                  ) : (
+                    <div className="w-full p-4 rounded-2xl bg-[#F7F6F3] dark:bg-white/5 border border-[#E2E1DC] dark:border-white/10 flex flex-col items-center gap-3 text-center transition-all animate-in fade-in slide-in-from-bottom-2">
+                      <div className="flex items-center gap-2 text-muted-foreground font-bold text-[10px] uppercase tracking-[0.1em]">
+                        <Users className="h-3 w-3" />
+                        {language === "pt-BR" ? "Plano Individual" : "Individual Plan"}
+                      </div>
+                      <p className="text-xs font-medium text-muted-foreground leading-snug">
+                        {language === "pt-BR" 
+                          ? "Atualize para o plano Familia PRO para adicionar sua família aqui!"
+                          : "Upgrade to Family PRO plan to add your family here!"}
+                      </p>
+                      <Button 
+                        size="sm"
+                        onClick={() => navigate("/app/settings/subscription")}
+                        className="h-9 px-6 rounded-xl bg-[#165A52] hover:bg-[#165A52]/90 text-white text-[11px] font-black uppercase tracking-wider shadow-lg shadow-primary/20"
+                      >
+                        {language === "pt-BR" ? "Mudar de Plano" : "Upgrade Plan"}
+                      </Button>
+                    </div>
+                  )
                 )}
               </div>
             ))}
@@ -361,15 +386,22 @@ export function GroupMembersCard() {
 
       {/* Remove Confirmation Dialog */}
       <AlertDialog open={!!removeConfirm} onOpenChange={() => setRemoveConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogTitle>{t.removeTitle}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {removeConfirm && t.removeDesc(removeConfirm.memberName)}
-          </AlertDialogDescription>
+        <AlertDialogContent className="rounded-[1.5rem] p-6 gap-6 sm:max-w-[425px] border-none shadow-2xl">
+          <div className="space-y-2">
+            <AlertDialogTitle className="text-xl font-black text-foreground">{t.removeTitle}</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm font-medium text-muted-foreground">
+              {removeConfirm && t.removeDesc(removeConfirm.memberName)}
+            </AlertDialogDescription>
+          </div>
 
-          <div className="flex gap-2 justify-end">
-            <AlertDialogCancel>{t.cancel}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemove} className="bg-red-600 hover:bg-red-700">
+          <div className="flex gap-3 justify-end mt-2">
+            <AlertDialogCancel className="h-12 rounded-xl font-bold border-2 border-muted hover:bg-muted/50 w-full sm:w-auto px-6 mt-0">
+              {t.cancel}
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleRemove} 
+              className="h-12 rounded-xl font-bold bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20 w-full sm:w-auto px-6 border-0"
+            >
               {t.remove}
             </AlertDialogAction>
           </div>
@@ -378,15 +410,22 @@ export function GroupMembersCard() {
 
       {/* Cancel Invite Confirmation Dialog */}
       <AlertDialog open={!!cancelConfirm} onOpenChange={() => setCancelConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogTitle>{t.cancelInviteTitle}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {cancelConfirm && t.cancelInviteDesc(cancelConfirm.invited_email)}
-          </AlertDialogDescription>
+        <AlertDialogContent className="rounded-[1.5rem] p-6 gap-6 sm:max-w-[425px] border-none shadow-2xl">
+          <div className="space-y-2">
+            <AlertDialogTitle className="text-xl font-black text-foreground">{t.cancelInviteTitle}</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm font-medium text-muted-foreground">
+              {cancelConfirm && t.cancelInviteDesc(cancelConfirm.invited_email)}
+            </AlertDialogDescription>
+          </div>
 
-          <div className="flex gap-2 justify-end">
-            <AlertDialogCancel>{t.back}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCancelInvite} className="bg-red-600 hover:bg-red-700">
+          <div className="flex gap-3 justify-end mt-2">
+            <AlertDialogCancel className="h-12 rounded-xl font-bold border-2 border-muted hover:bg-muted/50 w-full sm:w-auto px-6 mt-0">
+              {t.back}
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleCancelInvite} 
+              className="h-12 rounded-xl font-bold bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20 w-full sm:w-auto px-6 border-0 transition-all active:scale-95"
+            >
               {t.cancelInvite}
             </AlertDialogAction>
           </div>

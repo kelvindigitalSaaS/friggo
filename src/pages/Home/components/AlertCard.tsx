@@ -1,4 +1,4 @@
-import { AlertTriangle, Clock, Package, Leaf, X } from 'lucide-react';
+import { AlertTriangle, Clock, Package, Leaf, X, Info } from 'lucide-react';
 import { Alert } from '@/types/kaza';
 import { cn } from '@/lib/utils';
 
@@ -35,7 +35,12 @@ const alertConfig = {
 };
 
 export function AlertCard({ alert, onDismiss }: AlertCardProps) {
- const config = alertConfig[alert.type];
+ const config = alertConfig[alert.type] || {
+    icon: Info,
+    bgClass: 'bg-blue-100 dark:bg-blue-900/20',
+    borderClass: 'border-blue-200 dark:border-blue-800/30',
+    iconClass: 'text-blue-500',
+  };
  const Icon = config.icon;
 
  return (

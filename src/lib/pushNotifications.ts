@@ -2,6 +2,7 @@
 import { PushNotifications } from "@capacitor/push-notifications";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { isAndroid, isNative } from "./capacitor";
+import { supabase } from "@/integrations/supabase/client";
 
 // ── Notification icon & badge paths — use unified app icon
 const ICON_192 = "/icon.png";
@@ -374,9 +375,89 @@ export function registerNotificationHandlers() {
         window.location.href = "/settings";
       } else if (action === "open" && data?.url) {
         window.location.href = data.url;
+      } else if (action === "done") {
+        // Garbage done via notification action
+        const homeId = localStorage.getItem("kaza-home-id");
+        if (homeId) {
+          handleGarbageDone(homeId);
+        }
       }
     }
   });
+}
+
+/**
+ * Handle garbage removal completion from push notification action.
+ */
+async function handleGarbageDone(homeId: string) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // 1. Update the database
+    await supabase
+      .from("garbage_reminders")
+      .update({
+        last_done_at: new Date().toISOString(),
+        last_done_by_user_id: user.id
+      })
+      .eq("home_id", homeId);
+
+    // 2. Notify other home members
+    const profile = await supabase.from("profiles").select("name").eq("user_id", user.id).single();
+    const userName = profile.data?.name || "Alguém";
+
+    await notifyHomeMembers({
+      home_id: homeId,
+      title: "🗑️ Lixo Retirado!",
+      body: `${userName} já colocou o lixo para fora! 🏠`,
+      exclude_user_id: user.id
+    });
+
+  } catch (error) {
+    console.error("Error updating garbage status:", error);
+  }
+}
+
+/**
+ * Invokes the send-push-notification Edge Function to notify home members.
+ */
+export async function notifyHomeMembers(payload: {
+  home_id: string;
+  title: string;
+  body: string;
+  exclude_user_id?: string;
+  data?: Record<string, string>;
+}) {
+  try {
+    console.log("[PUSH] Notifying home members with payload:", payload);
+    if (!payload.home_id) {
+      console.warn("[PUSH] Aborting: home_id is missing");
+      return { success: false, error: "home_id is missing" };
+    }
+
+    const { data, error } = await supabase.functions.invoke("send-push-notification", {
+      body: payload
+    });
+    
+    if (error) {
+      console.error("[PUSH] Edge Function error:", error);
+      throw error;
+    }
+
+    if (data && data.success === false && data.code === "NO_MEMBERS") {
+      return { success: false, error: data.message };
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error("Failed to notify home members:", error);
+    // Se o erro for 401, provavelmente é um problema de sessão ou configuração.
+    if (error?.message?.includes("401")) {
+      return { success: false, error: "Sessão expirada ou erro de configuração. Tente sair e entrar novamente." };
+    }
+    return { success: false, error: error?.message || error };
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -13,7 +13,7 @@ import {
   Flower,
   Pill,
   Loader2,
-  Wand2,
+  Sparkles,
   Minus,
   ChevronDown,
   ChevronUp,
@@ -27,6 +27,7 @@ import {
   Pencil,
   X,
   SlidersHorizontal,
+  Bell,
 } from "lucide-react";
 import {
   Select,
@@ -50,6 +51,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { notifyHomeMembers } from "@/lib/pushNotifications";
+import { allRecipes } from "@/data/recipeDatabase";
+import { Calendar, Utensils, Zap } from "lucide-react";
 
 export function ShoppingTab() {
   const {
@@ -87,22 +91,24 @@ export function ShoppingTab() {
   const [showFilters, setShowFilters] = useState(false);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [isNotifying, setIsNotifying] = useState(false);
+  const [daysHorizon, setDaysHorizon] = useState<3 | 7 | 15>(7);
 
   const labels = {
     "pt-BR": {
       title: "Lista de Compras",
       pending: "pendentes",
       bought: "comprados",
-      generateAI: "Gerar lista com IA",
-      generating: "Gerando lista...",
+      generateAI: "Gerar sugestões para hoje",
+      generating: "Analisando estoque...",
       lowStockCount: "itens em estoque baixo",
-      analyzeStock: "Analisa seu estoque e sugere compras",
+      analyzeStock: "Sugere itens com base no que está acabando",
       addPlaceholder: "Adicionar item...",
       emptyList: "Lista vazia",
-      emptyDesc: "Adicione itens ou gere com IA",
+      emptyDesc: "Adicione itens ou peça sugestões",
       itemAdded: "Item adicionado à lista",
       tooManyReq: "Muitas requisições. Tente novamente em alguns segundos.",
-      aiSuggested: "itens sugeridos pela IA!",
+      aiSuggested: "itens sugeridos com base no estoque!",
       listUpdated: "Lista atualizada com itens em falta",
       all: "Todos",
       market: "Mercado",
@@ -126,16 +132,16 @@ export function ShoppingTab() {
       title: "Shopping List",
       pending: "pending",
       bought: "bought",
-      generateAI: "Generate list with AI",
-      generating: "Generating list...",
+      generateAI: "Get shopping suggestions",
+      generating: "Analyzing stock...",
       lowStockCount: "low stock items",
-      analyzeStock: "Analyzes your stock and suggests purchases",
+      analyzeStock: "Suggests items based on what's running low",
       addPlaceholder: "Add item...",
       emptyList: "Empty list",
-      emptyDesc: "Add items or generate with AI",
+      emptyDesc: "Add items or get suggestions",
       itemAdded: "Item added to list",
       tooManyReq: "Too many requests. Try again in a few seconds.",
-      aiSuggested: "items suggested by AI!",
+      aiSuggested: "items suggested based on stock!",
       listUpdated: "List updated with missing items",
       all: "All",
       market: "Market",
@@ -300,11 +306,45 @@ export function ShoppingTab() {
     window.open(`https://wa.me/?text=${msg}`, '_blank');
   };
 
+  const handleNotifyGroup = async () => {
+    if (!homeId || !user) return;
+    
+    setIsNotifying(true);
+    const profile = await supabase.from("profiles").select("name").eq("user_id", user.id).single();
+    const userName = profile.data?.name || (language === "pt-BR" ? "Alguém" : "Someone");
+    
+    const result = await notifyHomeMembers({
+      home_id: homeId,
+      title: language === "pt-BR" ? "🛒 Lista de Compras!" : "🛒 Shopping List!",
+      body: language === "pt-BR" 
+        ? `${userName} atualizou a lista. Alguém pode passar no mercado?`
+        : `${userName} updated the list. Can someone stop by the market?`,
+      exclude_user_id: user.id
+    });
+
+    if (result.success) {
+      toast.success(language === "pt-BR" ? "Casa notificada! 🔔" : "Home notified! 🔔");
+    } else {
+      // Se for apenas o aviso de que não tem membros, usamos o toast comum, senão erro.
+      const msg = result.error || (language === "pt-BR" ? "Erro ao notificar grupo" : "Error notifying home");
+      if (result.error?.includes("membros")) {
+        toast(msg);
+      } else {
+        toast.error(msg);
+      }
+    }
+    setIsNotifying(false);
+  };
+
   const handleAddItem = (product?: ProductSuggestion) => {
     const itemName = product?.name || newItem.trim();
     if (!itemName) return;
+
+    // A categoria selecionada nos chips (newItemStore) é a fonte de verdade para itens manuais.
+    // Se for um produto sugerido, ele traz sua própria categoria, mas se o usuário mudou o chip, respeitamos.
     const chosenStore = product?.category || newItemStore;
     const parsedQty = parseFloat(newItemQty.replace(',', '.'));
+    
     addToShoppingList({
       name: itemName,
       category:
@@ -314,6 +354,7 @@ export function ShoppingTab() {
       unit: product?.unit || newItemUnit,
       store: chosenStore
     });
+    
     setNewItem("");
     setNewItemQty("1");
     setShowSuggestions(false);
@@ -339,12 +380,13 @@ export function ShoppingTab() {
 
     // Local analysis — instant, offline, no AI cost
     const suggestedItems: any[] = [];
-    const residents = onboardingData?.residents ?? 1;
-    const habits = onboardingData?.habits ?? [];
-    const homeType = onboardingData?.homeType ?? "apartment";
-
-    // Scale factor for quantity: 1 person = 1x, 2 = 1.5x, 3+ = residents factor
-    const scaleFactor = residents <= 1 ? 1 : residents <= 2 ? 1.5 : residents;
+    const residents = onboardingData?.residents || 1;
+    const habits = onboardingData?.habits || [];
+    const homeType = onboardingData?.homeType || "apartment";
+    
+    // Fator de escala baseado no horizonte de dias (base era 3 dias)
+    const timeScale = daysHorizon / 3;
+    const scaleFactor = residents * timeScale;
 
     lowStockItems.forEach((item) => {
       suggestedItems.push({
@@ -418,13 +460,13 @@ export function ShoppingTab() {
       lifestyleItems.push(
         {
           name: language === "pt-BR" ? "Arroz" : "Rice",
-          quantity: Math.ceil(residents * 0.5),
+          quantity: Math.ceil(residents * 0.5 * timeScale),
           unit: "kg",
           store: "market"
         },
         {
           name: language === "pt-BR" ? "Feijão" : "Beans",
-          quantity: Math.ceil(residents * 0.3),
+          quantity: Math.ceil(residents * 0.3 * timeScale),
           unit: "kg",
           store: "market"
         },
@@ -436,7 +478,7 @@ export function ShoppingTab() {
         },
         {
           name: language === "pt-BR" ? "Cebola" : "Onion",
-          quantity: Math.ceil(residents * 2),
+          quantity: Math.ceil(residents * 2 * timeScale),
           unit: language === "pt-BR" ? "un" : "un",
           store: "fair"
         },
@@ -454,25 +496,25 @@ export function ShoppingTab() {
       lifestyleItems.push(
         {
           name: language === "pt-BR" ? "Peito de frango" : "Chicken breast",
-          quantity: Math.ceil(residents * 0.5),
+          quantity: Math.ceil(residents * 0.5 * timeScale),
           unit: "kg",
           store: "market"
         },
         {
           name: language === "pt-BR" ? "Brócolis" : "Broccoli",
-          quantity: Math.ceil(residents * 0.5),
+          quantity: Math.ceil(residents * 0.5 * timeScale),
           unit: "kg",
           store: "fair"
         },
         {
           name: language === "pt-BR" ? "Iogurte natural" : "Plain yogurt",
-          quantity: residents,
+          quantity: Math.ceil(residents * timeScale),
           unit: language === "pt-BR" ? "un" : "un",
           store: "market"
         },
         {
           name: language === "pt-BR" ? "Frutas variadas" : "Mixed fruits",
-          quantity: Math.ceil(residents * 3),
+          quantity: Math.ceil(residents * 3 * timeScale),
           unit: language === "pt-BR" ? "un" : "un",
           store: "fair"
         },
@@ -490,19 +532,19 @@ export function ShoppingTab() {
       lifestyleItems.push(
         {
           name: language === "pt-BR" ? "Batata-doce" : "Sweet potato",
-          quantity: Math.ceil(residents * 3),
+          quantity: Math.ceil(residents * 3 * timeScale),
           unit: language === "pt-BR" ? "un" : "un",
           store: "fair"
         },
         {
           name: language === "pt-BR" ? "Ovo" : "Eggs",
-          quantity: Math.ceil(residents * 6),
+          quantity: Math.ceil(residents * 6 * timeScale),
           unit: language === "pt-BR" ? "un" : "un",
           store: "market"
         },
         {
           name: language === "pt-BR" ? "Cenoura" : "Carrot",
-          quantity: Math.ceil(residents * 3),
+          quantity: Math.ceil(residents * 3 * timeScale),
           unit: language === "pt-BR" ? "un" : "un",
           store: "fair"
         }
@@ -514,7 +556,7 @@ export function ShoppingTab() {
       lifestyleItems.push(
         {
           name: language === "pt-BR" ? "Ovos" : "Eggs",
-          quantity: Math.ceil(residents * 4),
+          quantity: Math.ceil(residents * 4 * timeScale),
           unit: language === "pt-BR" ? "un" : "un",
           store: "market"
         },
@@ -538,13 +580,13 @@ export function ShoppingTab() {
       lifestyleItems.push(
         {
           name: language === "pt-BR" ? "Leite integral" : "Whole milk",
-          quantity: residents,
+          quantity: Math.ceil(residents * timeScale),
           unit: language === "pt-BR" ? "L" : "L",
           store: "market"
         },
         {
           name: language === "pt-BR" ? "Macarrão" : "Pasta",
-          quantity: Math.ceil(residents * 0.25),
+          quantity: Math.ceil(residents * 0.25 * timeScale),
           unit: "kg",
           store: "market"
         }
@@ -568,6 +610,27 @@ export function ShoppingTab() {
         }
       );
     }
+
+    // 2. Ingredients from Planning & Favorites
+    const recipeIngredients: string[] = [];
+    (mealPlan || []).forEach(entry => {
+        const recipe = allRecipes.find(r => r.id === entry.recipe_id);
+        if (recipe) recipeIngredients.push(...recipe.ingredients);
+    });
+    (favoriteRecipes || []).slice(0, 3).forEach(recipeId => {
+        const recipe = allRecipes.find(r => r.id === recipeId);
+        if (recipe) recipeIngredients.push(...recipe.ingredients);
+    });
+
+    const uniqueRecipeIngredients = Array.from(new Set(recipeIngredients));
+    uniqueRecipeIngredients.forEach(ing => {
+        lifestyleItems.push({
+            name: ing.charAt(0).toUpperCase() + ing.slice(1),
+            quantity: Math.ceil(timeScale),
+            unit: "un",
+            store: "market"
+        });
+    });
 
     // Add lifestyle items that aren't already in the list or suggested
     lifestyleItems.forEach((item) => {
@@ -694,58 +757,99 @@ export function ShoppingTab() {
         </div>
       </div>
 
-      <button
-        onClick={handleGenerateSmartList}
-        disabled={isGenerating}
-        className="flex w-full items-center gap-3 rounded-2xl border border-primary/15 bg-primary/5 dark:bg-primary/10 p-4 text-left transition-all active:scale-[0.97] disabled:opacity-50"
-      >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15">
-          {isGenerating ? (
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          ) : (
-            <Wand2 className="h-5 w-5 text-primary" />
-          )}
+      {/* Smart Suggestions Control Center */}
+      <div className="mb-4 p-4 rounded-3xl bg-[#F7F6F3] dark:bg-white/5 border border-[#E2E1DC] dark:border-white/10 animate-in fade-in slide-in-from-top-2">
+        <div className="flex items-center justify-between mb-3 px-1">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-[#165A52]" />
+            <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Período de compras</span>
+          </div>
+          <div className="flex bg-black/[0.05] dark:bg-white/10 p-1 rounded-xl gap-1">
+            {([3, 7, 15] as const).map(d => (
+              <button
+                key={d}
+                onClick={() => setDaysHorizon(d)}
+                className={cn(
+                  "px-3 py-1 rounded-lg text-[10px] font-bold transition-all",
+                  daysHorizon === d 
+                    ? "bg-white dark:bg-[#165A52] text-[#165A52] dark:text-white shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {d === 15 ? '15d' : d === 7 ? '1 sem' : '3d'}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-foreground truncate">
-            {isGenerating ? l.generating : l.generateAI}
-          </p>
-          <p className="text-xs text-muted-foreground truncate">
-            {lowStockItems.length > 0
-              ? `${lowStockItems.length} ${l.lowStockCount}`
-              : l.analyzeStock}
-          </p>
-        </div>
-      </button>
 
-      {/* ── SELECT ALL + GUARDAR LISTA + WHATSAPP ── */}
+        <button
+          onClick={handleGenerateSmartList}
+          disabled={isGenerating}
+          className="w-full group relative flex items-center gap-4 p-3 rounded-2xl bg-white dark:bg-white/[0.02] border border-[#E2E1DC] dark:border-white/10 transition-all hover:shadow-md active:scale-[0.98] overflow-hidden"
+        >
+          <div className="h-12 w-12 rounded-xl bg-[#165A52]/10 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110">
+            {isGenerating ? (
+              <Loader2 className="h-5 w-5 animate-spin text-[#165A52]" />
+            ) : (
+              <Sparkles className="h-5 w-5 text-[#165A52]" />
+            )}
+          </div>
+          <div className="flex-1 text-left">
+            <h4 className="text-sm font-black text-foreground group-hover:text-[#165A52] transition-colors">
+              {isGenerating ? l.generating : l.generateAI}
+            </h4>
+            <p className="text-[11px] font-medium text-muted-foreground">
+              {l.analyzeStock}
+            </p>
+          </div>
+          <div className="flex items-center justify-center h-8 w-8 rounded-full bg-black/5 dark:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Zap className="h-3 w-3 text-[#165A52]" />
+          </div>
+          {isGenerating && (
+            <div className="absolute bottom-0 left-0 h-1 bg-[#165A52] animate-progress-indeterminate w-full" />
+          )}
+        </button>
+      </div>
       {pendingCount > 0 && (
-        <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-2">
           <button
             onClick={() => {
               const pending = shoppingList.filter(i => !i.isCompleted);
               pending.forEach(i => toggleShoppingItem(i.id));
             }}
-            className="flex items-center justify-center gap-1.5 h-[52px] px-3 rounded-2xl bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/[0.04] dark:border-white/[0.06] text-xs font-semibold text-foreground transition-all active:scale-[0.97] whitespace-nowrap"
+            className="flex items-center justify-center h-[52px] w-[52px] rounded-2xl bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/[0.04] dark:border-white/[0.06] text-primary transition-all active:scale-[0.95]"
+            title={l.selectAll}
           >
-            <CheckSquare className="h-4 w-4 text-primary" />
-            <span className="hidden sm:inline">{l.selectAll}</span>
-            <span className="sm:hidden">Selecionar Tudo</span>
+            <CheckSquare className="h-5 w-5" />
           </button>
+
           <button
             onClick={handleSaveList}
-            className="flex items-center justify-center h-[52px] w-[52px] min-w-[52px] rounded-2xl text-white shadow-sm transition-all active:scale-[0.97]"
-            style={{ background: "#165A52", boxShadow: "0 4px 16px rgba(22,90,82,0.25)" }}
-            title={l.payList}
+            className="flex items-center justify-center gap-2 h-[52px] rounded-2xl text-white font-bold transition-all active:scale-[0.97] shadow-lg shadow-primary/20"
+            style={{ background: "#165A52" }}
           >
             <Save className="h-5 w-5" />
+            <span className="text-sm">{language === "pt-BR" ? "Concluir" : "Done"}</span>
           </button>
+
           <button
             onClick={handleShareWhatsApp}
-            className="flex items-center justify-center h-[52px] w-[52px] min-w-[52px] rounded-2xl border border-black/[0.06] bg-white/80 dark:bg-white/5 transition-all active:scale-[0.97]"
+            className="flex items-center justify-center h-[52px] w-[52px] rounded-2xl border border-black/[0.06] bg-white/80 dark:bg-white/5 transition-all active:scale-[0.95]"
             title={l.shareWhatsApp}
           >
             <Share2 className="h-5 w-5 text-[#25D366]" />
+          </button>
+
+          <button
+            onClick={handleNotifyGroup}
+            disabled={isNotifying}
+            className={cn(
+              "flex items-center justify-center h-[52px] w-[52px] rounded-2xl border border-black/[0.06] bg-white/80 dark:bg-white/5 transition-all active:scale-[0.95]",
+              isNotifying && "opacity-50"
+            )}
+            title={language === "pt-BR" ? "Notificar Casa" : "Notify Home"}
+          >
+            <Bell className={cn("h-5 w-5 text-primary", isNotifying && "animate-pulse")} />
           </button>
         </div>
       )}
@@ -857,46 +961,83 @@ export function ShoppingTab() {
       </Dialog>
 
       <div className="relative">
-        <div className="flex gap-2">
-          <Input
-            ref={inputRef}
-            placeholder={l.addPlaceholder}
-            value={newItem}
-            onChange={(e) => setNewItem(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAddItem()}
-            onFocus={() => setShowSuggestions(suggestions.length > 0)}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-            className="flex-1 h-[52px] rounded-2xl border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 backdrop-blur-xl text-sm transition-all focus:shadow-sm"
-          />
-          <Input
-            inputMode="decimal"
-            placeholder="Qtd"
-            value={newItemQty}
-            onChange={(e) => setNewItemQty(e.target.value)}
-            className="flex-shrink-0 h-[52px] w-[56px] text-center rounded-2xl border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 text-sm font-bold transition-all focus:shadow-sm px-1 placeholder:font-normal placeholder:opacity-70"
-          />
-          <Select value={newItemUnit} onValueChange={setNewItemUnit}>
-            <SelectTrigger className="h-[52px] w-[64px] rounded-2xl border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 text-xs font-bold shrink-0">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="un">un</SelectItem>
-              <SelectItem value="kg">kg</SelectItem>
-              <SelectItem value="g">g</SelectItem>
-              <SelectItem value="L">L</SelectItem>
-              <SelectItem value="ml">ml</SelectItem>
-              <SelectItem value="pct">pct</SelectItem>
-              <SelectItem value="cx">cx</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            onClick={() => handleAddItem()}
-            size="icon"
-            className="rounded-2xl shadow-sm shadow-primary/25 transition-all active:scale-[0.97]"
-            style={{ height: "52px", width: "52px", background: "#165A52" }}
-          >
-            <Plus className="h-5 w-5" />
-          </Button>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            {(['all', 'market', 'fair', 'pharmacy', 'other'] as const).map(cat => {
+              const isActive = cat === 'all' ? activeFilter === 'all' : activeFilter === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setActiveFilter(cat);
+                    if (cat !== 'all') setNewItemStore(cat as any);
+                  }}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all",
+                    isActive 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-white/80 dark:bg-white/5 border border-black/[0.04] dark:border-white/[0.06] text-muted-foreground"
+                  )}
+                >
+                  {cat === 'all' && <ShoppingCart className="h-3 w-3" />}
+                  {cat === 'market' && <Store className="h-3 w-3" />}
+                  {cat === 'fair' && <Flower className="h-3 w-3" />}
+                  {cat === 'pharmacy' && <Pill className="h-3 w-3" />}
+                  {cat === 'other' && <LayoutList className="h-3 w-3" />}
+                  {cat === 'all' ? l.all : cat === 'market' ? l.market : cat === 'fair' ? l.fair : cat === 'pharmacy' ? l.pharmacy : 'Outros'}
+                  {cat !== 'all' && (
+                    <span className={cn(
+                      "ml-1 rounded-full px-1 py-0.5 text-[8px]",
+                      isActive ? "bg-white/20" : "bg-black/[0.04] dark:bg-white/10"
+                    )}>
+                      {shoppingList.filter(i => i.store === cat).length}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              ref={inputRef}
+              placeholder={l.addPlaceholder}
+              value={newItem}
+              onChange={(e) => setNewItem(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddItem()}
+              onFocus={() => setShowSuggestions(suggestions.length > 0)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              className="flex-1 h-[52px] rounded-2xl border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 backdrop-blur-xl text-sm transition-all focus:shadow-sm"
+            />
+            <Input
+              inputMode="decimal"
+              placeholder="Q.td"
+              value={newItemQty}
+              onChange={(e) => setNewItemQty(e.target.value)}
+              className="flex-shrink-0 h-[52px] w-[50px] text-center rounded-2xl border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 text-sm font-bold transition-all focus:shadow-sm px-1 placeholder:font-normal placeholder:opacity-70"
+            />
+            <Select value={newItemUnit} onValueChange={setNewItemUnit}>
+              <SelectTrigger className="h-[52px] w-[60px] rounded-2xl border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 text-xs font-bold shrink-0 px-2">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="un">un</SelectItem>
+                <SelectItem value="kg">kg</SelectItem>
+                <SelectItem value="g">g</SelectItem>
+                <SelectItem value="L">L</SelectItem>
+                <SelectItem value="ml">ml</SelectItem>
+                <SelectItem value="pct">pct</SelectItem>
+                <SelectItem value="cx">cx</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={() => handleAddItem()}
+              size="icon"
+              className="rounded-2xl shadow-sm shadow-primary/25 transition-all active:scale-[0.97] shrink-0"
+              style={{ height: "52px", width: "52px", background: "#165A52" }}
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
         {showSuggestions && (
           <div className="absolute left-0 right-12 z-50 mt-2 max-h-48 overflow-y-auto rounded-2xl border border-black/[0.04] dark:border-white/[0.06] bg-white/90 dark:bg-card/90 backdrop-blur-2xl shadow-lg animate-fade-in">
@@ -918,65 +1059,7 @@ export function ShoppingTab() {
         )}
       </div>
 
-      <div className="flex items-center justify-between mt-2">
-        {!groupByCategory && (
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Todos chip — always visible */}
-            <button
-              onClick={() => setActiveFilter("all")}
-              className={cn(
-                "flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 active:scale-[0.97]",
-                activeFilter === "all"
-                  ? "text-primary-foreground shadow-sm shadow-primary/25"
-                  : "bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/[0.04] dark:border-white/[0.06] text-foreground"
-              )}
-              style={activeFilter === "all" ? { background: "#165A52" } : {}}
-            >
-              <ShoppingCart className="h-3.5 w-3.5" />
-              {storeFilters[0].label}
-              <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-bold", activeFilter === "all" ? "bg-white/20" : "bg-black/[0.04] dark:bg-white/10 text-muted-foreground")}>
-                {shoppingList.length}
-              </span>
-            </button>
-
-            {/* Show store filters only when not "all" OR when toggled via filter icon */}
-            {activeFilter !== "all" && storeFilters.slice(1).map((filter) => {
-              const Icon = filter.icon;
-              const count = shoppingList.filter((i) => i.store === filter.id).length;
-              return (
-                <button
-                  key={filter.id}
-                  onClick={() => setActiveFilter(filter.id)}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 active:scale-[0.97]",
-                    activeFilter === filter.id
-                      ? "text-primary-foreground shadow-sm shadow-primary/25"
-                      : "bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/[0.04] dark:border-white/[0.06] text-foreground"
-                  )}
-                  style={activeFilter === filter.id ? { background: "#165A52" } : {}}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {filter.label}
-                  {count > 0 && (
-                    <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-bold", activeFilter === filter.id ? "bg-white/20" : "bg-black/[0.04] dark:bg-white/10 text-muted-foreground")}>
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-
-            {/* Filter icon to expand store filters when "all" is active */}
-            {activeFilter === "all" && (
-              <button
-                onClick={() => setActiveFilter("market")}
-                className="flex items-center justify-center h-[36px] w-[36px] rounded-full bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/[0.04] dark:border-white/[0.06] text-muted-foreground transition-all flex-shrink-0 active:scale-[0.97]"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        )}
+      <div className="flex items-center justify-end mt-2">
 
         <button
           onClick={() => setGroupByCategory(!groupByCategory)}

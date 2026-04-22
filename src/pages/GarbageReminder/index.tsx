@@ -12,6 +12,10 @@ import { AlarmClock, ArrowLeft, Bell, Building2, Calendar, Check, Clock, Home, M
 import { toast } from "sonner";
 import { PageTransition } from "@/components/PageTransition";
 import { startGarbageReminderMonitoring } from "@/lib/garbageReminderNotifications";
+import { notifyHomeMembers } from "@/lib/pushNotifications";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 const WEEKDAYS = {
   "pt-BR": [
@@ -47,6 +51,9 @@ export default function GarbageReminderPage() {
   const [garbageLocation, setGarbageLocation] = useState<"street" | "building">("street");
   const [buildingFloor, setBuildingFloor] = useState("");
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
+  const [lastDoneAt, setLastDoneAt] = useState<string | null>(null);
+  const [lastDoneByName, setLastDoneByName] = useState<string | null>(null);
+  const [isMarkingDone, setIsMarkingDone] = useState(false);
 
   const LS_KEY = "kaza-garbage-reminder";
 
@@ -58,6 +65,8 @@ export default function GarbageReminderPage() {
     setGarbageLocation(data.garbage_location ?? data.garbageLocation ?? "street");
     setBuildingFloor(data.building_floor ?? data.buildingFloor ?? "");
     setVibrationEnabled(data.vibration_enabled ?? data.vibrationEnabled ?? true);
+    setLastDoneAt(data.last_done_at ?? null);
+    // lastDoneByName will be fetched separately if lastDoneByUserId exists
   };
 
   // 1. Carrega do localStorage imediatamente (cache rápido)
@@ -80,10 +89,21 @@ export default function GarbageReminderPage() {
       .eq("home_id", homeId)
       .eq("user_id", user.id)
       .maybeSingle()
-      .then(({ data }: { data: any }) => {
+      .then(async ({ data }: { data: any }) => {
         if (!data) return;
         applyConfig(data);
-        // Atualiza o cache local com os dados do banco
+        
+        // Se houver alguém que fez por último, buscar o nome
+        if (data.last_done_by_user_id) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("name")
+            .eq("user_id", data.last_done_by_user_id)
+            .single();
+          if (profile) setLastDoneByName(profile.name);
+        }
+
+        // Atualiza o cache local...
         localStorage.setItem(LS_KEY, JSON.stringify({
           enabled: data.enabled,
           selectedDays: data.selected_days,
@@ -213,6 +233,58 @@ export default function GarbageReminderPage() {
         ? prev.filter((d) => d !== dayIndex)
         : [...prev, dayIndex].sort()
     );
+  };
+
+  const handleMarkAsDone = async () => {
+    if (!homeId || !user) return;
+    setIsMarkingDone(true);
+
+    try {
+      const now = new Date().toISOString();
+      
+      // 1. Update DB
+      const { error } = await supabase
+        .from("garbage_reminders")
+        .update({
+          last_done_at: now,
+          last_done_by_user_id: user.id
+        })
+        .eq("home_id", homeId);
+
+      if (error) throw error;
+
+      // 2. Local State
+      setLastDoneAt(now);
+      const profile = await supabase.from("profiles").select("name").eq("user_id", user.id).single();
+      const userName = profile.data?.name || (language === "pt-BR" ? "Alguém" : "Someone");
+      setLastDoneByName(userName);
+
+      // 3. Notify Group
+      const result = await notifyHomeMembers({
+        home_id: homeId,
+        title: language === "pt-BR" ? "🗑️ Lixo Retirado!" : "🗑️ Garbage Taken Out!",
+        body: language === "pt-BR" 
+          ? `${userName} já colocou o lixo para fora! 🏠`
+          : `${userName} already took out the trash! 🏠`,
+        exclude_user_id: user.id
+      });
+
+      if (result.success) {
+        toast.success(language === "pt-BR" ? "Lixo marcado como retirado e casa notificada!" : "Garbage marked as done and home notified!");
+      } else if (result.error) {
+        // Se o erro for apenas que não há membros, mostramos um aviso informativo
+        if (result.error.includes("membros")) {
+          toast(result.error);
+        } else {
+          toast.error(result.error);
+        }
+      }
+    } catch (error) {
+      console.error("Error marking garbage as done:", error);
+      toast.error(language === "pt-BR" ? "Erro ao atualizar status" : "Error updating status");
+    } finally {
+      setIsMarkingDone(false);
+    }
   };
 
   const getNextReminderInfo = () => {
@@ -400,6 +472,39 @@ export default function GarbageReminderPage() {
                 </div>
               </div>
             )}
+
+            {lastDoneAt && (
+              <div className="bg-white/50 dark:bg-white/5 rounded-2xl p-4 border border-black/[0.04] dark:border-white/[0.06] flex items-center gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-500/10 text-green-600">
+                  <Check className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-foreground opacity-60 uppercase tracking-wider">
+                    {language === "pt-BR" ? "Última Retirada" : "Last Task"}
+                  </p>
+                  <p className="text-sm font-semibold text-foreground truncate">
+                    {language === "pt-BR" 
+                      ? `${lastDoneByName || 'Alguém'} retirou o lixo`
+                      : `${lastDoneByName || 'Someone'} took out the trash`}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {format(new Date(lastDoneAt), "PPp", { locale: language === "pt-BR" ? ptBR : undefined })}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={handleMarkAsDone}
+              disabled={isMarkingDone}
+              className={cn(
+                "w-full flex items-center justify-center gap-2 h-14 rounded-2xl border-2 border-primary/20 bg-primary/5 text-primary font-bold transition-all active:scale-[0.98]",
+                isMarkingDone && "opacity-50"
+              )}
+            >
+              <Check className={cn("h-5 w-5", isMarkingDone && "animate-pulse")} />
+              {language === "pt-BR" ? "Marcar como Feito Agora" : "Mark as Done Now"}
+            </button>
           </div>
         )}
 

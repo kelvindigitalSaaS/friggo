@@ -14,17 +14,16 @@ export const corsHeaders = {
  */
 export async function validateAuth(req: Request) {
   const authHeader = req.headers.get("Authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    throw new AuthError("Missing or invalid Authorization header");
+  if (!authHeader) {
+    console.error("[AUTH] Missing Authorization header");
+    throw new AuthError("Missing Authorization header");
   }
 
-  const token = authHeader.replace("Bearer ", "");
-  
-  // Criamos um client temporário com a anon key para validar o JWT do usuário
-  // Isso evita conflitos com a service_role key usada no restante da função.
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("KAZA_ANON_KEY")!;
   
+  // Criamos o cliente passando o header de Authorization. 
+  // O Supabase resolverá a identidade do usuário automaticamente no servidor.
   const authClient = createClient(supabaseUrl, supabaseAnonKey, {
     global: { headers: { Authorization: authHeader } },
   });
@@ -32,9 +31,11 @@ export async function validateAuth(req: Request) {
   const { data: { user }, error } = await authClient.auth.getUser();
 
   if (error || !user) {
-    throw new AuthError(`Invalid token: ${error?.message || "User not found"}`);
+    console.error("[AUTH] User identification failed:", error?.message);
+    throw new AuthError(`Identification failed: ${error?.message || "User not found"}`);
   }
 
+  console.log("[AUTH] User identified:", user.id);
   return user;
 }
 

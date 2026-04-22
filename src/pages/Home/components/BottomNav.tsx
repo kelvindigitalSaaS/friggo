@@ -4,7 +4,7 @@ import {
   ShoppingCart,
   ChefHat,
   CalendarDays,
-  Settings
+  Settings2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -21,7 +21,7 @@ const tabLabels = {
     fridge: "Estoque",
     recipes: "Receitas",
     shopping: "Lista",
-    settings: "Perfil"
+    settings: "Ajustes"
   },
   en: {
     home: "Home",
@@ -50,7 +50,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
     { id: "fridge", label: l.fridge, icon: Refrigerator },
     { id: "recipes", label: l.recipes, icon: ChefHat },
     { id: "shopping", label: l.shopping, icon: ShoppingCart },
-    { id: "settings", label: l.settings, icon: Settings }
+    { id: "settings", label: l.settings, icon: Settings2 }
   ];
 
   return (

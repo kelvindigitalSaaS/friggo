@@ -209,6 +209,9 @@ export function KazaProvider({ children }: { children: ReactNode }) {
 
       const hid = membership?.home_id ?? null;
       setHomeId(hid);
+      if (hid) {
+        localStorage.setItem("kaza-home-id", hid);
+      }
 
       if (!hid) {
         // Post-email-confirmation: complete pending invite setup.
