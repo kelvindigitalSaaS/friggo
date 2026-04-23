@@ -29,7 +29,11 @@ serve(async (req) => {
     const { email, redirect_to } = await req.json();
     if (!email) return json({ error: "E-mail é obrigatório" }, 400);
 
-    const appUrl = Deno.env.get("PUBLIC_APP_URL") || "https://kaza.app";
+    let appUrl = (Deno.env.get("PUBLIC_APP_URL") || "https://kaza.app").trim();
+    // Limpeza profunda para evitar caminhos duplicados (/app/auth) ou espaços
+    appUrl = appUrl.replace(/\/app$/, "").replace(/\/$/, "");
+    if (!appUrl.startsWith("http")) appUrl = `https://${appUrl}`;
+
     const redirectTo = redirect_to || `${appUrl}/auth`;
 
     console.log(`[RESEND] Enviando link para: ${email}`);

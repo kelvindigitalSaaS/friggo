@@ -94,7 +94,11 @@ serve(async (req) => {
     if (inviteErr) throw inviteErr;
 
     // -- DISPARO RESEND --
-    const appUrl = Deno.env.get("PUBLIC_APP_URL") || "https://kaza.app";
+    let appUrl = (Deno.env.get("PUBLIC_APP_URL") || "https://kaza.app").trim();
+    // Limpeza profunda para evitar URLs malformadas ou com path duplicado
+    appUrl = appUrl.replace(/\/app$/, "").replace(/\/$/, "");
+    if (!appUrl.startsWith("http")) appUrl = `https://${appUrl}`;
+    
     const inviteUrl = `${appUrl}/invite?token=${invite.token}`;
     
     // Limpeza da variável From para evitar Erro 422
