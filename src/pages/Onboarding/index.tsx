@@ -682,7 +682,7 @@ function OnboardingForm() {
         supabase.from("profiles").update({ trial_start_date: now }).eq("user_id", uid),
       ]);
 
-      await completeOnboarding(data as OnboardingData);
+      await completeOnboarding({ ...(data as OnboardingData), themePreference: theme } as any);
     } catch (e: any) {
       setIsSubmitting(false); // Only reset if failed so user can fix
       if (e.message && (e.message.includes("CPF") || e.message.includes("cadastrado"))) {

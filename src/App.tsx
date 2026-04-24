@@ -21,7 +21,6 @@ import { Sentry } from "@/lib/sentry";
 import { OfflineOverlay } from "@/components/kaza/OfflineOverlay";
 import PWAInstallGuide from "@/components/kaza/PWAInstallGuide";
 import { AccountSessionTracker } from "@/components/kaza/AccountSessionTracker";
-import { Analytics } from "@vercel/analytics/react";
 
 const Index = lazy(() => import("./pages/Home"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -265,7 +264,6 @@ const App = () => {
                     <AccountSessionTracker />
                     <Toaster />
                     <Sonner />
-                    <Analytics />
                     <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
                       <AppPWAInstallGuide />
                       <MobileFrame>

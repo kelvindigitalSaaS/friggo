@@ -67,7 +67,8 @@ export function ShoppingTab() {
     onboardingData,
     markAllShoppingComplete,
     clearAllShoppingList,
-    homeId
+    homeId,
+    isSubAccount
   } = useKaza();
   const { user } = useAuth();
   const { language } = useLanguage();
@@ -738,12 +739,12 @@ export function ShoppingTab() {
           <Plus className="h-3 w-3" />
         </button>
       </div>
-      <button
+      {!isSubAccount && <button
         onClick={() => removeFromShoppingList(item.id)}
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-all active:bg-destructive/10 active:text-destructive active:scale-90"
       >
         <Trash2 className="h-3.5 w-3.5" />
-      </button>
+      </button>}
     </div>
   );
 
@@ -857,14 +858,14 @@ export function ShoppingTab() {
       {/* ── DELETE ALL + LISTAS SALVAS ── */}
       {shoppingList.length > 0 && (
         <div className="flex gap-2">
-          <button
+          {!isSubAccount && <button
             onClick={() => setShowDeleteDialog(true)}
             className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-destructive/10 text-destructive text-sm font-semibold transition-all active:scale-[0.97]"
             style={{ height: "48px" }}
           >
             <Trash2 className="h-4 w-4" />
             {l.deleteAll}
-          </button>
+          </button>}
           <button
             onClick={() => { loadSavedLists(); setShowSavedLists(true); }}
             className="flex items-center justify-center gap-2 rounded-2xl border border-black/[0.06] dark:border-white/10 bg-white/80 dark:bg-white/5 text-foreground text-sm font-semibold transition-all active:scale-[0.97] px-4"
@@ -914,12 +915,12 @@ export function ShoppingTab() {
                           <ShoppingCart className="h-3.5 w-3.5" />
                           {language === "pt-BR" ? "Carregar" : language === "es" ? "Cargar" : "Load"}
                         </button>
-                        <button
+                        {!isSubAccount && <button
                           onClick={() => handleDeleteSavedList(list.id)}
                           className="flex h-8 w-8 items-center justify-center rounded-xl bg-destructive/10 text-destructive transition-all active:scale-95"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        </button>}
                       </div>
                     </div>
                   </div>

@@ -74,7 +74,7 @@ import { sendWebNotification } from "@/lib/pushNotifications";
 
 export function SettingsTab() {
   const { user, signOut } = useAuth();
-  const { onboardingData, resetOnboarding, updateOnboardingData } = useKaza();
+  const { onboardingData, resetOnboarding, updateOnboardingData, isSubAccount } = useKaza();
   const { language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { canInstall, install } = usePWA();
@@ -322,9 +322,13 @@ export function SettingsTab() {
             </div>
           </div>
           <div className="flex flex-col gap-1 min-w-0">
-            <p className="text-[18px] font-bold text-[#2C2C2A] dark:text-white leading-tight truncate">
-              {onboardingData?.name || user?.email?.split("@")[0]}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-[18px] font-bold text-[#2C2C2A] dark:text-white leading-tight truncate">
+                {onboardingData?.name || user?.email?.split("@")[0]}
+              </p>
+              {/* Green dot: user is always online while app is open */}
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50 shrink-0" title="Online" />
+            </div>
             {planTier === "premium" && trialDaysRemaining <= 0 ? (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#3D6B55]/10 border border-[#3D6B55]/25 text-[#3D6B55] text-[11px] font-black uppercase tracking-wider w-fit">
                 <Crown className="h-3 w-3" /> Premium
@@ -365,13 +369,13 @@ export function SettingsTab() {
           </h3>
           <div className="grid grid-cols-2 gap-2.5">
             {([
-              { label: l.history, desc: l.historyDesc, icon: History, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/activity-history") },
-              { label: l.installGuide || "Como Instalar", desc: l.installGuideDesc || "Android, iOS e PC", icon: Download, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/settings/install") },
-              { label: l.report, desc: l.reportDesc, icon: Package, color: "text-[#3D6B55] dark:text-emerald-400", bg: "bg-[#3D6B55]/10 dark:bg-emerald-500/20", onClick: () => navigate("/app/monthly-report") },
-              { label: l.subscription, desc: l.subscriptionDesc, icon: Crown, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/settings/subscription/manage") },
-              { label: l.reconfigure, desc: l.reconfigureDesc, icon: RotateCcw, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-500/20", onClick: () => setConfirmReconfigureOpen(true) },
-              { label: l.garbage, desc: l.garbageDesc, icon: Trash2, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-500/20", onClick: () => navigate("/app/garbage-reminder") },
-            ] as const).map(({ label, desc, icon: Icon, color, bg, onClick }) => (
+              { label: l.history, desc: l.historyDesc, icon: History, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/activity-history"), subAllowed: true },
+              { label: l.installGuide || "Como Instalar", desc: l.installGuideDesc || "Android, iOS e PC", icon: Download, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/settings/install"), subAllowed: true },
+              { label: l.report, desc: l.reportDesc, icon: Package, color: "text-[#3D6B55] dark:text-emerald-400", bg: "bg-[#3D6B55]/10 dark:bg-emerald-500/20", onClick: () => navigate("/app/monthly-report"), subAllowed: true },
+              { label: l.subscription, desc: l.subscriptionDesc, icon: Crown, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/settings/subscription/manage"), subAllowed: false },
+              { label: l.reconfigure, desc: l.reconfigureDesc, icon: RotateCcw, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-500/20", onClick: () => setConfirmReconfigureOpen(true), subAllowed: false },
+              { label: l.garbage, desc: l.garbageDesc, icon: Trash2, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-500/20", onClick: () => navigate("/app/garbage-reminder"), subAllowed: true },
+            ] as const).filter(s => !isSubAccount || s.subAllowed).map(({ label, desc, icon: Icon, color, bg, onClick }) => (
               <button
                 key={label}
                 onClick={onClick}
@@ -681,7 +685,7 @@ export function SettingsTab() {
               </div>
               <ChevronRight className="h-4.5 w-4.5 text-[#B0AFA7] dark:text-white/30" />
             </button>
-            <button
+            {!isSubAccount && <button
               onClick={() => setDeleteAccountOpen(true)}
               className="w-full flex items-center justify-between px-5 py-4 border-b border-border dark:border-white/10 active:bg-red-50 dark:active:bg-red-500/10 transition-colors group"
             >
@@ -695,8 +699,8 @@ export function SettingsTab() {
                 </div>
               </div>
               <ChevronRight className="h-4.5 w-4.5 text-red-300" />
-            </button>
-            <button
+            </button>}
+            {!isSubAccount && <button
               onClick={() => setConfirmFactoryResetOpen(true)}
               className="w-full flex items-center justify-between px-5 py-4 border-b border-border dark:border-white/10 active:bg-red-50 dark:active:bg-red-500/10 transition-colors group"
             >
@@ -710,7 +714,7 @@ export function SettingsTab() {
                 </div>
               </div>
               <ChevronRight className="h-4.5 w-4.5 text-red-300" />
-            </button>
+            </button>}
             <button
               onClick={signOut}
               className="w-full flex items-center gap-3 px-5 py-4 active:bg-red-50 dark:active:bg-red-500/10 transition-colors"

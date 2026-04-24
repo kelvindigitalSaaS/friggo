@@ -85,15 +85,17 @@ export function useAuthLogic() {
     window.history.replaceState({}, "", url.toString());
 
     supabase.auth.exchangeCodeForSession(code)
-      .then(({ error }) => {
+      .then(async ({ error }) => {
         if (error) {
           console.error("[AUTH] code exchange failed:", error);
           const msg = type === "signup"
             ? "Link de confirmação inválido ou expirado."
             : "Erro ao autenticar. Tente novamente.";
           toast.error(msg, { duration: 6000 });
-        } else if (type === "signup") {
-          toast.success("Email confirmado! Bem-vindo!");
+        } else {
+          // Revoke all other sessions — one active session per account
+          await supabase.auth.signOut({ scope: "others" }).catch(() => {});
+          if (type === "signup") toast.success("Email confirmado! Bem-vindo!");
         }
       })
       .catch((err) => {
@@ -141,6 +143,8 @@ export function useAuthLogic() {
       if (view === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        // Revoke all other sessions — one active session per account
+        await supabase.auth.signOut({ scope: "others" }).catch(() => {});
         toast.success("Login realizado com sucesso!");
         navigate("/app/home");
       } else {

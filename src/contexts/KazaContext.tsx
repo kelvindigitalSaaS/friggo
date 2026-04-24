@@ -81,6 +81,7 @@ interface KazaContextType {
   saveOnboardingProgress: (data: Partial<OnboardingData>) => Promise<void>;
   checkCpf: (cpf: string) => Promise<boolean>;
   requestPasswordResetByCpf: (cpf: string) => Promise<boolean>;
+  isSubAccount: boolean;
 }
 
 const KazaContext = createContext<KazaContextType | undefined>(undefined);
@@ -141,6 +142,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   const [mealPlan, setMealPlan] = useState<MealPlanEntry[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubAccount, setIsSubAccount] = useState(false);
   const notifiedAlertIds = useRef<Set<string>>(new Set());
   const hasHydratedAlerts = useRef(false);
 
@@ -164,6 +166,20 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       ...overrides
     };
   }, [user?.user_metadata?.name, language]);
+
+  // Detect if current user is a sub-account (member of someone else's group, not master)
+  useEffect(() => {
+    if (!user) { setIsSubAccount(false); return; }
+    supabase
+      .from("sub_account_members")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .maybeSingle()
+      .then(({ data }) => {
+        setIsSubAccount(!!data && data.role !== "master");
+      });
+  }, [user]);
 
   useEffect(() => {
     notifiedAlertIds.current.clear();
@@ -1017,7 +1033,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         p_fridge_type: data.fridgeType || "regular",
         p_fridge_brand: data.fridgeBrand || null,
         p_cooling_level: data.coolingLevel || 3,
-        p_theme_preference: (data as any).themePreference || "system",
+        p_theme_preference: (data as any).themePreference || "system", // passed from ThemeContext via handleComplete
         p_language_preference: (data as any).languagePreference || language || "pt-BR"
       });
 
@@ -1033,7 +1049,13 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         throw error;
       }
 
-      if (newHomeId) setHomeId(newHomeId);
+      if (newHomeId) {
+        setHomeId(newHomeId);
+        // Save notification preferences selected during onboarding
+        if (data.notificationPrefs?.length) {
+          await updateNotificationPreferences(newHomeId, data.notificationPrefs).catch(() => {});
+        }
+      }
       setOnboardingCompleted(true);
       setOnboardingData(buildDefaultOnboarding(data));
       toast({ 
@@ -1277,7 +1299,8 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           onboardingData?.hiddenSections?.includes(id) || false,
         refreshData,
         favoriteRecipes, mealPlan,
-        toggleFavoriteRecipe, addToMealPlan, removeFromMealPlan
+        toggleFavoriteRecipe, addToMealPlan, removeFromMealPlan,
+        isSubAccount
       }}
     >
       {children}

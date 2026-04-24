@@ -65,6 +65,8 @@ export default function ConsumableTrackerPage() {
         language
     } = useConsumableLogic();
 
+    const { isSubAccount } = useKaza();
+
     const renderScreenContent = () => {
         if (screen === 'add') {
             const dailyTotal = (parseFormattedNumber(newItem.dailyConsumption) / INTERVAL_FACTORS[newItem.usageInterval]) * residents;
@@ -251,8 +253,8 @@ export default function ConsumableTrackerPage() {
                     </div>
 
                     <div className="flex gap-3 pt-4 pb-12">
-                        <Button variant="destructive" className="flex-1 h-16 rounded-2xl font-black uppercase tracking-widest shadow-sm" onClick={() => editItem && handleDelete(editItem.id)}>{l.deleteItem}</Button>
-                        <Button className="flex-[2] h-16 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-primary/20" onClick={handleSaveEdit}>{l.save}</Button>
+                        {!isSubAccount && <Button variant="destructive" className="flex-1 h-16 rounded-2xl font-black uppercase tracking-widest shadow-sm" onClick={() => editItem && handleDelete(editItem.id)}>{l.deleteItem}</Button>}
+                        <Button className={`${isSubAccount ? "flex-1" : "flex-[2]"} h-16 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-primary/20`} onClick={handleSaveEdit}>{l.save}</Button>
                     </div>
                 </div>
             );

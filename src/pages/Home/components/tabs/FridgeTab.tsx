@@ -22,7 +22,7 @@ const locationFilters: { id: ItemLocation | 'all'; label: string; labelEn: strin
 ];
 
 export function FridgeTab() {
-    const { items, removeItem, updateItem, consumables, onboardingData, toggleSection: toggleContextSection } = useKaza();
+    const { items, removeItem, updateItem, consumables, onboardingData, toggleSection: toggleContextSection, isSubAccount } = useKaza();
     const { language, t } = useLanguage();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'items' | 'consumables'>('items');
@@ -198,7 +198,7 @@ export function FridgeTab() {
                         <span className="text-xs text-muted-foreground">{selectedItems.size} {l.selected}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        {selectedItems.size > 0 && (
+                        {selectedItems.size > 0 && !isSubAccount && (
                             <Button onClick={deleteSelected} variant="destructive" size="sm" className="rounded-xl h-9 gap-1.5 active:scale-[0.97] transition-all">
                                 <Trash2 className="h-3.5 w-3.5" />
                                 {l.deleteSelected} ({selectedItems.size})

@@ -1,6 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Quattrocento:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+/* Fonts loaded via <link> in index.html for best performance */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -45,7 +43,6 @@
 
     --radius: 1.25rem;
 
-    /* Tipografia — Poppins como fonte principal */
     --font-sans: "Outfit", "SF Pro Text", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --font-serif: "Quattrocento", Georgia, "Times New Roman", serif;
     --font-mono: "Space Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;

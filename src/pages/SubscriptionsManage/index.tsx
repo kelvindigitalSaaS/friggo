@@ -4,6 +4,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccountSession } from "@/hooks/useAccountSession";
+import { useKaza } from "@/contexts/KazaContext";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -52,6 +53,10 @@ const labels = {
   "pt-BR": {
     title: "Gerenciar assinatura",
     currentPlan: "Seu plano atual",
+    subAccountTitle: "Sua assinatura",
+    subAccountMemberOf: "Você faz parte da casa",
+    subAccountManagedBy: "Sua assinatura é gerenciada pela conta principal.",
+    subAccountPlan: "Plano incluído",
     active: "Ativo",
     trial: "Período de teste multiPRO",
     free: "Grátis",
@@ -97,6 +102,10 @@ const labels = {
   en: {
     title: "Manage subscription",
     currentPlan: "Your current plan",
+    subAccountTitle: "Your subscription",
+    subAccountMemberOf: "You are part of the home",
+    subAccountManagedBy: "Your subscription is managed by the main account.",
+    subAccountPlan: "Included plan",
     active: "Active",
     trial: "multiPRO trial period",
     free: "Free",
@@ -142,6 +151,10 @@ const labels = {
   es: {
     title: "Administrar suscripción",
     currentPlan: "Tu plan actual",
+    subAccountTitle: "Tu suscripción",
+    subAccountMemberOf: "Eres miembro del hogar",
+    subAccountManagedBy: "Tu suscripción es administrada por la cuenta principal.",
+    subAccountPlan: "Plan incluido",
     active: "Activo",
     trial: "Período de prueba multiPRO",
     free: "Gratis",
@@ -201,7 +214,10 @@ export default function SubscriptionsManagePage() {
   const { language } = useLanguage();
   const { subscription, trialDaysRemaining, isMultiPro } = useSubscription();
   const { user } = useAuth();
+  const { onboardingData } = useKaza();
   const l = labels[language as keyof typeof labels] || labels["pt-BR"];
+
+  const [isSubAccount, setIsSubAccount] = useState(false);
 
   const isTrial = trialDaysRemaining > 0 && !subscription?.isActive;
   const isActive = !!subscription?.isActive;
@@ -227,6 +243,20 @@ export default function SubscriptionsManagePage() {
     disconnectMember,
     reconnectMember,
   } = useAccountSession(isMultiPro || isTrial ? groupId : null);
+
+  // Detect if this user is a sub-account (member, not master)
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("sub_account_members")
+      .select("group_id, role")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data && data.role !== "master") setIsSubAccount(true);
+      });
+  }, [user]);
 
   const [history, setHistory] = useState<PaymentRow[]>([]);
 
@@ -267,6 +297,77 @@ export default function SubscriptionsManagePage() {
     : isTrial
       ? `${l.trial} · multiPRO`
       : l.free;
+
+  // Sub-account view: show connected home + plan, no upgrade cards
+  if (isSubAccount) {
+    const homeName = onboardingData?.homeName || (language === "pt-BR" ? "Sua Casa" : language === "es" ? "Tu Hogar" : "Your Home");
+    return (
+      <div className="min-h-screen bg-[#0b1f1c] dark:bg-[#091f1c] pb-16 font-sans text-foreground">
+        <header className="sticky top-0 z-50 bg-[#0b1f1c]/95 dark:bg-[#091f1c]/90 backdrop-blur-xl border-b border-white/[0.06] px-4 h-16 flex items-center gap-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 text-white transition-all active:scale-90"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <h1 className="text-lg font-bold text-white">{(l as any).subAccountTitle}</h1>
+        </header>
+
+        <main className="max-w-lg mx-auto px-4 pt-6 space-y-5">
+          {/* Casa conectada */}
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-[1.5rem] bg-[#11302c] border border-white/10 p-5 shadow-sm"
+          >
+            <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-3">
+              {(l as any).subAccountMemberOf}
+            </p>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-12 w-12 rounded-2xl bg-[#165A52]/40 flex items-center justify-center shrink-0">
+                <span className="text-2xl">🏠</span>
+              </div>
+              <div>
+                <p className="text-[20px] font-black text-white leading-tight">{homeName}</p>
+                <p className="text-[12px] text-emerald-300/80 font-semibold mt-0.5">
+                  {(l as any).subAccountManagedBy}
+                </p>
+              </div>
+            </div>
+          </motion.section>
+
+          {/* Plano incluído */}
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="rounded-[1.5rem] border border-white/10 p-5 shadow-sm overflow-hidden"
+            style={{ background: "linear-gradient(145deg, #1a3d32 0%, #0f2e24 60%, #0a211a 100%)" }}
+          >
+            <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-3">
+              {(l as any).subAccountPlan}
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 rounded-2xl bg-[#165A52]/60 flex items-center justify-center shrink-0">
+                <Crown className="h-5 w-5 text-emerald-300" />
+              </div>
+              <div>
+                <p className="text-[20px] font-black text-white">MultiPRO</p>
+                <p className="text-[11px] text-emerald-300/70 font-medium">
+                  {language === "pt-BR" ? "Acesso completo via conta principal" : language === "es" ? "Acceso completo vía cuenta principal" : "Full access via main account"}
+                </p>
+              </div>
+              <div className="ml-auto">
+                <span className="text-[10px] font-black text-emerald-300 bg-emerald-300/10 border border-emerald-300/20 px-2.5 py-1 rounded-full">
+                  {(l as any).active}
+                </span>
+              </div>
+            </div>
+          </motion.section>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0b1f1c] dark:bg-[#091f1c] pb-16 font-sans text-foreground">
