@@ -319,22 +319,23 @@ export function SubscriptionProvider({
         const effectiveRecipesPerDay = inTrial ? -1 : data.recipes_per_day;
         const effectiveShoppingListLimit = inTrial ? -1 : data.shopping_list_limit;
 
-        // Determina o planTier efetivo
         const rawPlanTier: string = (data as any).plan_tier || "free";
         const effectivePlanTier: PlanTier = inTrial
           ? "multiPRO"
           : (rawPlanTier === "individualPRO" || rawPlanTier === "multiPRO")
             ? rawPlanTier as PlanTier
-            : data.plan === "premium" && data.is_active
-              ? "individualPRO"
-              : "free";
+            : (data.plan === "multiPRO" || data.plan === "standard") && data.is_active
+              ? "multiPRO"
+              : (data.plan === "premium" || data.plan === "individualPRO") && data.is_active
+                ? "individualPRO"
+                : "free";
 
         setSubscription({
           id: data.id,
           userId: data.user_id, // Mantemos o ID do mestre aqui para referência do plano
           plan: effectivePlan,
           planTier: effectivePlanTier,
-          groupId: (data as any).group_id ?? null,
+          groupId: (data as any).group_id ?? subMembership?.group_id ?? null,
           price: data.price,
           itemsLimit: effectiveItemsLimit,
           recipesPerDay: effectiveRecipesPerDay,

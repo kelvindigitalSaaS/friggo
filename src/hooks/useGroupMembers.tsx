@@ -37,21 +37,45 @@ export function useGroupMembers() {
 
     const fetchData = async () => {
       try {
-        // Fetch members with profile data
+        // 1. Fetch group to find master
+        const { data: groupData } = await supabase
+          .from("sub_account_groups")
+          .select("master_user_id")
+          .eq("id", groupId)
+          .maybeSingle();
+
+        // 2. Fetch members with profile data
         const { data: membersData } = await supabase
           .from("sub_account_members")
           .select("*, profile:profiles(name, avatar_url)")
           .eq("group_id", groupId);
 
-        // Fetch pending invites
-        const { data: invitesData } = await supabase
-          .from("sub_account_invites")
-          .select("*")
-          .eq("group_id", groupId)
-          .eq("status", "pending");
+        // 3. If master is not in members, fetch master profile and add
+        let allMembers: GroupMemberWithStatus[] = membersData || [];
+        if (groupData && !allMembers.some(m => m.user_id === groupData.master_user_id)) {
+          const { data: masterProfile } = await supabase
+            .from("profiles")
+            .select("name, avatar_url")
+            .eq("user_id", groupData.master_user_id)
+            .maybeSingle();
+          
+          if (masterProfile) {
+            // Add a synthetic member row for the master
+            allMembers.unshift({
+              id: "master-" + groupData.master_user_id,
+              group_id: groupId,
+              user_id: groupData.master_user_id,
+              role: "master",
+              is_active: true,
+              display_name: masterProfile.name,
+              joined_at: new Date().toISOString(), // Fallback
+              profile: masterProfile
+            } as any);
+          }
+        }
 
-        // Fetch online status from account_sessions
-        if (membersData) {
+        // 4. Fetch online status from account_sessions
+        if (allMembers.length > 0) {
           const { data: sessionsData } = await supabase
             .from("account_sessions")
             .select("user_id, is_connected, last_seen_at")
@@ -65,12 +89,19 @@ export function useGroupMembers() {
           );
 
           setMembers(
-            membersData.map((m) => ({
+            allMembers.map((m) => ({
               ...m,
               isOnline: onlineMap.get(m.user_id) ?? false,
             }))
           );
         }
+
+        // Fetch pending invites
+        const { data: invitesData } = await supabase
+          .from("sub_account_invites")
+          .select("*")
+          .eq("group_id", groupId)
+          .eq("status", "pending");
 
         setPendingInvites(invitesData || []);
       } catch (err) {
