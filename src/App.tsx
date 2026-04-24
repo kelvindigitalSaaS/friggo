@@ -53,6 +53,7 @@ const SalesPage = lazy(() => import("./pages/SalesPage"));
 const SalesTermsPage = lazy(() => import("./pages/SalesPage/TermsPage"));
 const SalesPrivacyPage = lazy(() => import("./pages/SalesPage/PrivacyPage"));
 const InvitePage = lazy(() => import("./pages/Invite").then(m => ({ default: m.InvitePage })));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
 const queryClient = new QueryClient();
 
@@ -378,6 +379,10 @@ const App = () => {
                               <Route
                                 path="/app/plan/meal-planner"
                                 element={<ProtectedRoute element={<MealPlannerPage />} />}
+                              />
+                              <Route
+                                path="/app/admin"
+                                element={<ProtectedRoute element={<AdminDashboard />} />}
                               />
                               <Route path="*" element={<NotFound />} />
                             </Routes>

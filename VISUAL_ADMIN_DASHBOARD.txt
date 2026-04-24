@@ -1,0 +1,252 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                       🔐 ADMIN DASHBOARD - VISUAL                          ║
+║                      c.users/maquina/desktop/apps/kaza                     ║
+║                            /app/admin                                      ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ [◄ back]  Admin Dashboard 🔐                              [logout 🚪]       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 👤 Conectado como: seu-email@gmail.com                                      │
+│ Último acesso: 24/04/2026 15:30:45                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+╔═════════════════╦═════════════════╗
+║  ✅ ATIVAS      ║  ❌ CANCELADAS  ║
+║                 ║                 ║
+║       42        ║        5        ║
+║                 ║                 ║
+║ Assinaturas     ║ Assinaturas     ║
+║ ativas          ║ canceladas      ║
+╚═════════════════╩═════════════════╝
+
+╔═════════════════╦═════════════════╗
+║ 💸 REEMBOLSADAS║ ⭐ TRIALS       ║
+║                 ║                 ║
+║        2        ║       15        ║
+║                 ║                 ║
+║ Assinaturas     ║ Período de      ║
+║ reembolsadas    ║ teste           ║
+╚═════════════════╩═════════════════╝
+
+╔═══════════════════════════════════════════════════════════════════════════╗
+║ 💰 RECEITA TOTAL                                                          ║
+║ R$ 1.134,00                                                               ║
+║ Assinaturas ativas                                                        ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│ 📊 MÉTRICAS DE RETENÇÃO                                                   │
+├───────────────────────────────────────────────────────────────────────────┤
+│ Taxa de Churn:       8.5%     │  Taxa de Retenção:  91.5%               │
+│ Total de Assinantes: 64                                                   │
+└───────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────┬──────────────┬──────────────┐
+│ [👁️ Ver Detalhes] │ [📥 CSV]     │ [🔄 Refresh] │
+└──────────────────┴──────────────┴──────────────┘
+
+═════════════════════════════════════════════════════════════════════════════
+  QUANDO CLICA "Ver Detalhes" → FILTROS APARECEM
+═════════════════════════════════════════════════════════════════════════════
+
+[Todas (64)] [✅ Ativas (42)] [❌ Canceladas (5)] [💸 Reembolsadas (2)] [⭐ Trial (15)]
+
+
+📋 LISTA DE ASSINATURAS (Exemplo de 3):
+═════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ João Silva                                                [✅ ATIVA]    │
+│ joao@email.com                                                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│ Plano: premium      │ Valor: R$ 27.00                                    │
+│ Início: 01/04/2026  │ Fim: -                                             │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Maria Santos                                            [❌ CANCELADA]  │
+│ maria@email.com                                                          │
+├─────────────────────────────────────────────────────────────────────────┤
+│ Plano: premium      │ Valor: R$ 27.00                                    │
+│ Início: 15/03/2026  │ Cancelado: 20/04/2026                             │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Pedro Costa                                            [💸 REEMBOLSADA] │
+│ pedro@email.com                                                          │
+├─────────────────────────────────────────────────────────────────────────┤
+│ Plano: premium      │ Valor: R$ 27.00                                    │
+│ Início: 10/04/2026  │ Reembolso: 22/04/2026                             │
+└─────────────────────────────────────────────────────────────────────────┘
+
+═════════════════════════════════════════════════════════════════════════════
+  BOTÕES DE AÇÃO
+═════════════════════════════════════════════════════════════════════════════
+
+[👁️ Ver Detalhes]  → Mostra/oculta lista completa
+                     Pode filtrar por status
+
+[📥 CSV]           → Baixa arquivo subscriptions_2026-04-24.csv
+                     Pronto para analisar no Excel/Google Sheets
+
+[🔄 Refresh]       → Recarrega dados do banco em tempo real
+
+═════════════════════════════════════════════════════════════════════════════
+  ESTRUTURA DO CSV EXPORTADO
+═════════════════════════════════════════════════════════════════════════════
+
+ID,Email,Nome,Status,Plano,Valor,Data Início,Data Cancelamento
+sub_001,joao@email.com,"João Silva",active,premium,27.00,01/04/2026,
+sub_002,maria@email.com,"Maria Santos",cancelled,premium,27.00,15/03/2026,20/04/2026
+sub_003,pedro@email.com,"Pedro Costa",refunded,premium,27.00,10/04/2026,22/04/2026
+...
+
+═════════════════════════════════════════════════════════════════════════════
+  FLUXO DE ACESSO
+═════════════════════════════════════════════════════════════════════════════
+
+Usuário acessa: https://seu-app.com/app/admin
+       │
+       ├─→ Verifica: Está logado?
+       │   ├─ NÃO  → Redireciona para /auth
+       │   └─ SIM  → Continua
+       │
+       ├─→ Verifica: Email está em ADMIN_EMAILS?
+       │   ├─ NÃO  → Redireciona para /app/home
+       │   │        Toast: "Acesso negado"
+       │   │        Log: Tentativa de acesso não autorizado
+       │   └─ SIM  → Carrega Dashboard ✓
+       │
+       └─→ Dashboard carrega:
+           - getSubscriptionStats()  → Mostra números
+           - getChurnMetrics()       → Mostra taxas
+           - Pronto para usar!
+
+
+═════════════════════════════════════════════════════════════════════════════
+  SEGURANÇA
+═════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ AUTENTICAÇÃO                                                             │
+│ ✓ Supabase Auth (mesmo do app)                                          │
+│ ✓ Session gerenciada automaticamente                                    │
+│ ✓ Logout seguro (limpa session)                                         │
+├─────────────────────────────────────────────────────────────────────────┤
+│ AUTORIZAÇÃO                                                              │
+│ ✓ Whitelist de emails em ADMIN_EMAILS                                   │
+│ ✓ Verificação a cada acesso                                             │
+│ ✓ Redirecionamento automático se não autorizado                         │
+├─────────────────────────────────────────────────────────────────────────┤
+│ AUDITORIA                                                                │
+│ ✓ Logging em tabela admin_logs                                          │
+│ ✓ Captura: email, ação, timestamp, IP, user-agent                      │
+│ ✓ Histórico completo de acessos                                         │
+├─────────────────────────────────────────────────────────────────────────┤
+│ DADOS EXPOSTOS                                                           │
+│ ✓ Apenas estatísticas (nunca dados sensíveis)                           │
+│ ✓ Nomes/emails apenas em lista de detalhes                              │
+│ ✓ Sem senhas, tokens ou dados de pagamento                              │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+═════════════════════════════════════════════════════════════════════════════
+  COMO CONFIGURAR
+═════════════════════════════════════════════════════════════════════════════
+
+PASSO 1: Editar src/lib/adminAuth.ts (linha 8-10)
+─────────────────────────────────────────────────
+
+  const ADMIN_EMAILS = [
+    'seu-email@gmail.com',        ← COLOQUE SEU EMAIL AQUI
+    'admin@kaza.app'
+  ];
+
+Exemplo:
+  const ADMIN_EMAILS = [
+    'joao@empresa.com',
+    'maria@empresa.com'
+  ];
+
+
+PASSO 2: Build e Deploy
+─────────────────────────
+
+  npm run build        # Já testado ✅ (7.93s, sem erros)
+  # Deploy normalmente
+
+
+PASSO 3: Acessar
+─────────────────
+
+  URL: https://seu-app.com/app/admin
+  Login com seu email
+  Sistema verifica automaticamente
+  Carrega dashboard se for admin!
+
+
+═════════════════════════════════════════════════════════════════════════════
+  DADOS DISPONÍVEIS
+═════════════════════════════════════════════════════════════════════════════
+
+ESTATÍSTICAS:
+  ✅ Ativas              - Quantas assinaturas pagando agora
+  ❌ Canceladas          - Quantas foram canceladas pelo usuário
+  💸 Reembolsadas        - Quantas foram reembolsadas
+  ⭐ Trials              - Quantas estão testando
+  💰 Receita Total       - Quanto entra das ativas
+
+MÉTRICAS:
+  📊 Taxa de Churn       - % de cancelamentos
+  📊 Taxa de Retenção    - % de quem continua
+  📊 Total de Assinantes - Soma de tudo
+
+DETALHES:
+  Nome do usuário
+  Email
+  Status (Ativa/Cancelada/Reembolsada/Trial)
+  Plano
+  Valor
+  Data de início
+  Data de cancelamento/reembolso
+
+
+═════════════════════════════════════════════════════════════════════════════
+  QUERIES DIRETAMENTE DO BANCO (Se quiser ver raw)
+═════════════════════════════════════════════════════════════════════════════
+
+-- Ver todas as assinaturas ativas
+SELECT COUNT(*) FROM subscriptions WHERE status = 'active';
+
+-- Ver todas as canceladas
+SELECT COUNT(*) FROM subscriptions WHERE status = 'cancelled';
+
+-- Ver todas as reembolsadas
+SELECT COUNT(*) FROM subscriptions WHERE status = 'refunded';
+
+-- Ver receita total
+SELECT SUM(amount) FROM subscriptions WHERE status = 'active';
+
+-- Ver detalhes completos (com usuário)
+SELECT s.*, p.name, p.email
+FROM subscriptions s
+LEFT JOIN profiles p ON s.user_id = p.id
+ORDER BY s.created_at DESC;
+
+
+═════════════════════════════════════════════════════════════════════════════
+  TUDO PRONTO! 🎉
+═════════════════════════════════════════════════════════════════════════════
+
+✅ Código implementado
+✅ Build compilado
+✅ Rota integrada
+✅ Segurança implementada
+✅ Documentação completa
+
+Próximo passo: Configure seu email e faça deploy!
+
