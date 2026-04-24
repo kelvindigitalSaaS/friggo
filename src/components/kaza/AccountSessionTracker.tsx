@@ -54,6 +54,14 @@ export function AccountSessionTracker() {
     // Upsert inicial
     const upsert = async () => {
       try {
+        // 1. Mark OTHER sessions of this user as force_disconnected
+        await supabase
+          .from("account_sessions")
+          .update({ force_disconnected: true })
+          .eq("user_id", user.id)
+          .neq("device_id", deviceId.current);
+
+        // 2. Register/Update current session
         const { data, error } = await supabase
           .from("account_sessions")
           .upsert(

@@ -8,6 +8,10 @@ import { toast } from "sonner";
 
 interface GroupMemberWithStatus extends SubAccountMember {
   isOnline?: boolean;
+  profile?: {
+    name: string | null;
+    avatar_url: string | null;
+  } | null;
 }
 
 interface GroupSlot {
@@ -33,10 +37,10 @@ export function useGroupMembers() {
 
     const fetchData = async () => {
       try {
-        // Fetch members
+        // Fetch members with profile data
         const { data: membersData } = await supabase
           .from("sub_account_members")
-          .select("*")
+          .select("*, profile:profiles(name, avatar_url)")
           .eq("group_id", groupId);
 
         // Fetch pending invites
@@ -92,10 +96,17 @@ export function useGroupMembers() {
         (payload) => {
           if (payload.eventType === "INSERT") {
             const newMember = payload.new as SubAccountMember;
-            setMembers((prev) => [...prev, { ...newMember, isOnline: false }]);
-            // Notify master that someone joined
-            const name = newMember.display_name || "Uma pessoa";
-            toast.success(`${name} se juntou ao seu plano!`);
+            // Fetch profile for the new member
+            supabase
+              .from("profiles")
+              .select("name, avatar_url")
+              .eq("user_id", newMember.user_id)
+              .maybeSingle()
+              .then(({ data: profileData }) => {
+                setMembers((prev) => [...prev, { ...newMember, profile: profileData, isOnline: false }]);
+                const name = profileData?.name || newMember.display_name || "Uma pessoa";
+                toast.success(`${name} se juntou ao seu plano!`);
+              });
           } else if (payload.eventType === "UPDATE") {
             const updated = payload.new as SubAccountMember;
             setMembers((prev) =>

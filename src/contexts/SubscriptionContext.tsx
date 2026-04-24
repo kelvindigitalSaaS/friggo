@@ -228,10 +228,36 @@ export function SubscriptionProvider({
     const t0 = performance.now();
     console.log("[SUB] fetchSubscription: start for", user.id);
     try {
+      // 1. Check if user is a sub-account member
+      const { data: subMembership } = await supabase
+        .from("sub_account_members")
+        .select("group_id")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      let targetUserId = user.id;
+      let isSubAccount = false;
+
+      if (subMembership) {
+        // Find the master of that group
+        const { data: group } = await supabase
+          .from("sub_account_groups")
+          .select("master_user_id")
+          .eq("id", subMembership.group_id)
+          .maybeSingle();
+        
+        if (group?.master_user_id) {
+          targetUserId = group.master_user_id;
+          isSubAccount = true;
+          console.log("[SUB] Sub-account detected. Inheriting from master:", targetUserId);
+        }
+      }
+
       const { data: profile } = await supabase
         .from("profiles")
         .select("plan_type, subscription_status, trial_start_date, created_at, cakto_customer_id, last_payment_date, payment_method")
-        .eq("user_id", user.id)
+        .eq("user_id", targetUserId)
         .maybeSingle();
 
       // @ts-expect-error -- supabase generated types incomplete
@@ -247,7 +273,7 @@ export function SubscriptionProvider({
         const { data: access } = await supabase
           .from("v_user_access")
           .select("has_access, in_trial, trial_days_left, billing_soon")
-          .eq("user_id", user.id)
+          .eq("user_id", targetUserId)
           .maybeSingle();
         if (access) {
           remaining = (access as any).trial_days_left ?? remaining;
@@ -265,7 +291,7 @@ export function SubscriptionProvider({
       const { data, error } = await supabase
         .from("subscriptions")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", targetUserId)
         .maybeSingle();
 
       if (error) throw error;
@@ -274,12 +300,15 @@ export function SubscriptionProvider({
         // Reset receitas se virou o dia
         const today = new Date().toISOString().split("T")[0];
         const lastReset = data.last_recipe_reset;
-        if (lastReset !== today) {
+        if (lastReset !== today && !isSubAccount) {
+          // Apenas o mestre reseta as receitas globais (ou cada um tem seu limite?)
+          // No multiPRO as receitas são por CONTA ou por GRUPO? 
+          // O usuário pediu "acesso as mesmas informacoes", então o limite deve ser do mestre.
           await supabase
             .from("subscriptions")
             .update({ recipes_used_today: 0, last_recipe_reset: today })
             .eq("id", data.id)
-            .eq("user_id", user.id);
+            .eq("user_id", targetUserId);
           data.recipes_used_today = 0;
         }
 
@@ -302,7 +331,7 @@ export function SubscriptionProvider({
 
         setSubscription({
           id: data.id,
-          userId: data.user_id,
+          userId: data.user_id, // Mantemos o ID do mestre aqui para referência do plano
           plan: effectivePlan,
           planTier: effectivePlanTier,
           groupId: (data as any).group_id ?? null,

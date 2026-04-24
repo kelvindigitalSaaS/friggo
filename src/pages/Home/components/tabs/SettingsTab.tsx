@@ -117,8 +117,8 @@ export function SettingsTab() {
       reportDesc: "Consumo do mês",
       logout: "Sair da conta",
       darkMode: "Modo Escuro",
-      subscription: "Assinatura",
-      subscriptionDesc: "Veja os detalhes do seu plano",
+      subscription: isSubAccount ? "Minha Home" : "Assinatura",
+      subscriptionDesc: isSubAccount ? "Gerencie a casa onde está conectado" : "Veja os detalhes do seu plano",
       memberSince: "Membro desde",
       trialStatus: "Status do Trial",
       premiumStatus: "Status Premium",
@@ -189,8 +189,8 @@ export function SettingsTab() {
       reportDesc: "Monthly consumption",
       logout: "Log out",
       darkMode: "Dark Mode",
-      subscription: "Subscription",
-      subscriptionDesc: "View your plan details",
+      subscription: isSubAccount ? "My Home" : "Subscription",
+      subscriptionDesc: isSubAccount ? "Manage the home you are connected to" : "View your plan details",
       memberSince: "Member since",
       trialStatus: "Trial Status",
       premiumStatus: "Premium Status",
@@ -247,8 +247,8 @@ export function SettingsTab() {
       reportDesc: "Consumo del mes",
       logout: "Cerrar sesión",
       darkMode: "Modo Oscuro",
-      subscription: "Suscripción",
-      subscriptionDesc: "Ver los detalles de tu plan",
+      subscription: isSubAccount ? "Mi Hogar" : "Suscripción",
+      subscriptionDesc: isSubAccount ? "Administra el hogar al que estás conectado" : "Ver los detalles de tu plan",
       memberSince: "Miembro desde",
       trialStatus: "Estado del Trial",
       premiumStatus: "Estado Premium",
@@ -372,7 +372,7 @@ export function SettingsTab() {
               { label: l.history, desc: l.historyDesc, icon: History, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/activity-history"), subAllowed: true },
               { label: l.installGuide || "Como Instalar", desc: l.installGuideDesc || "Android, iOS e PC", icon: Download, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/settings/install"), subAllowed: true },
               { label: l.report, desc: l.reportDesc, icon: Package, color: "text-[#3D6B55] dark:text-emerald-400", bg: "bg-[#3D6B55]/10 dark:bg-emerald-500/20", onClick: () => navigate("/app/monthly-report"), subAllowed: true },
-              { label: l.subscription, desc: l.subscriptionDesc, icon: Crown, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/settings/subscription/manage"), subAllowed: false },
+              { label: l.subscription, desc: l.subscriptionDesc, icon: isSubAccount ? Home : Crown, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => isSubAccount ? navigate("/app/home") : navigate("/app/settings/subscription/manage"), subAllowed: true },
               { label: l.reconfigure, desc: l.reconfigureDesc, icon: RotateCcw, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-500/20", onClick: () => setConfirmReconfigureOpen(true), subAllowed: false },
               { label: l.garbage, desc: l.garbageDesc, icon: Trash2, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-500/20", onClick: () => navigate("/app/garbage-reminder"), subAllowed: true },
             ] as const).filter(s => !isSubAccount || s.subAllowed).map(({ label, desc, icon: Icon, color, bg, onClick }) => (
@@ -401,10 +401,10 @@ export function SettingsTab() {
 
           {/* Current plan row */}
           <div className="rounded-2xl bg-white dark:bg-[#11302c] border border-[#E2E1DC] dark:border-white/10 overflow-hidden shadow-sm">
-            {planTier === "premium" && trialDaysRemaining <= 0 ? (
-              /* Premium paid — CLICKABLE → subscription page */
+            {planTier === "premium" || (isSubAccount && planTier !== "free") ? (
+              /* Premium paid or inherited — CLICKABLE → subscription page (or home info for sub-account) */
               <button
-                onClick={() => navigate("/app/settings/subscription/manage")}
+                onClick={() => isSubAccount ? navigate("/app/home") : navigate("/app/settings/subscription/manage")}
                 className="w-full flex items-center justify-between px-5 py-4 active:bg-[#F7F6F3] dark:active:bg-white/5 transition-colors group"
               >
                 <div className="flex items-center gap-3.5">
@@ -412,9 +412,13 @@ export function SettingsTab() {
                     <Crown className="h-5 w-5 text-[#3D6B55]" />
                   </div>
                   <div className="text-left">
-                    <p className="font-bold text-[#2C2C2A] dark:text-white text-[15px] leading-tight">Kaza Premium</p>
+                    <p className="font-bold text-[#2C2C2A] dark:text-white text-[15px] leading-tight">
+                      {isSubAccount ? onboardingData?.homeName || "Kaza Home" : "Kaza Premium"}
+                    </p>
                     <p className="text-[12px] text-[#7A7A72] dark:text-white/60 font-medium">
-                      {language === "pt-BR" ? "Acesso completo ativo" : language === "es" ? "Acceso completo activo" : "Full access active"}
+                      {isSubAccount 
+                        ? (language === "pt-BR" ? "Plano compartilhado ativo" : "Shared plan active")
+                        : (language === "pt-BR" ? "Acesso completo ativo" : "Full access active")}
                     </p>
                   </div>
                 </div>
