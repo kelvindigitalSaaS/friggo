@@ -82,6 +82,8 @@ interface KazaContextType {
   checkCpf: (cpf: string) => Promise<boolean>;
   requestPasswordResetByCpf: (cpf: string) => Promise<boolean>;
   isSubAccount: boolean;
+  inviteWelcomePending: boolean;
+  dismissInviteWelcome: () => void;
 }
 
 const KazaContext = createContext<KazaContextType | undefined>(undefined);
@@ -143,6 +145,11 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubAccount, setIsSubAccount] = useState(false);
+  const [inviteWelcomePending, setInviteWelcomePending] = useState(() => {
+    const flag = localStorage.getItem("kaza_invite_welcome_pending");
+    if (flag) { localStorage.removeItem("kaza_invite_welcome_pending"); return true; }
+    return false;
+  });
   const notifiedAlertIds = useRef<Set<string>>(new Set());
   const hasHydratedAlerts = useRef(false);
 
@@ -150,9 +157,10 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     overrides: Partial<OnboardingData> = {}
   ): OnboardingData => {
     const fallbackName = user?.user_metadata?.name || "";
+    const fallbackLastName = fallbackName.trim().split(/\s+/).slice(-1)[0] || fallbackName;
     const fallbackHomeName = fallbackName
-      ? (language === "pt-BR" ? `Casa da Família ${fallbackName}` : `${fallbackName}'s Family Home`)
-      : (language === "pt-BR" ? "Minha Casa" : "My Home");
+      ? (language === "pt-BR" ? `Lar da Família ${fallbackLastName}` : `${fallbackLastName} Family Home`)
+      : (language === "pt-BR" ? "Meu Lar" : "My Home");
 
     return {
       name: fallbackName,
@@ -249,6 +257,9 @@ export function KazaProvider({ children }: { children: ReactNode }) {
             const { completeInviteSetup } = await import("@/pages/Invite/components/SubAccountOnboarding");
             await completeInviteSetup(user.id, inviteToken);
             console.log("[KAZA] Invite setup completed successfully. Reloading...");
+
+            // Sinaliza para o app mostrar o modal de boas-vindas após o reload
+            localStorage.setItem("kaza_invite_welcome_pending", "1");
 
             // Clear invite_token from user metadata so it doesn't re-trigger on future logins
             await supabase.auth.updateUser({ data: { invite_token: null, invited_to_group: null } }).catch(() => {});
@@ -1024,7 +1035,13 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       
       // Chamada atômica via RPC (Blindada contra RLS e Duplicidade)
       const { data: newHomeId, error } = await supabase.rpc("complete_user_onboarding", {
-        p_home_name: data.homeName || (data.name ? `Casa da Família ${data.name}` : (language === "pt-BR" ? "Minha Casa" : "My Home")),
+        p_home_name: data.homeName || (() => {
+          if (data.name) {
+            const lastName = data.name.trim().split(/\s+/).slice(-1)[0] || data.name;
+            return language === "pt-BR" ? `Lar da Família ${lastName}` : `${lastName} Family Home`;
+          }
+          return language === "pt-BR" ? "Meu Lar" : "My Home";
+        })(),
         p_user_name: data.name || user.email?.split("@")[0] || "User",
         p_user_cpf: rawCpf,
         p_selected_plan: (data as any).selectedPlan || "multiPRO",
@@ -1250,16 +1267,27 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     const newExpiration = new Date();
     newExpiration.setDate(newExpiration.getDate() + 3);
     await updateItem(id, { location: "fridge", expirationDate: newExpiration });
+    const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
     setDefrostTimers((prev) => [
       ...prev,
       { id: crypto.randomUUID(), itemId: id, itemName: item.name,
         startedAt: new Date(), estimatedMinutes: 120 }
     ]);
+    // Notificação agendada para daqui 2h (quando o degelo termina), não instantânea
+    scheduleLocalNotification(
+      language === "pt-BR" ? "🧊 Degelo concluído" : "🧊 Defrost complete",
+      language === "pt-BR"
+        ? `${item.name} terminou de descongelar. Verifique antes de usar.`
+        : `${item.name} has finished defrosting. Check before use.`,
+      TWO_HOURS_MS,
+      `defrost-${id}`,
+      "general"
+    ).catch(() => {});
     toast({
       title: language === "pt-BR" ? "Degelo iniciado" : "Defrost started",
       description: language === "pt-BR"
-        ? `${item.name} movido para a geladeira. Um lembrete será enviado em 2 horas.`
-        : `${item.name} moved to the fridge. Reminder in 2 hours.`
+        ? `${item.name} movido para a geladeira. Notificação enviada em 2 horas.`
+        : `${item.name} moved to the fridge. Notification in 2 hours.`
     });
   };
 
@@ -1300,7 +1328,9 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         refreshData,
         favoriteRecipes, mealPlan,
         toggleFavoriteRecipe, addToMealPlan, removeFromMealPlan,
-        isSubAccount
+        isSubAccount,
+        inviteWelcomePending,
+        dismissInviteWelcome: () => setInviteWelcomePending(false),
       }}
     >
       {children}

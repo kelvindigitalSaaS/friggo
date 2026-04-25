@@ -3,7 +3,7 @@ import { BottomNav } from "./components/BottomNav";
 import { FabAddButton } from "./components/FabAddButton";
 import { HomeTab } from "./components/tabs/HomeTab";
 import { FridgeTab } from "./components/tabs/FridgeTab";
-import { RecipesTab } from "./components/tabs/RecipesTab";
+import { RecipesTabNew as RecipesTab } from "./components/tabs/RecipesTabNew";
 import { PlannerTab } from "./components/tabs/PlannerTab";
 import { ShoppingTab } from "./components/tabs/ShoppingTab";
 import { SettingsTab } from "./components/tabs/SettingsTab";

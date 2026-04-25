@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useKaza } from "@/contexts/KazaContext";
 import { SubAccountOnboarding } from "./components/SubAccountOnboarding";
 import {
   AlertDialog,
@@ -16,6 +17,7 @@ export function InvitePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { inviteWelcomePending, dismissInviteWelcome } = useKaza();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [inviteInfo, setInviteInfo] = useState<{
@@ -99,6 +101,24 @@ export function InvitePage() {
   const handleWelcomeClose = () => {
     navigate("/app");
   };
+
+  // Modal de boas-vindas para usuário que confirmou email e voltou ao app
+  if (inviteWelcomePending) {
+    return (
+      <AlertDialog open onOpenChange={() => { dismissInviteWelcome(); navigate("/app"); }}>
+        <AlertDialogContent>
+          <AlertDialogTitle>Bem-vindo ao KAZA! 🎉</AlertDialogTitle>
+          <AlertDialogDescription>
+            Você entrou em um grupo KAZA e agora tem acesso às geladeira, lista de compras
+            e planejador compartilhados. Aproveite!
+          </AlertDialogDescription>
+          <AlertDialogAction onClick={() => { dismissInviteWelcome(); navigate("/app"); }}>
+            Começar
+          </AlertDialogAction>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
+  }
 
   if (loading) {
     return (

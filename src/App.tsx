@@ -53,7 +53,7 @@ const SalesPage = lazy(() => import("./pages/SalesPage"));
 const SalesTermsPage = lazy(() => import("./pages/SalesPage/TermsPage"));
 const SalesPrivacyPage = lazy(() => import("./pages/SalesPage/PrivacyPage"));
 const InvitePage = lazy(() => import("./pages/Invite").then(m => ({ default: m.InvitePage })));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const FeedbackSurvey = lazy(() => import("./pages/FeedbackSurvey"));
 
 const queryClient = new QueryClient();
 
@@ -112,7 +112,7 @@ function SplashLoader() {
 /** Redireciona para /auth se não estiver logado */
 function ProtectedRoute({ element, allowLocked = false, allowOnboarding = false }: { element: JSX.Element, allowLocked?: boolean, allowOnboarding?: boolean }) {
   const { user, loading: authLoading, requireAuth } = useAuth();
-  const { isLocked, loading: subLoading } = useSubscription();
+  const { isLocked, feedbackSubmitted, loading: subLoading } = useSubscription();
   const { isOnboarded, loading: kazaLoading } = useKaza();
   const [timedOut, setTimedOut] = useState(false);
 
@@ -145,6 +145,10 @@ function ProtectedRoute({ element, allowLocked = false, allowOnboarding = false 
   }
 
   if (isLocked && !allowLocked) {
+    // Redirecionar para feedback se não foi respondido, senão para paywall
+    if (!feedbackSubmitted) {
+      return <Navigate to="/app/feedback-survey" replace />;
+    }
     return <Navigate to="/app/home?subscription=open" replace />;
   }
 
@@ -357,6 +361,10 @@ const App = () => {
                                 element={<ProtectedRoute element={<GarbageReminderPage />} />}
                               />
                               <Route
+                                path="/app/feedback-survey"
+                                element={<ProtectedRoute allowLocked={true} element={<FeedbackSurvey />} />}
+                              />
+                              <Route
                                 path="/app/settings/subscription"
                                 element={<ProtectedRoute element={<SubscriptionPage />} />}
                               />
@@ -379,10 +387,6 @@ const App = () => {
                               <Route
                                 path="/app/plan/meal-planner"
                                 element={<ProtectedRoute element={<MealPlannerPage />} />}
-                              />
-                              <Route
-                                path="/app/admin"
-                                element={<ProtectedRoute element={<AdminDashboard />} />}
                               />
                               <Route path="*" element={<NotFound />} />
                             </Routes>

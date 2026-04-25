@@ -551,9 +551,11 @@ function OnboardingForm() {
   // Lógica de auto-sugestão quando o nome pessoal muda
   useEffect(() => {
     if (data.name && !isHomeNameTouched && steps[currentStep] === "personalize") {
-      const suggested = language === "pt-BR" 
-        ? `Casa da Família ${data.name}` 
-        : `${data.name}'s Family Home`;
+      const parts = data.name.trim().split(/\s+/);
+      const lastName = parts.length > 1 ? parts[parts.length - 1] : parts[0];
+      const suggested = language === "pt-BR"
+        ? `Lar da Família ${lastName}`
+        : `${lastName} Family Home`;
       setData(prev => ({ ...prev, homeName: suggested }));
     }
   }, [data.name, language, isHomeNameTouched, currentStep]);

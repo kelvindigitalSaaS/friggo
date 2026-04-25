@@ -4,6 +4,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useRef,
   useCallback
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { openExternalUrl } from "@/lib/nativeBrowser";
 import { isNative } from "@/lib/capacitor";
 import type { PlanTierEnum } from "@/integrations/supabase/types";
+import { scheduleLocalNotification } from "@/lib/pushNotifications";
 
 /** Plano interno da subscription (campo `plan` na tabela). Mantido para compat. */
 export type SubscriptionPlan = "free" | "basic" | "standard" | "premium" | "individualPRO" | "multiPRO";
@@ -195,7 +197,9 @@ interface SubscriptionContextType {
   getRemainingShoppingItems: (currentCount: number) => number;
   trialDaysRemaining: number;
   isLocked: boolean;
+  billingSoon: boolean;
   registrationDate: Date | null;
+  feedbackSubmitted: boolean;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | null>(null);
@@ -211,6 +215,9 @@ export function SubscriptionProvider({
   const [trialDaysRemaining, setTrialDaysRemaining] = useState<number>(7);
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const [registrationDate, setRegistrationDate] = useState<Date | null>(null);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState<boolean>(false);
+  const [billingSoon, setBillingSoon] = useState<boolean>(false);
+  const expiryNotifSentRef = useRef<boolean>(false);
 
   const fetchSubscription = useCallback(async () => {
     if (authLoading) return; // Wait for auth to initialize
@@ -221,6 +228,7 @@ export function SubscriptionProvider({
       setIsLocked(false);
       setTrialDaysRemaining(7);
       setRegistrationDate(null);
+      setFeedbackSubmitted(false);
       setLoading(false);
       return;
     }
@@ -256,7 +264,7 @@ export function SubscriptionProvider({
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("plan_type, subscription_status, trial_start_date, created_at, cakto_customer_id, last_payment_date, payment_method")
+        .select("plan_type, subscription_status, trial_start_date, created_at, cakto_customer_id, last_payment_date, payment_method, feedback_submitted")
         .eq("user_id", targetUserId)
         .maybeSingle();
 
@@ -278,6 +286,38 @@ export function SubscriptionProvider({
         if (access) {
           remaining = (access as any).trial_days_left ?? remaining;
           locked = !((access as any).has_access);
+          const soon = !!((access as any).billing_soon);
+          setBillingSoon(soon);
+
+          // Notifica uma vez por sessão quando o trial está acabando ou billing_soon
+          const notifKey = `kaza_expiry_notif_${targetUserId}`;
+          const alreadyNotified = sessionStorage.getItem(notifKey);
+          if (!alreadyNotified && !expiryNotifSentRef.current) {
+            if (soon || (remaining > 0 && remaining <= 2)) {
+              expiryNotifSentRef.current = true;
+              sessionStorage.setItem(notifKey, "1");
+              const msg = remaining > 0
+                ? `Seu período de teste termina em ${remaining} dia${remaining === 1 ? "" : "s"}. Assine para continuar.`
+                : "Sua cobrança está próxima. Verifique sua assinatura.";
+              scheduleLocalNotification(
+                "⏳ Kaza — Assinatura",
+                msg,
+                0,
+                "subscription-expiry",
+                "general"
+              ).catch(() => {});
+            } else if (locked) {
+              expiryNotifSentRef.current = true;
+              sessionStorage.setItem(notifKey, "1");
+              scheduleLocalNotification(
+                "🔒 Kaza — Acesso encerrado",
+                "Seu período de teste terminou. Assine para continuar usando o Kaza.",
+                0,
+                "subscription-locked",
+                "general"
+              ).catch(() => {});
+            }
+          }
         }
       } catch {
         // view pode não existir em ambientes antigos — mantém fallback
@@ -287,6 +327,7 @@ export function SubscriptionProvider({
       setIsLocked(locked);
       // @ts-expect-error -- supabase generated types incomplete
       setRegistrationDate(profile?.created_at ? new Date(profile.created_at) : null);
+      setFeedbackSubmitted((profile as any)?.feedback_submitted ?? false);
 
       const { data, error } = await supabase
         .from("subscriptions")
@@ -403,25 +444,23 @@ export function SubscriptionProvider({
   const planTier: PlanTier = subscription?.planTier ?? "free";
   const isMultiPro = planTier === "multiPRO";
 
+  // Modelo: trial 7 dias (ilimitado) → PRO (ilimitado) ou travado. Não há plano free parcial.
   const canAddItem = useCallback(() => {
-    if (!subscription) return trialDaysRemaining > 0;
-    if (subscription.itemsLimit === -1) return true;
-    return true;
-  }, [subscription, trialDaysRemaining]);
+    return !isLocked;
+  }, [isLocked]);
 
   const canUseRecipe = useCallback(() => {
+    if (isLocked) return false;
     if (!subscription) return trialDaysRemaining > 0;
     if (subscription.recipesPerDay === -1) return true;
     return subscription.recipesUsedToday < subscription.recipesPerDay;
-  }, [subscription, trialDaysRemaining]);
+  }, [isLocked, subscription, trialDaysRemaining]);
 
   const canAddShoppingItem = useCallback(
-    (currentCount: number) => {
-      if (!subscription) return trialDaysRemaining > 0;
-      if (subscription.shoppingListLimit === -1) return true;
-      return currentCount < subscription.shoppingListLimit;
+    (_currentCount: number) => {
+      return !isLocked;
     },
-    [subscription, trialDaysRemaining]
+    [isLocked]
   );
 
   const canChangeNotification = useCallback(() => {
@@ -579,7 +618,9 @@ export function SubscriptionProvider({
         getRemainingShoppingItems,
         trialDaysRemaining,
         isLocked,
-        registrationDate
+        billingSoon,
+        registrationDate,
+        feedbackSubmitted
       }}
     >
       {children}

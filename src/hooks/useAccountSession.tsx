@@ -34,6 +34,19 @@ function getPlatform(): string {
   return "web";
 }
 
+function getDeviceName(): string {
+  const ua = navigator.userAgent;
+  if (/android/i.test(ua)) {
+    const m = ua.match(/Android[^;]*;\s*([^)]+)\)/);
+    return m ? m[1].trim() : "Android";
+  }
+  if (/iphone/i.test(ua)) return "iPhone";
+  if (/ipad/i.test(ua)) return "iPad";
+  if (/macintosh/i.test(ua)) return "Mac";
+  if (/windows/i.test(ua)) return "Windows";
+  return "Web";
+}
+
 export interface GroupMemberStatus extends SubAccountMember {
   /** Sessões ativas deste membro (pode ter múltiplos dispositivos) */
   sessions: Pick<AccountSession, "id" | "device_id" | "device_name" | "platform" | "is_connected" | "last_seen_at">[];
@@ -76,6 +89,7 @@ export function useAccountSession(groupId: string | null = null): UseAccountSess
             user_id: user.id,
             group_id: gid,
             device_id: deviceId.current,
+            device_name: getDeviceName(),
             platform: platform.current,
             is_connected: true,
             force_disconnected: false,
@@ -186,9 +200,10 @@ export function useAccountSession(groupId: string | null = null): UseAccountSess
         .update({ last_seen_at: new Date().toISOString(), is_connected: true })
         .eq("user_id", user.id)
         .eq("device_id", deviceId.current)
+        .select("force_disconnected")
+        .single()
         .then(({ data }) => {
-          // Verifica force_disconnect no retorno
-          if (Array.isArray(data) && data[0]?.force_disconnected) {
+          if (data?.force_disconnected) {
             signOut();
           }
         });

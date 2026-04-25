@@ -4,7 +4,54 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
 const CAKTO_WEBHOOK_SECRET = Deno.env.get("CAKTO_WEBHOOK_SECRET") || "";
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const resendApiKey = Deno.env.get("RESEND_API_KEY") ?? "";
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+async function sendCancellationEmail(toEmail: string, userName: string) {
+  if (!resendApiKey) return;
+  let fromValue = Deno.env.get("RESEND_FROM_EMAIL") || "Kaza <team@kazapp.tech>";
+  fromValue = fromValue.replace(/[\^\"\'\\]/g, "").trim();
+  const appUrl = (Deno.env.get("PUBLIC_APP_URL") || "https://kaza.app").replace(/\/$/, "");
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendApiKey}` },
+    body: JSON.stringify({
+      from: fromValue,
+      to: toEmail,
+      subject: "Sua assinatura do Kaza foi cancelada",
+      html: `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f4f7f6;font-family:Arial,sans-serif;color:#1f2d2a;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f7f6;">
+    <tr><td align="center" style="padding:24px 12px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background:#fff;border-radius:20px;overflow:hidden;">
+        <tr><td align="center" style="padding:28px 24px 12px;background:#165a52;">
+          <div style="font-size:24px;font-weight:700;color:#fff;">Kaza</div>
+        </td></tr>
+        <tr><td style="padding:32px 28px;">
+          <p style="margin:0 0 14px;font-size:22px;font-weight:700;text-align:center;">Assinatura cancelada</p>
+          <p style="margin:0 0 20px;font-size:15px;color:#52635f;text-align:center;">
+            Olá, <strong>${userName}</strong>. Sua assinatura do Kaza foi cancelada e seu acesso foi migrado para o plano Grátis.
+          </p>
+          <p style="margin:0 0 20px;font-size:15px;color:#52635f;text-align:center;">
+            Se isso foi um engano ou quiser reativar, clique abaixo.
+          </p>
+          <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
+            <tr><td align="center" bgcolor="#165a52" style="border-radius:14px;">
+              <a href="${appUrl}" style="display:inline-block;padding:15px 26px;font-size:15px;font-weight:700;color:#fff;text-decoration:none;border-radius:14px;">Reativar assinatura</a>
+            </td></tr>
+          </table>
+          <p style="margin:24px 0 0;font-size:12px;color:#7b8a87;text-align:center;">Obrigado por usar o Kaza.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+    }),
+  }).catch((e) => console.error("❌ Erro ao enviar email de cancelamento:", e));
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -225,6 +272,34 @@ serve(async (req) => {
         currency: "BRL",
         metadata: { cakto_transaction_id: transactionId, event },
       });
+
+      // Enviar email de cancelamento ao cliente
+      const userName = customer.name || email.split("@")[0];
+      await sendCancellationEmail(email, userName);
+
+      // Force-disconnect sub-accounts vinculadas ao grupo do mestre
+      const { data: masterGroup } = await supabase
+        .from("sub_account_groups")
+        .select("id")
+        .eq("master_user_id", profile.user_id)
+        .maybeSingle();
+      if (masterGroup?.id) {
+        const { data: members } = await supabase
+          .from("sub_account_members")
+          .select("user_id")
+          .eq("group_id", masterGroup.id)
+          .eq("is_active", true)
+          .neq("user_id", profile.user_id);
+        if (members && members.length > 0) {
+          const memberIds = members.map((m: any) => m.user_id);
+          await supabase
+            .from("account_sessions")
+            .update({ force_disconnected: true, is_connected: false })
+            .in("user_id", memberIds)
+            .eq("group_id", masterGroup.id);
+          console.log(`✅ Force-disconnected ${memberIds.length} sub-account(s) do grupo ${masterGroup.id}`);
+        }
+      }
 
       resultMsg = "Refund/Cancel processed - user downgraded to free";
 
