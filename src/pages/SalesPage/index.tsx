@@ -669,6 +669,15 @@ export default function SalesPage() {
       document.head.appendChild(meta);
     }
 
+    // Canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement('link') as HTMLLinkElement;
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = 'https://kazapp.tech/pagina-de-vendas';
+
     // JSON-LD structured data
     const existingLd = document.querySelector('script[data-kaza-ld]');
     if (!existingLd) {
@@ -695,13 +704,13 @@ export default function SalesPage() {
     const ogTags = [
       { property: 'og:title', content: 'KAZA — Gestão Doméstica Inteligente' },
       { property: 'og:description', content: 'Organize seu estoque, evite desperdício e economize tempo com o KAZA.' },
-      { property: 'og:image', content: 'https://kaza.app/icons/512.png' },
-      { property: 'og:url', content: 'https://kaza.app' },
+      { property: 'og:image', content: 'https://kazapp.tech/icons/512.png' },
+      { property: 'og:url', content: 'https://kazapp.tech/pagina-de-vendas' },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: 'KAZA — Gestão Doméstica Inteligente' },
       { name: 'twitter:description', content: 'Controle de estoque, receitas e lista de compras inteligente.' },
-      { name: 'twitter:image', content: 'https://kaza.app/icons/512.png' }
+      { name: 'twitter:image', content: 'https://kazapp.tech/icons/512.png' }
     ];
 
     ogTags.forEach(tag => {
@@ -715,6 +724,10 @@ export default function SalesPage() {
       }
       element.setAttribute('content', tag.content);
     });
+    return () => {
+      canonical?.remove();
+      document.querySelector('script[data-kaza-ld]')?.remove();
+    };
   }, []);
 
   return (

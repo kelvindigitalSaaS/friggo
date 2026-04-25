@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Páginas públicas (indexáveis)
+Allow: /pagina-de-vendas
+Allow: /pagina-de-vendas/termos-de-uso
+Allow: /pagina-de-vendas/privacidade
+
+# Área restrita do app (não indexar)
+Disallow: /app/
+
+Sitemap: https://kazapp.tech/sitemap.xml
