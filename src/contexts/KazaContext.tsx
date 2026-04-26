@@ -178,15 +178,34 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   // Detect if current user is a sub-account (member of someone else's group, not master)
   useEffect(() => {
     if (!user) { setIsSubAccount(false); return; }
-    supabase
-      .from("sub_account_members")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("is_active", true)
-      .maybeSingle()
-      .then(({ data }) => {
-        setIsSubAccount(!!data && data.role !== "master");
-      });
+    const checkSubAccount = async () => {
+      const { data: subData } = await supabase
+        .from("sub_account_members")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (subData && subData.role !== "master") {
+        setIsSubAccount(true);
+        return;
+      }
+
+      // Fallback: check if they are a 'resident' in home_members
+      const { data: homeData } = await supabase
+        .from("home_members")
+        .select("role")
+        .eq("user_id", user.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (homeData && homeData.role === "resident") {
+        setIsSubAccount(true);
+      } else {
+        setIsSubAccount(false);
+      }
+    };
+    checkSubAccount();
   }, [user]);
 
   useEffect(() => {

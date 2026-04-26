@@ -20,6 +20,7 @@ const tabLabels = {
     home: "Casa",
     fridge: "Estoque",
     recipes: "Receitas",
+    planner: "Plano",
     shopping: "Lista",
     settings: "Ajustes"
   },
@@ -27,6 +28,7 @@ const tabLabels = {
     home: "Home",
     fridge: "Pantry",
     recipes: "Recipes",
+    planner: "Planner",
     shopping: "Shopping",
     settings: "Settings"
   },
@@ -34,6 +36,7 @@ const tabLabels = {
     home: "Inicio",
     fridge: "Despensa",
     recipes: "Recetas",
+    planner: "Plan",
     shopping: "Compras",
     settings: "Ajustes"
   }
@@ -49,6 +52,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
     { id: "home", label: l.home, icon: Home },
     { id: "fridge", label: l.fridge, icon: Refrigerator },
     { id: "recipes", label: l.recipes, icon: ChefHat },
+    { id: "planner", label: l.planner, icon: CalendarDays },
     { id: "shopping", label: l.shopping, icon: ShoppingCart },
     { id: "settings", label: l.settings, icon: Settings2 }
   ];

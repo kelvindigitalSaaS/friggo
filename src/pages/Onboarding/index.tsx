@@ -89,7 +89,8 @@ const onboardingLabels = {
       { id: "recipes", label: "Receitas sugeridas", icon: "🍽️", description: "Sugestões baseadas no seu estoque" },
       { id: "nightCheckup", label: "Check-up noturno", icon: "🌙", description: "Lembrete diário à noite" },
       { id: "cooking", label: "Temporizador de cozinha", icon: "🔔", description: "Quando o timer acabar" },
-      { id: "consumables", label: "Consumíveis baixos", icon: "📉", description: "Quando produtos de casa acabam" }
+      { id: "consumables", label: "Consumíveis baixos", icon: "📉", description: "Quando produtos de casa acabam" },
+      { id: "garbage", label: "Lembrete do Lixo", icon: "🗑️", description: "Avisos de coleta de lixo" }
     ],
     consumables: "Consumíveis da casa",
     consumablesDesc: "Configure os produtos que você usa no dia a dia",
@@ -101,6 +102,8 @@ const onboardingLabels = {
     consumableUsageType: "Frequência",
     consumableDaily: "Diário",
     consumableWeekly: "Semanal",
+    consumableFortnightly: "Quinzenal",
+    consumableMonthly: "Mensal",
     consumableUnit: "Unidade",
     consumableAdd: "Adicionar item",
     consumableCategories: {
@@ -183,7 +186,8 @@ const onboardingLabels = {
       { id: "recipes", label: "Suggested recipes", icon: "🍽️", description: "Suggestions based on your stock" },
       { id: "nightCheckup", label: "Night check-up", icon: "🌙", description: "Daily evening reminder" },
       { id: "cooking", label: "Kitchen timer", icon: "🔔", description: "When the timer is done" },
-      { id: "consumables", label: "Low consumables", icon: "📉", description: "When household products run out" }
+      { id: "consumables", label: "Low consumables", icon: "📉", description: "When household products run out" },
+      { id: "garbage", label: "Garbage reminder", icon: "🗑️", description: "Trash collection reminders" }
     ],
     consumables: "Household consumables",
     consumablesDesc: "Set up the products you use every day",
@@ -195,6 +199,8 @@ const onboardingLabels = {
     consumableUsageType: "Frequency",
     consumableDaily: "Daily",
     consumableWeekly: "Weekly",
+    consumableFortnightly: "Biweekly",
+    consumableMonthly: "Monthly",
     consumableUnit: "Unit",
     consumableAdd: "Add item",
     consumableCategories: {
@@ -277,7 +283,8 @@ const onboardingLabels = {
       { id: "recipes", label: "Recetas sugeridas", icon: "🍽️", description: "Sugerencias basadas en tu stock" },
       { id: "nightCheckup", label: "Chequeo nocturno", icon: "🌙", description: "Recordatorio diario por la noche" },
       { id: "cooking", label: "Temporizador de cocina", icon: "🔔", description: "Cuando el timer termine" },
-      { id: "consumables", label: "Consumibles bajos", icon: "📉", description: "Cuando los productos del hogar se acaban" }
+      { id: "consumables", label: "Consumibles bajos", icon: "📉", description: "Cuando los productos del hogar se acaban" },
+      { id: "garbage", label: "Recordatorio de basura", icon: "🗑️", description: "Avisos de recolección de basura" }
     ],
     consumables: "Consumibles del hogar",
     consumablesDesc: "Configura los productos que usas en el día a día",
@@ -289,6 +296,8 @@ const onboardingLabels = {
     consumableUsageType: "Frecuencia",
     consumableDaily: "Diario",
     consumableWeekly: "Semanal",
+    consumableFortnightly: "Quincenal",
+    consumableMonthly: "Mensual",
     consumableUnit: "Unidad",
     consumableAdd: "Agregar item",
     consumableCategories: {
@@ -1345,29 +1354,26 @@ function OnboardingForm() {
                     </div>
                     <div>
                       <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{(l as any).consumableUsageType}</label>
-                      <div className="flex gap-1 mt-0.5">
-                        <button
-                          onClick={() => setOnboardingConsumables(prev => prev.map((c, i) => i === index ? { ...c, usageType: "daily" } : c))}
-                          className={cn(
-                            "flex-1 h-9 rounded-xl text-xs font-semibold transition-all",
-                            item.usageType === "daily"
-                              ? "bg-primary text-primary-foreground shadow-sm"
-                              : "bg-muted/30 text-muted-foreground"
-                          )}
-                        >
-                          {(l as any).consumableDaily}
-                        </button>
-                        <button
-                          onClick={() => setOnboardingConsumables(prev => prev.map((c, i) => i === index ? { ...c, usageType: "weekly" } : c))}
-                          className={cn(
-                            "flex-1 h-9 rounded-xl text-xs font-semibold transition-all",
-                            item.usageType === "weekly"
-                              ? "bg-primary text-primary-foreground shadow-sm"
-                              : "bg-muted/30 text-muted-foreground"
-                          )}
-                        >
-                          {(l as any).consumableWeekly}
-                        </button>
+                      <div className="grid grid-cols-2 gap-1 mt-0.5">
+                        {([
+                          { key: "daily", label: (l as any).consumableDaily },
+                          { key: "weekly", label: (l as any).consumableWeekly },
+                          { key: "fortnightly", label: (l as any).consumableFortnightly },
+                          { key: "monthly", label: (l as any).consumableMonthly },
+                        ] as const).map(({ key, label }) => (
+                          <button
+                            key={key}
+                            onClick={() => setOnboardingConsumables(prev => prev.map((c, i) => i === index ? { ...c, usageType: key } : c))}
+                            className={cn(
+                              "h-9 rounded-xl text-[10px] font-semibold transition-all",
+                              item.usageType === key
+                                ? "bg-primary text-primary-foreground shadow-sm"
+                                : "bg-muted/30 text-muted-foreground"
+                            )}
+                          >
+                            {label}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -1471,29 +1477,26 @@ function OnboardingForm() {
                   </div>
                   <div>
                     <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{(l as any).consumableUsageType}</label>
-                    <div className="flex gap-1 mt-0.5">
-                      <button
-                        onClick={() => setNewConsumable(prev => ({ ...prev, usageType: "daily" }))}
-                        className={cn(
-                          "flex-1 h-9 rounded-xl text-[10px] font-semibold transition-all",
-                          newConsumable.usageType === "daily"
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted/30 text-muted-foreground"
-                        )}
-                      >
-                        {(l as any).consumableDaily}
-                      </button>
-                      <button
-                        onClick={() => setNewConsumable(prev => ({ ...prev, usageType: "weekly" }))}
-                        className={cn(
-                          "flex-1 h-9 rounded-xl text-[10px] font-semibold transition-all",
-                          newConsumable.usageType === "weekly"
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted/30 text-muted-foreground"
-                        )}
-                      >
-                        {(l as any).consumableWeekly}
-                      </button>
+                    <div className="grid grid-cols-2 gap-1 mt-0.5">
+                      {([
+                        { key: "daily", label: (l as any).consumableDaily },
+                        { key: "weekly", label: (l as any).consumableWeekly },
+                        { key: "fortnightly", label: (l as any).consumableFortnightly },
+                        { key: "monthly", label: (l as any).consumableMonthly },
+                      ] as const).map(({ key, label }) => (
+                        <button
+                          key={key}
+                          onClick={() => setNewConsumable(prev => ({ ...prev, usageType: key }))}
+                          className={cn(
+                            "h-9 rounded-xl text-[10px] font-semibold transition-all",
+                            newConsumable.usageType === key
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted/30 text-muted-foreground"
+                          )}
+                        >
+                          {label}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>

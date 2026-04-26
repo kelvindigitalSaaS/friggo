@@ -34,13 +34,12 @@ const DEFAULT_CONSUMABLES = [
   { name: "Álcool em Gel", icon: "🧴" },
 ];
 
-type Step = "loading" | "name" | "consumables" | "password" | "complete" | "verify-email";
+type Step = "loading" | "name" | "password" | "complete" | "verify-email";
 
 const STEP_NUMBERS: Record<string, number> = {
   name: 1,
   password: 2,
-  consumables: 3,
-  complete: 4,
+  complete: 3,
 };
 
 export function SubAccountOnboarding({
@@ -59,7 +58,7 @@ export function SubAccountOnboarding({
   // Form state
   const [name, setName] = useState("");
   const [cpf, setCpf] = useState("");
-  const [selectedConsumables, setSelectedConsumables] = useState<Set<string>>(new Set());
+  const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -70,8 +69,7 @@ export function SubAccountOnboarding({
   // Password requirements real-time check
   const passwordReqs = getPasswordRequirements(password);
 
-  // Consumables from the main account's home (fetched when reaching consumables step)
-  const [extraConsumables, setExtraConsumables] = useState<Array<{ name: string; icon: string }>>([]);
+  // Password requirements real-time check
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -79,22 +77,7 @@ export function SubAccountOnboarding({
     return () => clearInterval(t);
   }, [resendCooldown]);
 
-  useEffect(() => {
-    if (step !== "consumables" || !groupId) return;
-    supabase
-      .from("consumables")
-      .select("name, icon")
-      .eq("home_id", groupId)
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          const defaultNames = new Set(DEFAULT_CONSUMABLES.map((c) => c.name));
-          const extras = data
-            .filter((c: any) => c.name && !defaultNames.has(c.name))
-            .map((c: any) => ({ name: c.name, icon: c.icon || "📦" }));
-          setExtraConsumables(extras);
-        }
-      });
-  }, [step, groupId]);
+
 
   const handleResendEmail = async () => {
     if (resending || resendCooldown > 0) return;
@@ -141,12 +124,10 @@ export function SubAccountOnboarding({
 
         if (saved.name) setName(saved.name);
         if (saved.cpf) setCpf(saved.cpf);
-        if (Array.isArray(saved.consumables)) {
-          setSelectedConsumables(new Set(saved.consumables));
-        }
+        if (saved.cpf) setCpf(saved.cpf);
 
         const resumeStep = progress.current_step ?? 0;
-        if (resumeStep >= 2) setStep("consumables");    // password done
+        if (resumeStep >= 2) setStep("complete");    // password done
         else if (resumeStep >= 1) setStep("password");  // name/cpf done
         else setStep("name");
       } catch {
@@ -199,21 +180,6 @@ export function SubAccountOnboarding({
       // We just mark that the password step is completed.
       await saveStep(STEP_NUMBERS.password, { password_defined: true }); 
       toast.success("Senha definida com sucesso");
-      setStep("consumables");
-    } catch {
-      toast.error("Erro ao salvar. Verifique sua conexão.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleConsumablesNext = async () => {
-    setLoading(true);
-    try {
-      await saveStep(STEP_NUMBERS.consumables, {
-        consumables: Array.from(selectedConsumables),
-      });
-      toast.success("Preferências salvas");
       setStep("complete");
     } catch {
       toast.error("Erro ao salvar. Verifique sua conexão.");
@@ -221,6 +187,7 @@ export function SubAccountOnboarding({
       setLoading(false);
     }
   };
+
 
   const handleComplete = async () => {
     setLoading(true);
@@ -262,7 +229,7 @@ export function SubAccountOnboarding({
     }
   };
 
-  const stepOrder: Step[] = ["name", "password", "consumables", "complete"];
+  const stepOrder: Step[] = ["name", "password", "complete"];
   const handleBack = () => {
     const idx = stepOrder.indexOf(step);
     if (idx > 0) setStep(stepOrder[idx - 1]);
@@ -357,50 +324,6 @@ export function SubAccountOnboarding({
           </div>
         )}
 
-        {step === "consumables" && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-primary uppercase tracking-widest">Estoque Inicial</p>
-              <h2 className="text-2xl font-black text-foreground">O que tem na despensa?</h2>
-              <p className="text-sm text-muted-foreground">Selecione o que você já usa no dia a dia</p>
-            </div>
-            {extraConsumables.length > 0 && (
-              <p className="text-xs text-muted-foreground -mt-2 mb-1">
-                Inclui itens já cadastrados pela conta principal
-              </p>
-            )}
-            <div className="grid grid-cols-2 gap-3">
-              {[...DEFAULT_CONSUMABLES, ...extraConsumables].map((item) => (
-                <label
-                  key={item.name}
-                  className={cn(
-                    "flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all cursor-pointer",
-                    selectedConsumables.has(item.name)
-                      ? "bg-primary/10 border-primary ring-4 ring-primary/5"
-                      : "bg-white dark:bg-white/5 border-black/[0.04] dark:border-white/[0.08] grayscale opacity-60"
-                  )}
-                >
-                  <Checkbox
-                    checked={selectedConsumables.has(item.name)}
-                    className="sr-only"
-                    onCheckedChange={(checked) => {
-                      const next = new Set(selectedConsumables);
-                      if (checked) next.add(item.name);
-                      else next.delete(item.name);
-                      setSelectedConsumables(next);
-                    }}
-                  />
-                  <span className="text-3xl mb-2">{item.icon}</span>
-                  <span className="text-xs font-bold text-foreground text-center line-clamp-1">{item.name}</span>
-                </label>
-              ))}
-            </div>
-            <Button onClick={handleConsumablesNext} size="lg" className="w-full h-14 rounded-2xl font-bold text-base" disabled={loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Tudo pronto, continuar
-            </Button>
-          </div>
-        )}
 
         {step === "password" && (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -487,10 +410,6 @@ export function SubAccountOnboarding({
               <SummaryRow label="Nome" value={name} />
               <SummaryRow label="CPF" value={cpf} />
               <SummaryRow label="Email" value={invitedEmail} />
-              <SummaryRow
-                label="Consumíveis"
-                value={selectedConsumables.size > 0 ? `${selectedConsumables.size} itens` : "Nenhum"}
-              />
             </div>
 
             <Button onClick={handleComplete} size="lg" className="w-full h-16 rounded-[1.75rem] font-black uppercase tracking-widest text-base shadow-xl shadow-emerald-500/20" disabled={loading}>
@@ -597,47 +516,5 @@ export async function completeInviteSetup(userId: string, inviteToken: string) {
     );
   if (profileErr) throw profileErr;
 
-  // Use progress consumables or fallback empty
-  const consumablesList = Array.isArray(saved.consumables) ? saved.consumables : [];
-
-  if (consumablesList.length > 0) {
-    const { data: membership } = await supabase
-      .from("home_members")
-      .select("home_id")
-      .eq("user_id", userId)
-      .limit(1)
-      .maybeSingle();
-
-    if (membership?.home_id) {
-      const DEFAULT_CONSUMABLES_MAP: Record<string, { icon: string; category: string }> = {
-        "Papel Higiênico": { icon: "🧻", category: "hygiene" },
-        "Papel Toalha": { icon: "🧺", category: "cleaning" },
-        "Detergente": { icon: "🧴", category: "cleaning" },
-        "Sabonete": { icon: "🧼", category: "hygiene" },
-        "Pasta de Dente": { icon: "🪥", category: "hygiene" },
-        "Shampoo": { icon: "🧴", category: "hygiene" },
-        "Desodorante": { icon: "🚿", category: "hygiene" },
-        "Álcool em Gel": { icon: "🧴", category: "hygiene" },
-      };
-
-      const rows = consumablesList.map((name: string) => {
-        const info = DEFAULT_CONSUMABLES_MAP[name] || { icon: "📦", category: "other" };
-        return {
-          home_id: membership.home_id,
-          name,
-          icon: info.icon,
-          category: info.category,
-          current_stock: 1,
-          unit: "un",
-          daily_consumption: 0,
-          min_stock: 1,
-          usage_interval: "weekly",
-        };
-      });
-
-      await supabase
-        .from("consumables")
-        .upsert(rows, { onConflict: "home_id,name" });
-    }
-  }
+  // Removed consumable creation for invited accounts, they inherit the home.
 }

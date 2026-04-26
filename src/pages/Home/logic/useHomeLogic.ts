@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useKaza } from "@/contexts/KazaContext";
 import { useAuth } from "@/hooks/useAuth";
 
-const TAB_ORDER = ["home", "fridge", "recipes", "shopping", "settings"];
+const TAB_ORDER = ["home", "fridge", "recipes", "planner", "shopping", "settings"];
 const TAB_STORAGE_KEY = "Kaza-active-tab";
 
 export function useHomeLogic() {

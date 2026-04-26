@@ -155,7 +155,8 @@ export function SettingsTab() {
         recipes: { label: "Receitas", desc: "Sugestões de receitas" },
         nightCheckup: { label: "Check-up Noturno", desc: "Lembrete diário" },
         cooking: { label: "Cozinhando", desc: "Temporizadores de cozinha" },
-        consumables: { label: "Consumíveis", desc: "Reposição de itens" }
+        consumables: { label: "Consumíveis", desc: "Reposição de itens" },
+        garbage: { label: "Lixo", desc: "Lembretes de coleta" }
       },
       installGuide: "Como Instalar",
       installGuideDesc: "Guia para Android, iOS e PC",
@@ -227,7 +228,8 @@ export function SettingsTab() {
         recipes: { label: "Recipes", desc: "Recipe suggestions" },
         nightCheckup: { label: "Night Checkup", desc: "Daily reminder" },
         cooking: { label: "Cooking", desc: "Kitchen timers" },
-        consumables: { label: "Consumables", desc: "Item restocking" }
+        consumables: { label: "Consumables", desc: "Item restocking" },
+        garbage: { label: "Garbage", desc: "Collection reminders" }
       }
     },
     es: {
@@ -285,7 +287,8 @@ export function SettingsTab() {
         recipes: { label: "Recetas", desc: "Sugerencias de recetas" },
         nightCheckup: { label: "Chequeo Nocturno", desc: "Recordatorio diario" },
         cooking: { label: "Cocina", desc: "Temporizadores de cocina" },
-        consumables: { label: "Consumibles", desc: "Reposición de artículos" }
+        consumables: { label: "Consumibles", desc: "Reposición de artículos" },
+        garbage: { label: "Basura", desc: "Recordatorios de recolección" }
       }
     }
   };
@@ -538,11 +541,12 @@ export function SettingsTab() {
               { key: "nightCheckup", Icon: CalendarClock, color: "text-indigo-500 dark:text-indigo-400", bg: "bg-indigo-50 dark:bg-indigo-500/20" },
               { key: "cooking", Icon: Flame, color: "text-orange-500 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-500/20" },
               { key: "consumables", Icon: Package2, color: "text-purple-500 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-500/20" },
+              { key: "garbage", Icon: Trash2, color: "text-orange-500 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-500/20" },
             ] as const).map(({ key, Icon, color, bg }, idx) => {
               const prefs = onboardingData?.notificationPrefs || ["expiry", "shopping", "nightCheckup"];
               const isActive = prefs.includes(key);
               return (
-                <div key={key} className={cn("flex items-center justify-between px-5 py-3.5", idx < 5 && "border-b border-[#E2E1DC] dark:border-white/10")}>
+                <div key={key} className={cn("flex items-center justify-between px-5 py-3.5", idx < 6 && "border-b border-[#E2E1DC] dark:border-white/10")}>
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className={cn("rounded-xl p-2 shrink-0", isActive ? bg : "bg-[#EDECEA] dark:bg-white/10")}>
                       <Icon className={cn("h-4 w-4", isActive ? color : "text-[#B0AFA7] dark:text-white/30")} />

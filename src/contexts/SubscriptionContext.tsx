@@ -258,7 +258,32 @@ export function SubscriptionProvider({
         if (group?.master_user_id) {
           targetUserId = group.master_user_id;
           isSubAccount = true;
-          console.log("[SUB] Sub-account detected. Inheriting from master:", targetUserId);
+          console.log("[SUB] Sub-account detected via sub_account_members. Inheriting from master:", targetUserId);
+        }
+      } else {
+        // Fallback: check home_members role
+        const { data: homeMember } = await supabase
+          .from("home_members")
+          .select("home_id, role")
+          .eq("user_id", user.id)
+          .limit(1)
+          .maybeSingle();
+          
+        if (homeMember && homeMember.role === "resident") {
+          // If they are a resident, we need to find the master of that home
+          const { data: masterMember } = await supabase
+            .from("home_members")
+            .select("user_id")
+            .eq("home_id", homeMember.home_id)
+            .eq("role", "admin")
+            .limit(1)
+            .maybeSingle();
+            
+          if (masterMember?.user_id) {
+            targetUserId = masterMember.user_id;
+            isSubAccount = true;
+            console.log("[SUB] Sub-account detected via home_members. Inheriting from master:", targetUserId);
+          }
         }
       }
 

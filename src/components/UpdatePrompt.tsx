@@ -8,6 +8,9 @@ export function UpdatePrompt() {
   const { pathname } = useLocation();
   const isAppRoute = pathname.startsWith('/app');
 
+  // Suppress update prompts in development mode (localhost)
+  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
   const [isUpdating, setIsUpdating] = useState(false);
   const [hasUpdate, setHasUpdate] = useState(false);
   const dismissedRef = useRef(false);
@@ -15,6 +18,7 @@ export function UpdatePrompt() {
   const reloadingRef = useRef(false);
 
   useEffect(() => {
+    if (isDev) return; // Skip update checks in dev mode
     checkForAppUpdate().then((available) => {
       if (available && !dismissedRef.current) setHasUpdate(true);
     });
@@ -49,6 +53,7 @@ export function UpdatePrompt() {
   }, []);
 
   useEffect(() => {
+    if (isDev) return; // Skip update toast in dev mode
     if (!hasUpdate || toastShownRef.current || !isAppRoute) return;
     toastShownRef.current = true;
 
