@@ -285,7 +285,8 @@ export function ConsumableTracker({ open, onClose, inline }: ConsumableTrackerPr
     unit: "unidades",
     currentStock: "10",
     minStock: "2",
-    category: "hygiene" as any
+    category: "hygiene" as any,
+    usageInterval: "daily" as "daily" | "weekly" | "monthly"
   });
 
   const [customAction, setCustomAction] = useState<{
@@ -404,7 +405,7 @@ export function ConsumableTracker({ open, onClose, inline }: ConsumableTrackerPr
       dailyConsumption: daily,
       minStock: min,
       category: newItem.category,
-      usageInterval: "daily"
+      usageInterval: newItem.usageInterval
     });
     setNewItem({
       name: "",
@@ -413,7 +414,8 @@ export function ConsumableTracker({ open, onClose, inline }: ConsumableTrackerPr
       unit: "unidades",
       currentStock: "10",
       minStock: "2",
-      category: "hygiene"
+      category: "hygiene",
+      usageInterval: "daily"
     });
     setScreen("list");
     toast.success(l.itemAdded);
@@ -500,6 +502,25 @@ export function ConsumableTracker({ open, onClose, inline }: ConsumableTrackerPr
             className="h-11 rounded-md mt-1.5"
           />
         </div>
+      </div>
+
+      <div>
+        <Label className="text-xs font-semibold text-gray-500">
+          {language === "pt-BR" ? "Frequência de uso" : language === "en" ? "Usage frequency" : "Frecuencia de uso"}
+        </Label>
+        <Select
+          value={newItem.usageInterval}
+          onValueChange={(v) => setNewItem((p) => ({ ...p, usageInterval: v as "daily" | "weekly" | "monthly" }))}
+        >
+          <SelectTrigger className="h-11 rounded-md mt-1.5">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="daily">{language === "pt-BR" ? "Diário" : language === "en" ? "Daily" : "Diario"}</SelectItem>
+            <SelectItem value="weekly">{language === "pt-BR" ? "Semanal" : language === "en" ? "Weekly" : "Semanal"}</SelectItem>
+            <SelectItem value="monthly">{language === "pt-BR" ? "Mensal" : language === "en" ? "Monthly" : "Mensual"}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

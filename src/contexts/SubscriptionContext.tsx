@@ -264,17 +264,14 @@ export function SubscriptionProvider({
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("plan_type, subscription_status, trial_start_date, created_at, cakto_customer_id, last_payment_date, payment_method, feedback_submitted")
+        .select("created_at")
         .eq("user_id", targetUserId)
         .maybeSingle();
 
-      // @ts-expect-error -- supabase generated types incomplete
-      const planType = profile?.plan_type || "free";
-      // @ts-expect-error -- supabase generated types incomplete
-      const trialStart = profile?.trial_start_date ? new Date(profile.trial_start_date) : new Date();
+      const trialStart = profile?.created_at ? new Date(profile.created_at) : new Date();
       const daysPassed = Math.floor((new Date().getTime() - trialStart.getTime()) / (1000 * 3600 * 24));
       let remaining = Math.max(0, 7 - daysPassed);
-      let locked = planType !== 'premium' && remaining === 0;
+      let locked = remaining === 0;
 
       // Fonte canônica: view v_user_access
       try {
@@ -325,17 +322,24 @@ export function SubscriptionProvider({
 
       setTrialDaysRemaining(remaining);
       setIsLocked(locked);
-      // @ts-expect-error -- supabase generated types incomplete
       setRegistrationDate(profile?.created_at ? new Date(profile.created_at) : null);
-      setFeedbackSubmitted((profile as any)?.feedback_submitted ?? false);
+      setFeedbackSubmitted(false);
 
-      const { data, error } = await supabase
-        .from("subscriptions")
-        .select("*")
-        .eq("user_id", targetUserId)
-        .maybeSingle();
-
-      if (error) throw error;
+      let data: Record<string, unknown> | null = null;
+      if (isSubAccount) {
+        // Sub-accounts can't read master's subscriptions directly due to RLS.
+        // Use SECURITY DEFINER RPC that resolves the effective user.
+        const { data: rpcData } = await (supabase as any).rpc("get_effective_subscription");
+        data = rpcData?.[0] ?? null;
+      } else {
+        const { data: subData, error } = await supabase
+          .from("subscriptions")
+          .select("*")
+          .eq("user_id", targetUserId)
+          .maybeSingle();
+        if (error) throw error;
+        data = subData as Record<string, unknown> | null;
+      }
 
       if (data) {
         // Reset receitas se virou o dia
@@ -392,10 +396,32 @@ export function SubscriptionProvider({
           isActive: data.is_active,
           paymentProvider: data.payment_provider,
           paymentId: data.payment_id,
-          // @ts-expect-error -- supabase generated types incomplete
-          lastPaymentDate: profile?.last_payment_date ? new Date(profile.last_payment_date) : null,
-          // @ts-expect-error -- supabase generated types incomplete
-          paymentMethod: profile?.payment_method || null,
+          lastPaymentDate: null,
+          paymentMethod: null,
+        });
+      } else if (remaining > 0) {
+        // No subscription row yet, but user is in trial → grant synthetic multiPRO access
+        setSubscription({
+          id: "trial-synthetic",
+          userId: targetUserId,
+          plan: "multiPRO" as SubscriptionPlan,
+          planTier: "multiPRO",
+          groupId: subMembership?.group_id ?? null,
+          price: null,
+          itemsLimit: -1,
+          recipesPerDay: -1,
+          shoppingListLimit: -1,
+          notificationChangeDays: 7,
+          lastNotificationChange: null,
+          recipesUsedToday: 0,
+          lastRecipeReset: new Date(),
+          startedAt: trialStart,
+          expiresAt: null,
+          isActive: false,
+          paymentProvider: null,
+          paymentId: null,
+          lastPaymentDate: null,
+          paymentMethod: null,
         });
       } else {
         setSubscription(null);

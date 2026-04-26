@@ -1044,7 +1044,6 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         })(),
         p_user_name: data.name || user.email?.split("@")[0] || "User",
         p_user_cpf: rawCpf,
-        p_selected_plan: (data as any).selectedPlan || "multiPRO",
         p_home_type: data.homeType || "apartment",
         p_residents: data.residents || 1,
         p_fridge_type: data.fridgeType || "regular",
