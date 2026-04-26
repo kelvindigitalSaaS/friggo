@@ -25,6 +25,8 @@ import { AccountSessionTracker } from "@/components/kaza/AccountSessionTracker";
 import { UpdatePrompt } from "@/components/UpdatePrompt";
 import { invalidateCacheIfNeeded } from "@/lib/cacheVersion";
 import { initDebugHelper } from "@/lib/debugHelper";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 const Index = lazy(() => import("./pages/Home"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -286,6 +288,8 @@ const App = () => {
                     <UpdatePrompt />
                     <Toaster />
                     <Sonner />
+                    {!isNative && <Analytics />}
+                    {!isNative && <SpeedInsights />}
                     <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
                       <AppPWAInstallGuide />
                       <MobileFrame>
