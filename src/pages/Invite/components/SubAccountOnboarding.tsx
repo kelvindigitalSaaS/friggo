@@ -58,7 +58,6 @@ export function SubAccountOnboarding({
   // Form state
   const [name, setName] = useState("");
   const [cpf, setCpf] = useState("");
-  const [cpf, setCpf] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -69,7 +68,6 @@ export function SubAccountOnboarding({
   // Password requirements real-time check
   const passwordReqs = getPasswordRequirements(password);
 
-  // Password requirements real-time check
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
