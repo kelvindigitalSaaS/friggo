@@ -197,9 +197,16 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
+      const { data: existing } = await (supabase as any)
         .from("notification_preferences")
-        .upsert(patch, { onConflict: 'user_id' });
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("home_id", hid)
+        .maybeSingle();
+
+      const { error } = existing
+        ? await (supabase as any).from("notification_preferences").update(patch).eq("user_id", user.id).eq("home_id", hid)
+        : await (supabase as any).from("notification_preferences").insert(patch);
 
       if (error) throw error;
 
@@ -1352,10 +1359,17 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       achievement_updates: list.includes("achievements"),
     };
     if (nightCheckupTime !== undefined) patch.nightly_checkup_time = nightCheckupTime;
-    
-    const { error } = await supabase
+
+    const { data: existing } = await (supabase as any)
       .from("notification_preferences")
-      .upsert(patch, { onConflict: 'user_id' });
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("home_id", hid)
+      .maybeSingle();
+
+    const { error } = existing
+      ? await (supabase as any).from("notification_preferences").update(patch).eq("user_id", user.id).eq("home_id", hid)
+      : await (supabase as any).from("notification_preferences").insert(patch);
     return { error };
   }
 

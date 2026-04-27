@@ -96,6 +96,7 @@ export function ShoppingTab() {
   const [newItemUnit, setNewItemUnit] = useState("un");
   const [newItemQty, setNewItemQty] = useState("1");
   const [newItemStore, setNewItemStore] = useState<"market" | "fair" | "pharmacy" | "other">("market");
+  const [newItemCategory, setNewItemCategory] = useState<string>("pantry");
   const [showFilters, setShowFilters] = useState(false);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
@@ -390,9 +391,9 @@ export function ShoppingTab() {
     
     addToShoppingList({
       name: itemName,
-      category:
-        chosenStore === "pharmacy" ? "hygiene" :
-          chosenStore === "fair" ? "vegetable" : "pantry",
+      category: (product
+        ? (chosenStore === "pharmacy" ? "hygiene" : chosenStore === "fair" ? "vegetable" : "pantry")
+        : newItemCategory) as any,
       quantity: product?.defaultQuantity || (Number.isFinite(parsedQty) ? parsedQty : 1),
       unit: product?.unit || newItemUnit,
       store: chosenStore as any
@@ -400,6 +401,7 @@ export function ShoppingTab() {
     
     setNewItem("");
     setNewItemQty("1");
+    setNewItemCategory("pantry");
     setShowSuggestions(false);
     toast.success(l.itemAdded);
   };
@@ -451,7 +453,27 @@ export function ShoppingTab() {
         { name: language === "pt-BR" ? "Feijão" : "Beans", quantity: Math.ceil(residents * 0.3 * timeScale), unit: "kg", store: "market" }
       );
     }
-    // ... more items omitted for brevity in this thought-block, but I'll include the logic in the write_to_file
+
+    // Itens do plano alimentar que estão faltando no estoque
+    if (mealPlan && mealPlan.length > 0) {
+      const today = new Date().toISOString().split("T")[0];
+      const upcomingMeals = mealPlan.filter((m: any) => m.planned_date >= today);
+      upcomingMeals.forEach((meal: any) => {
+        const recipeName: string = meal.recipe_name || "";
+        const recipe = allRecipes.find((r) => r.name.toLowerCase() === recipeName.toLowerCase());
+        if (recipe) {
+          recipe.ingredients.forEach((ing: string) => {
+            const ingLower = ing.toLowerCase();
+            const inStock = items.some(
+              (item) => item.name.toLowerCase().includes(ingLower) || ingLower.includes(item.name.toLowerCase())
+            );
+            if (!inStock) {
+              suggestedItems.push({ name: ing, quantity: 1, unit: "un", store: "market" });
+            }
+          });
+        }
+      });
+    }
 
     let addedCount = 0;
     suggestedItems.forEach((item) => {
@@ -609,11 +631,13 @@ export function ShoppingTab() {
         </button>
       </div>
 
-      {pendingCount > 0 && (
+      {shoppingList.length > 0 && (
         <div className="grid grid-cols-[auto_1fr_auto_auto] gap-2">
-          <button onClick={() => shoppingList.filter(i => !i.isCompleted).forEach(i => toggleShoppingItem(i.id))}
-            className="flex items-center justify-center h-[52px] w-[52px] rounded-2xl bg-white/80 dark:bg-white/5 border border-black/[0.04] text-primary transition-all active:scale-[0.95]" title={l.selectAll}><CheckSquare className="h-5 w-5" /></button>
-          <button onClick={handleSaveList} className="flex items-center justify-center gap-2 h-[52px] rounded-2xl text-white font-bold transition-all active:scale-[0.97]" style={{ background: "#165A52" }}><Save className="h-5 w-5" /><span className="text-sm">{l.concluir}</span></button>
+          {pendingCount > 0 && (
+            <button onClick={() => shoppingList.filter(i => !i.isCompleted).forEach(i => toggleShoppingItem(i.id))}
+              className="flex items-center justify-center h-[52px] w-[52px] rounded-2xl bg-white/80 dark:bg-white/5 border border-black/[0.04] text-primary transition-all active:scale-[0.95]" title={l.selectAll}><CheckSquare className="h-5 w-5" /></button>
+          )}
+          <button onClick={handleSaveList} className={cn("flex items-center justify-center gap-2 h-[52px] rounded-2xl text-white font-bold transition-all active:scale-[0.97]", !pendingCount && "col-span-1")} style={{ background: "#165A52" }}><Save className="h-5 w-5" /><span className="text-sm">{l.concluir}</span></button>
           <button onClick={handleShareWhatsApp} className="flex items-center justify-center h-[52px] w-[52px] rounded-2xl border border-black/[0.06] bg-white/80 dark:bg-white/5 transition-all active:scale-[0.95]" title={l.shareWhatsApp}><Share2 className="h-5 w-5 text-[#25D366]" /></button>
           <button onClick={handleNotifyGroup} disabled={isNotifying} className={cn("flex items-center justify-center h-[52px] w-[52px] rounded-2xl border border-black/[0.06] bg-white/80 dark:bg-white/5 transition-all active:scale-[0.95]", isNotifying && "opacity-50")} title={l.notificarCasa}><Bell className={cn("h-5 w-5 text-primary", isNotifying && "animate-pulse")} /></button>
         </div>
@@ -621,8 +645,8 @@ export function ShoppingTab() {
 
       {shoppingList.length > 0 && (
         <div className="flex gap-2">
-          {!isSubAccount && <button onClick={() => setShowDeleteDialog(true)} className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-destructive/10 text-destructive text-sm font-semibold h-12 transition-all active:scale-[0.97]"><Trash2 className="h-4 w-4" />{l.deleteAll}</button>}
-          <button onClick={() => { loadSavedLists(); setShowSavedLists(true); }} className="flex items-center justify-center gap-2 rounded-2xl border border-black/[0.06] bg-white/80 dark:bg-white/5 text-foreground text-sm font-semibold h-12 px-4 transition-all active:scale-[0.97]"><Save className="h-4 w-4 text-primary" /><span>{l.listasSalvas}</span></button>
+          {!isSubAccount && <button onClick={() => setShowDeleteDialog(true)} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-destructive/10 text-destructive transition-all active:scale-[0.97]"><Trash2 className="h-4 w-4" /></button>}
+          <button onClick={() => { loadSavedLists(); setShowSavedLists(true); }} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-black/[0.06] bg-white/80 dark:bg-white/5 text-foreground text-sm font-semibold h-12 px-4 transition-all active:scale-[0.97]"><Save className="h-4 w-4 text-primary" /><span>{l.listasSalvas}</span></button>
         </div>
       )}
 
@@ -674,11 +698,30 @@ export function ShoppingTab() {
           </div>
           <div className="flex gap-2">
             <Input ref={inputRef} placeholder={l.addPlaceholder} value={newItem} onChange={(e) => setNewItem(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAddItem()} className="flex-1 h-[52px] rounded-2xl border-black/[0.04] bg-white/80 dark:bg-white/5 text-sm" />
-            <Input inputMode="decimal" placeholder="Q.td" value={newItemQty} onChange={(e) => setNewItemQty(e.target.value)} className="flex-shrink-0 h-[52px] w-[50px] text-center rounded-2xl border-black/[0.04] bg-white/80 dark:bg-white/5 text-sm font-bold" />
-            <Select value={newItemUnit} onValueChange={setNewItemUnit}><SelectTrigger className="h-[52px] w-[60px] rounded-2xl border-black/[0.04] bg-white/80 dark:bg-white/5 text-xs font-bold shrink-0 px-2"><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="un">un</SelectItem><SelectItem value="kg">kg</SelectItem><SelectItem value="g">g</SelectItem><SelectItem value="L">L</SelectItem><SelectItem value="ml">ml</SelectItem><SelectItem value="pct">pct</SelectItem></SelectContent></Select>
+            <Input inputMode="decimal" placeholder="Qtd" value={newItemQty} onChange={(e) => setNewItemQty(e.target.value)} className="flex-shrink-0 h-[52px] w-[48px] text-center rounded-2xl border-black/[0.04] bg-white/80 dark:bg-white/5 text-sm font-bold" />
+            <Select value={newItemUnit} onValueChange={setNewItemUnit}>
+              <SelectTrigger className="h-[52px] w-[58px] rounded-2xl border-black/[0.04] bg-white/80 dark:bg-white/5 text-xs font-bold shrink-0 px-2"><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="un">un</SelectItem><SelectItem value="kg">kg</SelectItem><SelectItem value="g">g</SelectItem><SelectItem value="L">L</SelectItem><SelectItem value="ml">ml</SelectItem><SelectItem value="pct">pct</SelectItem></SelectContent>
+            </Select>
             <Button onClick={() => handleAddItem()} size="icon" className="rounded-2xl shrink-0 h-[52px] w-[52px]" style={{ background: "#165A52" }}><Plus className="h-5 w-5" /></Button>
           </div>
+          {/* Categoria do alimento */}
+          <Select value={newItemCategory} onValueChange={setNewItemCategory}>
+            <SelectTrigger className="h-10 rounded-2xl border-black/[0.04] bg-white/80 dark:bg-white/5 text-xs font-semibold text-muted-foreground"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {[
+                { value: "pantry",   label: language === "pt-BR" ? "🥫 Mercearia" : "🥫 Pantry" },
+                { value: "fruit",    label: language === "pt-BR" ? "🍎 Frutas" : "🍎 Fruit" },
+                { value: "vegetable",label: language === "pt-BR" ? "🥦 Verduras/Legumes" : "🥦 Vegetable" },
+                { value: "meat",     label: language === "pt-BR" ? "🥩 Carnes" : "🥩 Meat" },
+                { value: "dairy",    label: language === "pt-BR" ? "🧀 Laticínios" : "🧀 Dairy" },
+                { value: "beverage", label: language === "pt-BR" ? "🧃 Bebidas" : "🧃 Beverage" },
+                { value: "frozen",   label: language === "pt-BR" ? "🧊 Congelados" : "🧊 Frozen" },
+                { value: "hygiene",  label: language === "pt-BR" ? "🧴 Higiene" : "🧴 Hygiene" },
+                { value: "cleaning", label: language === "pt-BR" ? "🧹 Limpeza" : "🧹 Cleaning" },
+              ].map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

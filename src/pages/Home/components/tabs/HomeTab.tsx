@@ -249,10 +249,13 @@ export function HomeTab() {
                                 onClick={() => navigate('/app/notifications')}
                                 className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 text-white transition-all active:scale-90 hover:bg-white/20"
                             >
-                                <Bell className="h-5 w-5" />
-                                {alerts.length > 0 && (
-                                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
-                                        {alerts.length}
+                                {expiringToday.length > 0
+                                    ? <Bell className="h-5 w-5 animate-[wiggle_1s_ease-in-out_infinite]" />
+                                    : <Bell className="h-5 w-5" />
+                                }
+                                {(alerts.length > 0 || expiringToday.length > 0) && (
+                                    <span className={`absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-sm ${expiringToday.length > 0 ? 'bg-red-500 animate-pulse' : 'bg-red-500'}`}>
+                                        {alerts.length + expiringToday.length}
                                     </span>
                                 )}
                             </button>

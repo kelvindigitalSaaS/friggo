@@ -45,6 +45,7 @@ export default function MealPlannerPage() {
   const dateParam = searchParams.get("date") || format(new Date(), "yyyy-MM-dd");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMealType, setSelectedMealType] = useState<string | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
   const [addedRecipes, setAddedRecipes] = useState<Set<string>>(new Set());
   const [visibleCount, setVisibleCount] = useState(50);
 
@@ -67,12 +68,17 @@ export default function MealPlannerPage() {
     }
   })();
 
-  const filteredRecipes = allRecipes
-    .filter(
-      (r) =>
-        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (r.description ?? "").toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  const filteredRecipes = allRecipes.filter((r) => {
+    const q = searchQuery.toLowerCase();
+    if (q && !r.name.toLowerCase().includes(q) && !(r.description ?? "").toLowerCase().includes(q)) return false;
+    if (selectedDifficulty) {
+      const d = (r.difficulty ?? "").toLowerCase();
+      if (selectedDifficulty === "fácil" && d !== "fácil" && d !== "easy" && d !== "facil") return false;
+      if (selectedDifficulty === "médio" && d !== "médio" && d !== "medium" && d !== "medio") return false;
+      if (selectedDifficulty === "difícil" && d !== "difícil" && d !== "hard") return false;
+    }
+    return true;
+  });
 
   const displayedRecipes = filteredRecipes.slice(0, visibleCount);
 
@@ -159,7 +165,7 @@ export default function MealPlannerPage() {
       </div>
 
       {/* Search */}
-      <div className="px-4 pb-3">
+      <div className="px-4 pb-2">
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
@@ -169,6 +175,32 @@ export default function MealPlannerPage() {
             className="pl-10 h-11 rounded-2xl bg-white dark:bg-white/[0.05] border-black/[0.06] dark:border-white/[0.08] focus:ring-primary/30"
           />
         </div>
+      </div>
+
+      {/* Difficulty filter */}
+      <div className="px-4 pb-3 flex gap-2">
+        {[
+          { label: "Fácil", value: "fácil", color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30" },
+          { label: "Médio", value: "médio", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30" },
+          { label: "Difícil", value: "difícil", color: "text-red-600", bg: "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30" },
+        ].map((d) => (
+          <button key={d.value}
+            onClick={() => { setSelectedDifficulty((p) => p === d.value ? null : d.value); setVisibleCount(50); }}
+            className={cn(
+              "h-7 px-3 rounded-full text-[11px] font-bold shrink-0 transition-all border",
+              selectedDifficulty === d.value
+                ? `${d.bg} ${d.color} shadow-sm`
+                : "bg-white dark:bg-white/5 text-muted-foreground border-black/[0.06] dark:border-white/[0.08]"
+            )}>
+            {d.label}
+          </button>
+        ))}
+        {selectedDifficulty && (
+          <button onClick={() => setSelectedDifficulty(null)}
+            className="h-7 px-3 rounded-full text-[11px] font-bold shrink-0 bg-black/5 dark:bg-white/10 text-muted-foreground border border-black/[0.06] dark:border-white/[0.08] transition-all ml-auto">
+            Limpar
+          </button>
+        )}
       </div>
 
       {/* Recipes List */}
