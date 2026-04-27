@@ -27,18 +27,21 @@ export function RecipesTabNew() {
     e.preventDefault();
     setHasSearched(true);
 
-    if (!query.trim() && !selectedCategory && !selectedDifficulty) {
+    const cat = selectedCategory === "all" ? undefined : selectedCategory;
+    const diff = selectedDifficulty === "all" ? undefined : selectedDifficulty;
+
+    if (!query.trim() && !cat && !diff) {
       // Se nenhum filtro, não fazer nada
       return;
     }
 
-    await search(query, selectedCategory, selectedDifficulty);
+    await search(query, cat, diff);
   };
 
   const handleReset = () => {
     setQuery("");
-    setSelectedCategory(undefined);
-    setSelectedDifficulty(undefined);
+    setSelectedCategory("all");
+    setSelectedDifficulty("all");
     setHasSearched(false);
     reset();
   };
@@ -88,7 +91,7 @@ export function RecipesTabNew() {
               />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">
+              <SelectItem value="all">
                 {language === "pt-BR" ? "Todas" : "All"}
               </SelectItem>
               {categories.map((cat) => (
@@ -111,7 +114,7 @@ export function RecipesTabNew() {
               />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">
+              <SelectItem value="all">
                 {language === "pt-BR" ? "Todas" : "All"}
               </SelectItem>
               {difficulties.map((diff) => (

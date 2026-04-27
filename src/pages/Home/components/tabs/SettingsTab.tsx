@@ -39,7 +39,9 @@ import {
   MonitorDown,
   Home,
   Users,
-  MessageCircle
+  MessageCircle,
+  Trophy,
+  Bug
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useKaza } from "@/contexts/KazaContext";
@@ -48,6 +50,8 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useSubscription, PLAN_DETAILS } from "@/contexts/SubscriptionContext";
 import { GroupMembersCard } from "../GroupMembersCard";
 import { usePWA } from "@/contexts/PWAContext";
+import { useAchievements } from "@/contexts/AchievementsContext";
+import { scheduleLocalNotification } from "@/lib/pushNotifications";
 import { Switch } from "@/components/ui/switch";
 import { getCategoryEmoji } from '../RecipeCard';
 import { Button } from "@/components/ui/button";
@@ -95,6 +99,7 @@ export function SettingsTab() {
   const planTier = getPlanTier();
   const [editingInlineName, setEditingInlineName] = useState(false);
   const [editingDialogName, setEditingDialogName] = useState(false);
+  const { recordGarbageDone } = useAchievements();
   const [localName, setLocalName] = useState<string>(
     onboardingData?.name || (user?.user_metadata?.name as string) || user?.email?.split("@")[0] || ""
   );
@@ -734,6 +739,73 @@ export function SettingsTab() {
               </div>
               <p className="font-semibold text-red-500 text-[15px]">{l.logout}</p>
             </button>
+          </div>
+        </section>
+
+        {/* Test Area */}
+        <section className="space-y-3">
+          <h3 className="text-[11px] font-bold text-[#9A998F] dark:text-white/40 uppercase tracking-[1.5px] px-1 flex items-center gap-1">
+            <Bug className="h-3.5 w-3.5" /> Área de Testes
+          </h3>
+          <div className="rounded-2xl bg-white dark:bg-card border border-border dark:border-white/10 overflow-hidden shadow-sm">
+            {[
+              { 
+                label: "Vibração (10s)", 
+                desc: "Testa a vibração do dispositivo", 
+                icon: Smartphone, 
+                onClick: () => {
+                  if (navigator.vibrate) {
+                    navigator.vibrate(10000);
+                    toast.success("Vibração iniciada por 10s");
+                  } else {
+                    toast.error("Vibração não suportada neste dispositivo");
+                  }
+                } 
+              },
+              { 
+                label: "Alerta de Lixo", 
+                desc: "Simula o lembrete de lixo em 1 segundo", 
+                icon: Trash2, 
+                onClick: () => {
+                  scheduleLocalNotification(
+                    "🗑️ Kaza — Lembrete",
+                    "Hoje é dia de colocar o lixo para fora!",
+                    1,
+                    "garbage-reminder",
+                    "garbage"
+                  ).then(() => toast.success("Alerta do lixo agendado (1s)"));
+                } 
+              },
+              { 
+                label: "Teste de Conquista", 
+                desc: "Simula o desbloqueio visual", 
+                icon: Trophy, 
+                onClick: () => {
+                  toast.success(`🏆 Conquista desbloqueada: Mestre do Teste`, {
+                    description: "Esta é uma demonstração de como uma conquista aparece.",
+                    duration: 5000,
+                  });
+                  recordGarbageDone();
+                } 
+              },
+            ].map(({ label, desc, icon: Icon, onClick }, idx, arr) => (
+              <button
+                key={label}
+                onClick={onClick}
+                className={cn("w-full flex items-center justify-between px-5 py-4 active:bg-secondary dark:active:bg-white/5 transition-colors group", idx < arr.length - 1 && "border-b border-border dark:border-white/10")}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-xl bg-purple-50 dark:bg-purple-500/10 p-2.5">
+                    <Icon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-[#2C2C2A] dark:text-white text-[15px]">{label}</p>
+                    <p className="text-xs text-[#9A998F] dark:text-white/40">{desc}</p>
+                  </div>
+                </div>
+                <ChevronRight className="h-4.5 w-4.5 text-[#B0AFA7] dark:text-white/30" />
+              </button>
+            ))}
           </div>
         </section>
 

@@ -40,32 +40,33 @@ export function useGroupMembers() {
           .eq("id", groupId)
           .maybeSingle();
 
-        // 2. Fetch members (display_name already stored in sub_account_members)
+        // 2. Fetch members
         const { data: membersData } = await supabase
           .from("sub_account_members")
           .select("*")
           .eq("group_id", groupId);
 
-        // 3. If master is not in members, fetch master name and add
         let allMembers: GroupMemberWithStatus[] = membersData || [];
-        if (groupData && !allMembers.some(m => m.user_id === groupData.master_user_id)) {
-          const { data: masterProfile } = await supabase
-            .from("profiles")
-            .select("name")
-            .eq("user_id", groupData.master_user_id)
-            .maybeSingle();
 
-          if (masterProfile?.name) {
-            // Add a synthetic member row for the master
-            allMembers.unshift({
-              id: "master-" + groupData.master_user_id,
-              group_id: groupId,
-              user_id: groupData.master_user_id,
-              role: "master",
-              is_active: true,
-              display_name: masterProfile.name,
-              joined_at: new Date().toISOString(),
-            } as any);
+        // Exclude the master from the dependents list
+        if (groupData?.master_user_id) {
+          allMembers = allMembers.filter(m => m.user_id !== groupData.master_user_id && m.role !== "master");
+        }
+
+        // Fetch real names from profiles to ensure we don't show IDs
+        if (allMembers.length > 0) {
+          const userIds = allMembers.map(m => m.user_id);
+          const { data: profilesData } = await supabase
+            .from("profiles")
+            .select("user_id, name")
+            .in("user_id", userIds);
+
+          if (profilesData) {
+            const profileMap = new Map(profilesData.map(p => [p.user_id, p.name]));
+            allMembers = allMembers.map(m => ({
+              ...m,
+              display_name: profileMap.get(m.user_id) || m.display_name
+            }));
           }
         }
 
