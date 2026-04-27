@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { RefreshCw, X } from 'lucide-react';
 import { checkForAppUpdate } from '@/lib/cacheVersion';
+import { useKaza } from '@/contexts/KazaContext';
 
 export function UpdatePrompt() {
   const { pathname } = useLocation();
@@ -52,9 +53,16 @@ export function UpdatePrompt() {
     };
   }, []);
 
+  const { onboardingData } = useKaza();
+
   useEffect(() => {
     if (isDev) return; // Skip update toast in dev mode
-    if (!hasUpdate || toastShownRef.current || !isAppRoute) return;
+    if (!isAppRoute || toastShownRef.current || !hasUpdate) return;
+    
+    // Check if user disabled auto prompts in DB or localStorage
+    const autoPromptEnabled = onboardingData?.autoUpdatePrompt ?? (localStorage.getItem("kaza_auto_update_prompt") !== "false");
+    if (!autoPromptEnabled) return;
+
     toastShownRef.current = true;
 
     const applyUpdate = async () => {
@@ -83,13 +91,13 @@ export function UpdatePrompt() {
 
     toast.custom(
       (t) => (
-        <div className="relative flex items-center gap-3 bg-blue-50 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 rounded-lg p-4 pr-10 shadow-lg max-w-md">
-          <RefreshCw className="h-5 w-5 text-blue-600 dark:text-blue-400 animate-spin" />
+        <div className="relative flex items-center gap-3 bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-lg p-4 pr-10 shadow-lg max-w-md">
+          <RefreshCw className="h-5 w-5 text-primary dark:text-primary animate-spin" />
           <div className="flex-1">
-            <p className="font-semibold text-blue-900 dark:text-blue-200">
+            <p className="font-semibold text-primary dark:text-primary">
               Nova versão disponível!
             </p>
-            <p className="text-sm text-blue-800 dark:text-blue-300 mt-1">
+            <p className="text-sm text-primary/80 dark:text-primary/80 mt-1">
               Clique para atualizar e aproveitar as novidades.
             </p>
           </div>
@@ -98,14 +106,14 @@ export function UpdatePrompt() {
               toast.dismiss(t);
               applyUpdate();
             }}
-            className="ml-2 px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md font-semibold text-sm hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors whitespace-nowrap"
+            className="ml-2 px-4 py-2 bg-primary text-primary-foreground rounded-md font-semibold text-sm hover:opacity-90 transition-opacity whitespace-nowrap"
           >
             Atualizar
           </button>
           <button
             onClick={() => dismiss(t)}
             aria-label="Fechar"
-            className="absolute top-2 right-2 p-1 rounded-md text-blue-700/70 dark:text-blue-300/70 hover:bg-blue-100 dark:hover:bg-blue-500/30 hover:text-blue-900 dark:hover:text-blue-100 transition-colors"
+            className="absolute top-2 right-2 p-1 rounded-md text-primary/70 hover:bg-primary/10 transition-colors"
           >
             <X className="h-4 w-4" />
           </button>

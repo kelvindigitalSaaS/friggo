@@ -16,7 +16,7 @@ export function FabAddButton({ activeTab }: FabAddButtonProps) {
         <Button
             onClick={() => navigate('/app/add-item')}
             size="icon"
-            className="fixed bottom-24 right-5 z-40 h-14 w-14 rounded-2xl shadow-xl shadow-primary/30 transition-all duration-200 hover:scale-105 active:scale-95"
+            className="fixed right-5 z-40 h-14 w-14 rounded-2xl shadow-xl shadow-primary/30 transition-all duration-200 hover:scale-105 active:scale-95 bottom-[calc(env(safe-area-inset-bottom,0px)+6.5rem)]"
         >
             <Plus className="h-6 w-6" />
         </Button>

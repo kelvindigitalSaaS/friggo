@@ -267,7 +267,7 @@ export function useGroupMembers() {
   );
 
   const removeMember = useCallback(
-    async (memberId: string, memberName: string) => {
+    async (memberId: string, memberName: string, userId: string) => {
       if (!groupId || !user) return;
 
       try {
@@ -275,8 +275,8 @@ export function useGroupMembers() {
         await supabase.functions.invoke("send-push-notification", {
           body: {
             group_id: groupId,
-            title: "Removido do plano",
-            body: `Você foi removido do plano Trio. Sua conta continua ativa normalmente.`,
+            title: "Você agora é uma conta principal",
+            body: `Você foi removido do plano compartilhado. Agora sua conta é principal (Gratuita) e você precisa reconfigurar sua casa ao entrar no app.`,
             data: {
               type: "member-removed",
             },
@@ -284,7 +284,7 @@ export function useGroupMembers() {
           },
         }).catch(() => {}); // Best effort
 
-        // Remove member
+        // Remove from sub_account_members
         const { error } = await supabase
           .from("sub_account_members")
           .update({ is_active: false })
@@ -292,6 +292,14 @@ export function useGroupMembers() {
           .eq("group_id", groupId);
 
         if (error) throw error;
+
+        // ALSO remove from home_members so they are kicked out of the master's home
+        // and forced to reconfigure their own home when they log in next time
+        await supabase
+          .from("home_members")
+          .delete()
+          .eq("user_id", userId)
+          .eq("home_id", groupId);
 
         toast.success(`${memberName} foi removido do plano`);
       } catch (err) {

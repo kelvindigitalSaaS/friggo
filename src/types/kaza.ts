@@ -87,6 +87,7 @@ export interface OnboardingData {
   name?: string;
   avatarUrl?: string;
   cpf?: string;
+  autoUpdatePrompt?: boolean;
   homeType: "apartment" | "house";
   residents: number;
   fridgeType?: "regular" | "smart";

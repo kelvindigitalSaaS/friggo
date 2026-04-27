@@ -144,8 +144,8 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
         changed = true;
         toast.success(`${t.icon} Conquista desbloqueada: ${t.name}`, {
           description: t.description,
-          duration: 5000,
-          position: "top-center",
+          duration: 6000,
+          position: "bottom-center",
         });
       }
     });

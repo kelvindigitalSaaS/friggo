@@ -62,6 +62,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { CurrentPlanBadge } from "../CurrentPlanBadge";
 import { supabase } from "@/integrations/supabase/client";
+import { checkForAppUpdate } from "@/lib/cacheVersion";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -93,6 +94,15 @@ export function SettingsTab() {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [notifDelay, setNotifDelay] = useState(5);
+  const [autoUpdatePrompt, setAutoUpdatePrompt] = useState(
+    () => onboardingData?.autoUpdatePrompt ?? (localStorage.getItem("kaza_auto_update_prompt") !== "false")
+  );
+
+  useEffect(() => {
+    if (onboardingData?.autoUpdatePrompt !== undefined) {
+      setAutoUpdatePrompt(onboardingData.autoUpdatePrompt);
+    }
+  }, [onboardingData?.autoUpdatePrompt]);
   const [nightCheckupTime, setNightCheckupTime] = useState<string>(
     () => onboardingData?.nightCheckupTime || "21:00"
   );
@@ -646,6 +656,62 @@ export function SettingsTab() {
             >
               <BellRing className="h-4 w-4" />
               {l.testNotif}
+            </button>
+          </div>
+        </section>
+
+        {/* App Version / Updates */}
+        <section className="space-y-3">
+          <h3 className="text-[11px] font-bold text-[#9A998F] dark:text-white/40 uppercase tracking-[1.5px] px-1 flex items-center gap-1">
+            <Smartphone className="h-3.5 w-3.5" /> Aplicativo
+          </h3>
+          <div className="rounded-2xl bg-white dark:bg-card border border-border dark:border-white/10 overflow-hidden shadow-sm">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#E2E1DC] dark:border-white/10">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="rounded-xl p-2 shrink-0 bg-primary/10">
+                  <RefreshCw className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-[#2C2C2A] dark:text-white text-[14px]">Alertas de atualização</p>
+                  <p className="text-[11px] text-[#9A998F] dark:text-white/40">Exibir notificação quando houver versão nova</p>
+                </div>
+              </div>
+              <Switch
+                checked={autoUpdatePrompt}
+                onCheckedChange={(val) => {
+                  setAutoUpdatePrompt(val);
+                  localStorage.setItem("kaza_auto_update_prompt", String(val));
+                  updateOnboardingData({ autoUpdatePrompt: val });
+                }}
+              />
+            </div>
+            <button
+              onClick={async () => {
+                const toastId = toast.loading("Verificando atualizações...");
+                try {
+                  const available = await checkForAppUpdate();
+                  if (available) {
+                    toast.success("Atualização encontrada! Reiniciando...", { id: toastId });
+                    setTimeout(() => window.location.reload(), 1500);
+                  } else {
+                    toast.success("O aplicativo já está na última versão!", { id: toastId });
+                  }
+                } catch {
+                  toast.dismiss(toastId);
+                }
+              }}
+              className="w-full flex items-center justify-between px-5 py-4 active:bg-secondary dark:active:bg-white/5 transition-colors group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-secondary dark:bg-white/10 p-2.5">
+                  <Download className="h-5 w-5 text-[#3D3D3A] dark:text-white/80" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-[#2C2C2A] dark:text-white text-[15px]">Verificar atualizações</p>
+                  <p className="text-xs text-[#9A998F] dark:text-white/40">Baixar a última versão do Kaza</p>
+                </div>
+              </div>
+              <ChevronRight className="h-4.5 w-4.5 text-[#B0AFA7] dark:text-white/30" />
             </button>
           </div>
         </section>

@@ -33,6 +33,7 @@ export function GroupMembersCard() {
   const [removeConfirm, setRemoveConfirm] = useState<{
     memberId: string;
     memberName: string;
+    userId: string;
   } | null>(null);
   const [cancelConfirm, setCancelConfirm] = useState<SubAccountInvite | null>(null);
 
@@ -147,7 +148,7 @@ export function GroupMembersCard() {
 
   const handleRemove = async () => {
     if (!removeConfirm) return;
-    await removeMember(removeConfirm.memberId, removeConfirm.memberName);
+    await removeMember(removeConfirm.memberId, removeConfirm.memberName, removeConfirm.userId);
     setRemoveConfirm(null);
   };
 
@@ -234,6 +235,7 @@ export function GroupMembersCard() {
                           setRemoveConfirm({
                             memberId: slot.member!.id,
                             memberName: slot.member!.display_name || "Membro",
+                            userId: slot.member!.user_id,
                           })
                         }
                         className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"

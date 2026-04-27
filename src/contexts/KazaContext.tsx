@@ -378,6 +378,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       if (np?.night_checkup) notifPrefs.push("nightCheckup");
       if (np?.cooking_reminders) notifPrefs.push("cooking");
       if (np?.low_stock_consumables) notifPrefs.push("consumables");
+      if (np?.garbage_reminder) notifPrefs.push("garbage");
 
       const onboardingActive = !!profile?.onboarding_completed;
       setOnboardingCompleted(onboardingActive);
@@ -387,6 +388,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           name: profile?.name ?? "",
           avatarUrl: profile?.avatar_url ?? undefined,
           cpf: profile?.cpf ?? undefined,
+          autoUpdatePrompt: profile?.auto_update_prompt ?? true,
           homeType: home?.home_type ?? "apartment",
           residents: home?.residents ?? 1,
           fridgeType: hs?.fridge_type ?? "regular",
@@ -1128,6 +1130,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       daily_summary: list.includes("recipes"),
       cooking_reminders: list.includes("cooking"),
       night_checkup: list.includes("nightCheckup"),
+      garbage_reminder: list.includes("garbage"),
     };
     if (nightCheckupTime !== undefined) patch.nightly_checkup_time = nightCheckupTime;
     const { error } = await supabase
@@ -1209,6 +1212,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
 
       if (data.name !== undefined) profilePatch.name = data.name;
       if (data.avatarUrl !== undefined) profilePatch.avatar_url = data.avatarUrl;
+      if ((data as any).autoUpdatePrompt !== undefined) profilePatch.auto_update_prompt = (data as any).autoUpdatePrompt;
       // CPF também é blindado (trigger no banco também bloqueia em última instância).
       if ((data as any).cpf !== undefined && !onboardingData?.cpf) {
         const raw = String((data as any).cpf || "").replace(/\D/g, "");
