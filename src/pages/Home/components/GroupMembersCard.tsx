@@ -17,6 +17,7 @@ import { SubAccountInvite } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const SESSION_KEY = "kaza_group_card_collapsed";
 
@@ -211,9 +212,12 @@ export function GroupMembersCard() {
                 {slot.type === "filled" && slot.member && (
                   <>
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-sm font-bold text-primary">
-                        {(slot.member.display_name || "?")[0].toUpperCase()}
-                      </div>
+                      <Avatar className="h-10 w-10 rounded-lg shadow-sm">
+                        <AvatarImage src={slot.member.avatar_url || ""} />
+                        <AvatarFallback className="rounded-lg bg-primary/10 text-sm font-bold text-primary uppercase">
+                          {(slot.member.display_name || "?")[0]}
+                        </AvatarFallback>
+                      </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-foreground truncate">
                           {slot.member.display_name || "Membro da Casa"}

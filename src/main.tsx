@@ -12,6 +12,10 @@ import { startGarbageReminderMonitoring } from "./lib/garbageReminderNotificatio
 import { initSentry } from "./lib/sentry";
 import { isNative } from "./lib/capacitor";
 import { registerSW } from "virtual:pwa-register";
+import { processSyncQueue } from "./lib/offlineSync";
+
+// Initialize sync queue processing
+processSyncQueue();
 
 // Initialize error tracking first
 initSentry();

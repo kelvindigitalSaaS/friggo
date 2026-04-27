@@ -484,9 +484,17 @@ export function ShoppingTab() {
         {item.isCompleted && <Check className="h-3.5 w-3.5" />}
       </button>
       <div className="min-w-0 flex-1">
-        <p className={cn("text-sm font-semibold text-foreground transition-all", item.isCompleted && "line-through text-muted-foreground")}>
-          {item.name}
-        </p>
+        <div className="flex items-center gap-1.5">
+          <p className={cn("text-sm font-semibold text-foreground transition-all", item.isCompleted && "line-through text-muted-foreground")}>
+            {item.name}
+          </p>
+          {/* Badge Crítico */}
+          {!item.isCompleted && items.some(i => i.name.toLowerCase() === item.name.toLowerCase() && i.minStock && i.quantity <= i.minStock) && (
+            <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-red-500/10 text-red-500 text-[9px] font-black uppercase tracking-tighter border border-red-500/20 animate-pulse">
+              <Zap className="h-2.5 w-2.5" /> {language === 'pt-BR' ? 'Crítico' : 'Critical'}
+            </span>
+          )}
+        </div>
         <p className="text-[10px] text-muted-foreground">{item.unit}</p>
       </div>
       <div className="flex items-center gap-0.5">

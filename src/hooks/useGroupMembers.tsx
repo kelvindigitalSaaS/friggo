@@ -58,15 +58,19 @@ export function useGroupMembers() {
           const userIds = allMembers.map(m => m.user_id);
           const { data: profilesData } = await supabase
             .from("profiles")
-            .select("user_id, name")
+            .select("user_id, name, avatar_url")
             .in("user_id", userIds);
 
           if (profilesData) {
-            const profileMap = new Map(profilesData.map(p => [p.user_id, p.name]));
-            allMembers = allMembers.map(m => ({
-              ...m,
-              display_name: profileMap.get(m.user_id) || m.display_name
-            }));
+            const profileMap = new Map(profilesData.map(p => [p.user_id, { name: p.name, avatar: p.avatar_url }]));
+            allMembers = allMembers.map(m => {
+              const p = profileMap.get(m.user_id);
+              return {
+                ...m,
+                display_name: p?.name || m.display_name,
+                avatar_url: p?.avatar || m.avatar_url
+              };
+            });
           }
         }
 
