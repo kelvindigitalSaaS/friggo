@@ -85,13 +85,16 @@ export function useRecipesAPI(): UseRecipesReturn {
         params.append("limit", LIMIT.toString());
         params.append("offset", "0");
 
+        const { data: { session } } = await supabase.auth.getSession();
+
         const response = await fetch(
           `${supabaseUrl}/functions/v1/search-recipes?${params}`,
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${supabaseKey}`,
+              Authorization: `Bearer ${session?.access_token || supabaseKey}`,
+              apikey: supabaseKey,
             },
           }
         );
@@ -145,13 +148,16 @@ export function useRecipesAPI(): UseRecipesReturn {
       params.append("limit", LIMIT.toString());
       params.append("offset", newOffset.toString());
 
+      const { data: { session } } = await supabase.auth.getSession();
+
       const response = await fetch(
         `${supabaseUrl}/functions/v1/search-recipes?${params}`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${supabaseKey}`,
+            Authorization: `Bearer ${session?.access_token || supabaseKey}`,
+            apikey: supabaseKey,
           },
         }
       );

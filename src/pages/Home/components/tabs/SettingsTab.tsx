@@ -784,6 +784,7 @@ export function SettingsTab() {
                   toast.success(`🏆 Conquista desbloqueada: Mestre do Teste`, {
                     description: "Esta é uma demonstração de como uma conquista aparece.",
                     duration: 5000,
+                    position: "top-center",
                   });
                   recordGarbageDone();
                 } 
