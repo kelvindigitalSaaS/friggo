@@ -120,8 +120,6 @@ export function SettingsTab() {
   const l = t;
   const homeTypeLabel =
     onboardingData?.homeType === "house" ? t.house : t.apartment;
-=
-    onboardingData?.homeType === "house" ? l.house : l.apartment;
 
   // keep localName in sync when onboardingData or user changes
   useEffect(() => {
@@ -165,8 +163,9 @@ export function SettingsTab() {
                 <Crown className="h-3 w-3" /> Premium
               </span>
             ) : trialDaysRemaining > 0 ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400 text-[11px] font-black uppercase tracking-wider w-fit">
                 {t.trialStatus} · {trialDaysRemaining}d
-              </button>
+              </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F0EFE8] dark:bg-white/10 border border-[#E2E1DC] dark:border-white/10 text-[#9A998F] dark:text-white/40 text-[11px] font-black uppercase tracking-wider w-fit">
                 {t.trial}

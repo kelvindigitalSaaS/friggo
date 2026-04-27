@@ -32,10 +32,6 @@ import {
 
 type ActiveSection = 'fridge' | 'expiring' | 'alerts' | 'shopping' | null;
 
-ntes de que venza:',
-    },
-};
-
 const cardSpring = { type: 'spring' as const, stiffness: 300, damping: 28, mass: 0.8 };
 
 export function HomeTab() {
