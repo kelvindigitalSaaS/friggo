@@ -71,50 +71,35 @@ export function useRecipesAPI(): UseRecipesReturn {
       setCurrentDifficulty(difficulty || null);
 
       try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        let queryBuilder = supabase
+          .from('recipes')
+          .select('*', { count: 'exact' });
 
-        if (!supabaseUrl) {
-          throw new Error("VITE_SUPABASE_URL não definida");
+        if (query && query.trim()) {
+          queryBuilder = queryBuilder.ilike('name', `%${query.trim()}%`);
+        }
+        if (category && category !== 'all') {
+          queryBuilder = queryBuilder.eq('category', category);
+        }
+        if (difficulty && difficulty !== 'all') {
+          queryBuilder = queryBuilder.eq('difficulty', difficulty);
         }
 
-        const params = new URLSearchParams();
-        if (query && query.trim()) params.append("q", query.trim());
-        if (category) params.append("category", category);
-        if (difficulty) params.append("difficulty", difficulty);
-        params.append("limit", LIMIT.toString());
-        params.append("offset", "0");
+        const { data, error, count } = await queryBuilder
+          .range(0, LIMIT - 1)
+          .order('name');
 
-        const { data: { session } } = await supabase.auth.getSession();
-
-        const response = await fetch(
-          `${supabaseUrl}/functions/v1/search-recipes?${params}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session?.access_token || supabaseKey}`,
-              apikey: supabaseKey,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Erro ${response.status}: Falha na busca`);
+        if (error) {
+          throw new Error(error.message);
         }
 
-        const data = await response.json();
-
-        if (!data.success) {
-          throw new Error(data.error || "Erro ao buscar receitas");
-        }
-
-        setRecipes(data.recipes || []);
-        setTotal(data.total || 0);
-        setHasNext(data.has_next || false);
-        if (data.categories) {
-          setCategories(data.categories);
-        }
+        setRecipes(data || []);
+        setTotal(count || 0);
+        setHasNext((count || 0) > LIMIT);
+        
+        // Categroy counts can be derived or fetched separately if needed, but we'll mock or omit for now
+        // since we just need the recipes to show up.
+        setCategories([]);
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Erro ao buscar receitas";
         setError(errorMsg);
@@ -134,46 +119,31 @@ export function useRecipesAPI(): UseRecipesReturn {
 
     try {
       const newOffset = currentOffset + LIMIT;
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      
+      let queryBuilder = supabase
+        .from('recipes')
+        .select('*', { count: 'exact' });
 
-      if (!supabaseUrl) {
-        throw new Error("VITE_SUPABASE_URL não definida");
+      if (currentQuery) {
+        queryBuilder = queryBuilder.ilike('name', `%${currentQuery}%`);
+      }
+      if (currentCategory && currentCategory !== 'all') {
+        queryBuilder = queryBuilder.eq('category', currentCategory);
+      }
+      if (currentDifficulty && currentDifficulty !== 'all') {
+        queryBuilder = queryBuilder.eq('difficulty', currentDifficulty);
       }
 
-      const params = new URLSearchParams();
-      if (currentQuery) params.append("q", currentQuery);
-      if (currentCategory) params.append("category", currentCategory);
-      if (currentDifficulty) params.append("difficulty", currentDifficulty);
-      params.append("limit", LIMIT.toString());
-      params.append("offset", newOffset.toString());
+      const { data, error, count } = await queryBuilder
+        .range(newOffset, newOffset + LIMIT - 1)
+        .order('name');
 
-      const { data: { session } } = await supabase.auth.getSession();
-
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/search-recipes?${params}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.access_token || supabaseKey}`,
-            apikey: supabaseKey,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Erro ${response.status}: Falha na busca`);
+      if (error) {
+        throw new Error(error.message);
       }
 
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || "Erro ao carregar mais receitas");
-      }
-
-      setRecipes((prev) => [...prev, ...data.recipes]);
-      setHasNext(data.has_next || false);
+      setRecipes((prev) => [...prev, ...(data || [])]);
+      setHasNext((count || 0) > newOffset + LIMIT);
       setCurrentOffset(newOffset);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Erro ao carregar mais";

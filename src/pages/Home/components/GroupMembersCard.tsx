@@ -216,7 +216,7 @@ export function GroupMembersCard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-foreground truncate">
-                          {slot.member.display_name || (slot.member.user_id.substring(0, 8) + "...")}
+                          {slot.member.display_name || "Membro da Casa"}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {slot.member.isOnline ? (

@@ -11,9 +11,13 @@ import {
     Thermometer,
     Leaf,
     Trophy,
+    Trophy,
     Flame,
     Droplets,
+    Star,
+    Award
 } from 'lucide-react';
+import { useAchievements } from '@/contexts/AchievementsContext';
 import { PageTransition } from '@/components/PageTransition';
 import { cn } from '@/lib/utils';
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
@@ -49,6 +53,7 @@ export default function MonthlyReportPage() {
     const navigate = useNavigate();
     const { language } = useLanguage();
     const { items, itemHistory } = useKaza();
+    const { achievements } = useAchievements();
 
     const labels = {
         'pt-BR': {
@@ -287,6 +292,67 @@ export default function MonthlyReportPage() {
                                 <p className="text-sm font-medium">{totalItems > 0 ? l.emptyTopItems : l.noData}</p>
                             </div>
                         )}
+                    </div>
+                </motion.section>
+
+                {/* ── Achievements ── */}
+                <motion.section {...fadeUp} transition={{ duration: 0.5, delay: 0.5 }} className="space-y-3">
+                    <div className="flex items-center justify-between px-1">
+                        <h3 className="text-[11px] font-black text-muted-foreground uppercase tracking-[2px]">
+                            {language === 'pt-BR' ? 'Conquistas da Casa' : language === 'es' ? 'Logros de la Casa' : 'House Achievements'}
+                        </h3>
+                        <Award className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="space-y-3">
+                        {achievements.map((achievement, i) => {
+                            const isUnlocked = !!achievement.unlockedAt;
+                            const percent = Math.min(100, Math.round((achievement.progress / achievement.threshold) * 100));
+                            return (
+                                <motion.div key={achievement.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 + i * 0.05 }}
+                                    className={cn(
+                                        "relative overflow-hidden rounded-2xl border p-4 transition-all",
+                                        isUnlocked 
+                                            ? "bg-white dark:bg-white/[0.04] border-primary/20 shadow-sm" 
+                                            : "bg-black/[0.02] dark:bg-white/[0.02] border-black/[0.04] dark:border-white/[0.04] opacity-80"
+                                    )}>
+                                    <div className="flex items-start gap-3">
+                                        <div className={cn(
+                                            "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-2xl shadow-inner",
+                                            isUnlocked ? "bg-primary/10" : "bg-black/5 dark:bg-white/5 grayscale opacity-50"
+                                        )}>
+                                            {achievement.icon}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className={cn("text-[15px] font-bold leading-tight", isUnlocked ? "text-foreground" : "text-muted-foreground")}>
+                                                {achievement.name}
+                                            </p>
+                                            <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug pr-2">
+                                                {achievement.description}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    {!isUnlocked && (
+                                        <div className="mt-3 space-y-1.5">
+                                            <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                                <span>Progresso</span>
+                                                <span>{achievement.progress} / {achievement.threshold}</span>
+                                            </div>
+                                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-black/5 dark:bg-white/5">
+                                                <motion.div initial={{ width: 0 }} animate={{ width: `${percent}%` }} transition={{ duration: 1, delay: 0.8 }}
+                                                    className="h-full bg-primary/40 rounded-full" />
+                                            </div>
+                                        </div>
+                                    )}
+                                    {isUnlocked && (
+                                        <div className="absolute top-3 right-3">
+                                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white shadow-sm">
+                                                <Star className="h-3 w-3 fill-current" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </motion.div>
+                            );
+                        })}
                     </div>
                 </motion.section>
             </main>

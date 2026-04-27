@@ -1131,10 +1131,25 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       achievement_updates: list.includes("achievements"),
     };
     if (nightCheckupTime !== undefined) patch.nightly_checkup_time = nightCheckupTime;
-    const { error } = await supabase
+    
+    const { data: existing } = await supabase
       .from("notification_preferences")
-      .upsert(patch, { onConflict: "user_id" });
-    return { error };
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await supabase
+        .from("notification_preferences")
+        .update(patch)
+        .eq("user_id", user.id);
+      return { error };
+    } else {
+      const { error } = await supabase
+        .from("notification_preferences")
+        .insert(patch);
+      return { error };
+    }
   }
 
   const resetOnboarding = async () => {

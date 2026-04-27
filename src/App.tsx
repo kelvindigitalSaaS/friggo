@@ -216,7 +216,7 @@ function RootRoute() {
   return <Suspense fallback={<PageSkeleton />}><SalesPage /></Suspense>;
 }
 
-/** Rota /pagina-de-vendas: logados vão para /app/home; visitantes veem a page de vendas */
+/** Rota /lp: logados vão para /app/home; visitantes veem a page de vendas */
 function SalesPageGuard() {
   const { user, loading } = useAuth();
   if (loading) return <SplashLoader />;
@@ -304,9 +304,9 @@ const App = () => {
                               <Route path="/sucesso" element={<SuccessPage />} />
                               <Route path="/success" element={<SuccessPage />} />
                               <Route path="/invite" element={<InvitePage />} />
-                              <Route path="/pagina-de-vendas" element={<SalesPageGuard />} />
-                              <Route path="/pagina-de-vendas/termos-de-uso" element={<SalesTermsPage />} />
-                              <Route path="/pagina-de-vendas/privacidade" element={<SalesPrivacyPage />} />
+                              <Route path="/lp" element={<SalesPageGuard />} />
+                              <Route path="/lp/termos-de-uso" element={<SalesTermsPage />} />
+                              <Route path="/lp/privacidade" element={<SalesPrivacyPage />} />
 
                               {/* App interno — todas as rotas protegidas sob /app */}
                               <Route path="/app" element={<Navigate to="/app/home" replace />} />

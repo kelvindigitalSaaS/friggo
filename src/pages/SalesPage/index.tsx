@@ -807,7 +807,7 @@ export default function SalesPage() {
           }}
         >
           <div className="max-w-6xl mx-auto px-5 sm:px-6 h-20 flex items-center justify-between">
-            <Link to="/pagina-de-vendas" className="flex items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-lg" aria-label="KAZA - Voltar ao início">
+            <Link to="/lp" className="flex items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-lg" aria-label="KAZA - Voltar ao início">
               <img src={LogoImage} alt="KAZA — Gestão doméstica inteligente" className="h-[34px] object-contain" />
             </Link>
 
@@ -1520,7 +1520,7 @@ export default function SalesPage() {
         <footer className="bg-[#0A1F18] pt-16 pb-8 border-t border-white/5 relative z-10">
           <div className="max-w-6xl w-full mx-auto px-5 sm:px-6 grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
             <div className="md:col-span-4 flex flex-col">
-              <Link to="/pagina-de-vendas" className="mb-6 inline-block" aria-label="KAZA">
+              <Link to="/lp" className="mb-6 inline-block" aria-label="KAZA">
                 <img src={LogoImage} alt="KAZA Logo" className="h-[32px] object-contain brightness-0 invert" />
               </Link>
               <p className="text-emerald-100/50 text-sm leading-relaxed max-w-sm font-medium">KAZA — Sua casa organizada. Menos desperdício, mais economia, tudo no automático.</p>

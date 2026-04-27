@@ -445,7 +445,7 @@ export default function SubscriptionsManagePage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-[13px] font-bold text-white truncate">
-                            {member.display_name || `Membro ${member.user_id.slice(0, 6)}`}
+                            {member.display_name || "Membro da Casa"}
                           </span>
                           {isMasterMember && (
                             <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-emerald-300/20 text-emerald-300">
