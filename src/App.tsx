@@ -289,7 +289,7 @@ const App = () => {
                     <Sonner />
                     {!isNative && <Analytics />}
                     {!isNative && <SpeedInsights />}
-                    <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+                    <BrowserRouter future={{ v7_relativeSplatPath: true }}>
                       <UpdatePrompt />
                       <AppPWAInstallGuide />
                       <MobileFrame>
@@ -423,9 +423,14 @@ export default Sentry.withErrorBoundary(App, {
         <h1 className="text-2xl font-bold text-foreground mb-2">
           Ops! Algo deu errado
         </h1>
-        <p className="text-muted-foreground mb-4">
+        <p className="text-muted-foreground mb-2">
           O app encontrou um erro inesperado.
         </p>
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-6 max-w-md mx-auto">
+          <p className="text-xs font-mono text-red-500 break-all">
+            {error?.message || "Erro desconhecido"}
+          </p>
+        </div>
         <button
           onClick={() => window.location.reload()}
           className="rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground"

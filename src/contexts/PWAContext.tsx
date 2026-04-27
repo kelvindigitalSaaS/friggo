@@ -24,10 +24,11 @@ export function PWAProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const handler = (e: Event) => {
-      e.preventDefault();
       // Only allow install prompt on /auth and /app routes, never on sales/marketing pages
       const path = window.location.pathname;
       if (!path.startsWith("/app") && !path.startsWith("/auth")) return;
+      
+      e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
 
