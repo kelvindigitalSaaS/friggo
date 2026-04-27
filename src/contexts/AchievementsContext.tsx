@@ -54,7 +54,7 @@ const NOOP_CTX: AchievementsContextType = {
 };
 
 export function AchievementsProvider({ children }: { children: React.ReactNode }) {
-  const { isSubAccount } = useKaza();
+  const { isSubAccount, homeId } = useKaza();
   const { user } = useAuth();
 
   const [dbCounters, setDbCounters] = useState<DbCounters>(EMPTY_DB);
@@ -147,10 +147,22 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
           duration: 6000,
           position: "bottom-center",
         });
+
+        // Broadcast to home
+        if (homeId && user) {
+          supabase.functions.invoke('send-push-notification', {
+            body: {
+              home_id: homeId,
+              title: "Nossa casa tem uma nova conquista!",
+              body: `${user.user_metadata?.name || 'Alguém'} desbloqueou: ${t.name} ${t.icon}`,
+              type: "achievement"
+            }
+          }).catch(console.error);
+        }
       }
     });
     return changed;
-  }, []);
+  }, [homeId, user]);
 
   // Detect unlocks when history counters change
   useEffect(() => {

@@ -41,7 +41,8 @@ import {
   Users,
   MessageCircle,
   Trophy,
-  Bug
+  Bug,
+  ShieldAlert
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useKaza } from "@/contexts/KazaContext";
@@ -171,7 +172,9 @@ export function SettingsTab() {
         nightCheckup: { label: "Check-up Noturno", desc: "Lembrete diário" },
         cooking: { label: "Cozinhando", desc: "Temporizadores de cozinha" },
         consumables: { label: "Consumíveis", desc: "Reposição de itens" },
-        garbage: { label: "Lixo", desc: "Lembretes de coleta" }
+        garbage: { label: "Lixo", desc: "Lembretes de coleta" },
+        achievements: { label: "Conquistas", desc: "Progresso e metas" },
+        forceAll: { label: "Forçar Alertas", desc: "Força as notificações na casa inteira" }
       },
       installGuide: "Como Instalar",
       installGuideDesc: "Guia para Android, iOS e PC",
@@ -244,7 +247,9 @@ export function SettingsTab() {
         nightCheckup: { label: "Night Checkup", desc: "Daily reminder" },
         cooking: { label: "Cooking", desc: "Kitchen timers" },
         consumables: { label: "Consumables", desc: "Item restocking" },
-        garbage: { label: "Garbage", desc: "Collection reminders" }
+        garbage: { label: "Garbage", desc: "Collection reminders" },
+        achievements: { label: "Achievements", desc: "Progress and goals" },
+        forceAll: { label: "Force Alerts", desc: "Force notifications for the whole home" }
       }
     },
     es: {
@@ -301,9 +306,11 @@ export function SettingsTab() {
         shopping: { label: "Compras", desc: "Lista de compras" },
         recipes: { label: "Recetas", desc: "Sugerencias de recetas" },
         nightCheckup: { label: "Chequeo Nocturno", desc: "Recordatorio diario" },
-        cooking: { label: "Cocina", desc: "Temporizadores de cocina" },
+        cooking: { label: "Cocinando", desc: "Temporizadores de cocina" },
         consumables: { label: "Consumibles", desc: "Reposición de artículos" },
-        garbage: { label: "Basura", desc: "Recordatorios de recolección" }
+        garbage: { label: "Basura", desc: "Recordatorios de recolección" },
+        achievements: { label: "Logros", desc: "Progreso y metas" },
+        forceAll: { label: "Forzar Alertas", desc: "Fuerza las notificaciones en toda la casa" }
       }
     }
   };
@@ -557,11 +564,12 @@ export function SettingsTab() {
               { key: "cooking", Icon: Flame, color: "text-orange-500 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-500/20" },
               { key: "consumables", Icon: Package2, color: "text-purple-500 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-500/20" },
               { key: "garbage", Icon: Trash2, color: "text-orange-500 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-500/20" },
+              { key: "achievements", Icon: Trophy, color: "text-yellow-500 dark:text-yellow-400", bg: "bg-yellow-50 dark:bg-yellow-500/20" },
             ] as const).map(({ key, Icon, color, bg }, idx) => {
               const prefs = onboardingData?.notificationPrefs || ["expiry", "shopping", "nightCheckup"];
               const isActive = prefs.includes(key);
               return (
-                <div key={key} className={cn("flex items-center justify-between px-5 py-3.5", idx < 6 && "border-b border-[#E2E1DC] dark:border-white/10")}>
+                <div key={key} className={cn("flex items-center justify-between px-5 py-3.5", idx < 7 && "border-b border-[#E2E1DC] dark:border-white/10")}>
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className={cn("rounded-xl p-2 shrink-0", isActive ? bg : "bg-[#EDECEA] dark:bg-white/10")}>
                       <Icon className={cn("h-4 w-4", isActive ? color : "text-[#B0AFA7] dark:text-white/30")} />
@@ -595,6 +603,27 @@ export function SettingsTab() {
                 </div>
               );
             })}
+            
+            {/* Force Notifications Toggle (Master Only) */}
+            {!isSubAccount && (
+              <div className="flex items-center justify-between px-5 py-3.5 border-t border-[#E2E1DC] dark:border-white/10 bg-emerald-50/50 dark:bg-emerald-500/10">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="rounded-xl p-2 shrink-0 bg-emerald-100 dark:bg-emerald-500/20">
+                    <ShieldAlert className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-[#2C2C2A] dark:text-white text-[14px]">{(l.notifOptions as any)["forceAll"]?.label}</p>
+                    <p className="text-[11px] text-[#9A998F] dark:text-white/40">{(l.notifOptions as any)["forceAll"]?.desc}</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={onboardingData?.forceNotifications || false}
+                  onCheckedChange={(val) => {
+                    updateOnboardingData({ forceNotifications: val });
+                  }}
+                />
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2.5">
             <select

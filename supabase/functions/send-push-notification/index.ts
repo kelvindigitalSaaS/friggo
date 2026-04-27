@@ -32,6 +32,7 @@ interface PushPayload {
   body: string;
   data?: Record<string, string>;
   exclude_user_id?: string;
+  type?: "expiry" | "shopping" | "recipes" | "nightCheckup" | "cooking" | "consumables" | "garbage" | "achievement";
 }
 
 serve(async (req) => {
@@ -45,7 +46,7 @@ serve(async (req) => {
     
     const payload: PushPayload = await req.json();
     console.log("[PUSH] Received payload from user", user.id, ":", JSON.stringify(payload));
-    const { group_id, home_id, title, body, data, exclude_user_id } = payload;
+    const { group_id, home_id, title, body, data, exclude_user_id, type } = payload;
 
     if ((!group_id && !home_id) || !title || !body) {
       const missing = [];
@@ -99,6 +100,54 @@ serve(async (req) => {
         success: false, 
         message: "Não há outros membros nesta casa para notificar. Convide sua família!",
         code: "NO_MEMBERS" 
+      }, 200);
+    }
+
+    // Check if master forced notifications (only applies to homes, not generic groups)
+    let forceNotifications = false;
+    if (home_id) {
+      const { data: hs } = await supabase
+        .from("home_settings")
+        .select("force_notifications")
+        .eq("home_id", home_id)
+        .maybeSingle();
+      if (hs?.force_notifications) {
+        forceNotifications = true;
+      }
+    }
+
+    // Filter users based on their personal notification preferences
+    if (type && !forceNotifications) {
+      const { data: prefs, error: prefsError } = await supabase
+        .from("notification_preferences")
+        .select("*")
+        .in("user_id", userIds);
+      
+      if (!prefsError && prefs) {
+        userIds = userIds.filter((uid) => {
+          const userPref = prefs.find(p => p.user_id === uid);
+          if (!userPref) return true; // Default to true if no preference record exists
+          
+          switch (type) {
+            case "expiry": return userPref.expiring_items !== false;
+            case "shopping": return userPref.shopping_list_updates !== false;
+            case "recipes": return userPref.daily_summary !== false;
+            case "nightCheckup": return userPref.night_checkup !== false;
+            case "cooking": return userPref.cooking_reminders !== false;
+            case "consumables": return userPref.low_stock_consumables !== false;
+            case "garbage": return userPref.garbage_reminder !== false;
+            case "achievement": return userPref.achievement_updates !== false;
+            default: return true;
+          }
+        });
+      }
+    }
+
+    if (userIds.length === 0) {
+      return json({ 
+        success: true, 
+        message: "Todos os usuários desativaram este tipo de notificação.",
+        code: "PREFS_DISABLED" 
       }, 200);
     }
 

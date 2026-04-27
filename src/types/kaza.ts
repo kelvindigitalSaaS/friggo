@@ -94,6 +94,7 @@ export interface OnboardingData {
   fridgeBrand?: string;
   coolingLevel?: number;
   hasAlexa?: boolean; // deprecated - kept for backwards compatibility
+  forceNotifications?: boolean;
   habits: string[];
   notificationPrefs?: string[];
   homeName?: string;

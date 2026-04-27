@@ -377,8 +377,8 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       if (np?.daily_summary) notifPrefs.push("recipes");
       if (np?.night_checkup) notifPrefs.push("nightCheckup");
       if (np?.cooking_reminders) notifPrefs.push("cooking");
-      if (np?.low_stock_consumables) notifPrefs.push("consumables");
       if (np?.garbage_reminder) notifPrefs.push("garbage");
+      if (np?.achievement_updates) notifPrefs.push("achievements");
 
       const onboardingActive = !!profile?.onboarding_completed;
       setOnboardingCompleted(onboardingActive);
@@ -394,6 +394,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           fridgeType: hs?.fridge_type ?? "regular",
           fridgeBrand: hs?.fridge_brand ?? undefined,
           coolingLevel: hs?.cooling_level ?? 3,
+          forceNotifications: hs?.force_notifications ?? false,
           habits: hs?.habits ?? [],
           hiddenSections: hs?.hidden_sections ?? [],
           notificationPrefs: notifPrefs.length ? notifPrefs : DEFAULT_NOTIFICATION_PREFS
@@ -1115,14 +1116,10 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   async function updateNotificationPreferences(
     hid: string, prefs?: string[], nightCheckupTime?: string
   ): Promise<{ error?: any }> {
+    if (!user) return { error: "User not authenticated" };
     const list = prefs ?? DEFAULT_NOTIFICATION_PREFS;
-    const STEP_NUMBERS: Record<string, number> = {
-      name: 1,
-      password: 2,
-      consumables: 3,
-      complete: 4,
-    };
     const patch: Record<string, unknown> = {
+      user_id: user.id,
       home_id: hid,
       expiring_items: list.includes("expiry"),
       shopping_list_updates: list.includes("shopping"),
@@ -1131,11 +1128,12 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       cooking_reminders: list.includes("cooking"),
       night_checkup: list.includes("nightCheckup"),
       garbage_reminder: list.includes("garbage"),
+      achievement_updates: list.includes("achievements"),
     };
     if (nightCheckupTime !== undefined) patch.nightly_checkup_time = nightCheckupTime;
     const { error } = await supabase
       .from("notification_preferences")
-      .upsert(patch, { onConflict: "home_id" });
+      .upsert(patch, { onConflict: "user_id" });
     return { error };
   }
 
@@ -1236,6 +1234,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       if (data.fridgeType !== undefined) settingsPatch.fridge_type = data.fridgeType;
       if (data.fridgeBrand !== undefined) settingsPatch.fridge_brand = data.fridgeBrand;
       if (data.coolingLevel !== undefined) settingsPatch.cooling_level = data.coolingLevel;
+      if ((data as any).forceNotifications !== undefined) settingsPatch.force_notifications = (data as any).forceNotifications;
       if (data.habits !== undefined) settingsPatch.habits = data.habits;
       if (data.hiddenSections !== undefined) settingsPatch.hidden_sections = data.hiddenSections;
 
