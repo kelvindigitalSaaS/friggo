@@ -182,8 +182,8 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     };
   }, [user?.user_metadata?.name, language]);
 
-  const updateNotificationPreferences = async (
-    prefs: Partial<NotificationPreferences>
+  const updateNotificationPreferencesLegacy = async (
+    prefs: Partial<any>
   ) => {
     if (!user) return;
     const hid = homeId || localStorage.getItem("kaza-home-id");
