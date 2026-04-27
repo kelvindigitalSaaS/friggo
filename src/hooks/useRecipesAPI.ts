@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface RecipeIngredient {
@@ -28,154 +28,106 @@ export interface Recipe {
   instructions: RecipeInstruction[];
 }
 
-export interface RecipeCategory {
-  category: string;
-  count: number;
-}
-
 interface UseRecipesReturn {
   recipes: Recipe[];
-  categories: RecipeCategory[];
   loading: boolean;
   error: string | null;
   total: number;
   hasNext: boolean;
-  search: (query: string, category?: string, difficulty?: string) => Promise<void>;
+  search: (query: string, categories?: string[], difficulty?: string) => Promise<void>;
   loadMore: () => Promise<void>;
   reset: () => void;
 }
 
+const LIMIT = 50;
+
 export function useRecipesAPI(): UseRecipesReturn {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [categories, setCategories] = useState<RecipeCategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [hasNext, setHasNext] = useState(false);
 
   const [currentQuery, setCurrentQuery] = useState<string | null>(null);
-  const [currentCategory, setCurrentCategory] = useState<string | null>(null);
+  const [currentCategories, setCurrentCategories] = useState<string[] | null>(null);
   const [currentDifficulty, setCurrentDifficulty] = useState<string | null>(null);
   const [currentOffset, setCurrentOffset] = useState(0);
 
-  const LIMIT = 50;
+  const buildQuery = (
+    query: string | null,
+    categories: string[] | null,
+    difficulty: string | null,
+    offset: number
+  ) => {
+    let q = supabase.from("recipes").select("*", { count: "exact" });
+    if (query) q = q.ilike("name", `%${query}%`);
+    if (categories && categories.length > 0) q = q.in("category", categories);
+    if (difficulty) q = q.eq("difficulty", difficulty);
+    return q.range(offset, offset + LIMIT - 1).order("name");
+  };
 
   const search = useCallback(
-    async (query: string, category?: string, difficulty?: string) => {
+    async (query: string, categories?: string[], difficulty?: string) => {
       setLoading(true);
       setError(null);
       setRecipes([]);
       setCurrentOffset(0);
-      setCurrentQuery(query || null);
-      setCurrentCategory(category || null);
-      setCurrentDifficulty(difficulty || null);
+      const q = query || null;
+      const cats = categories && categories.length > 0 ? categories : null;
+      const diff = difficulty || null;
+      setCurrentQuery(q);
+      setCurrentCategories(cats);
+      setCurrentDifficulty(diff);
 
       try {
-        let queryBuilder = supabase
-          .from('recipes')
-          .select('*', { count: 'exact' });
-
-        if (query && query.trim()) {
-          queryBuilder = queryBuilder.ilike('name', `%${query.trim()}%`);
-        }
-        if (category && category !== 'all') {
-          queryBuilder = queryBuilder.eq('category', category);
-        }
-        if (difficulty && difficulty !== 'all') {
-          queryBuilder = queryBuilder.eq('difficulty', difficulty);
-        }
-
-        const { data, error, count } = await queryBuilder
-          .range(0, LIMIT - 1)
-          .order('name');
-
-        if (error) {
-          throw new Error(error.message);
-        }
-
+        const { data, error: err, count } = await buildQuery(q, cats, diff, 0);
+        if (err) throw new Error(err.message);
         setRecipes(data || []);
         setTotal(count || 0);
         setHasNext((count || 0) > LIMIT);
-        
-        // Categroy counts can be derived or fetched separately if needed, but we'll mock or omit for now
-        // since we just need the recipes to show up.
-        setCategories([]);
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : "Erro ao buscar receitas";
-        setError(errorMsg);
-        console.error("[useRecipesAPI] Search error:", errorMsg);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Erro ao buscar receitas";
+        setError(msg);
       } finally {
         setLoading(false);
       }
     },
-    []
+    [] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const loadMore = useCallback(async () => {
     if (!hasNext || loading) return;
-
     setLoading(true);
-    setError(null);
-
+    const newOffset = currentOffset + LIMIT;
     try {
-      const newOffset = currentOffset + LIMIT;
-      
-      let queryBuilder = supabase
-        .from('recipes')
-        .select('*', { count: 'exact' });
-
-      if (currentQuery) {
-        queryBuilder = queryBuilder.ilike('name', `%${currentQuery}%`);
-      }
-      if (currentCategory && currentCategory !== 'all') {
-        queryBuilder = queryBuilder.eq('category', currentCategory);
-      }
-      if (currentDifficulty && currentDifficulty !== 'all') {
-        queryBuilder = queryBuilder.eq('difficulty', currentDifficulty);
-      }
-
-      const { data, error, count } = await queryBuilder
-        .range(newOffset, newOffset + LIMIT - 1)
-        .order('name');
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
+      const { data, error: err, count } = await buildQuery(
+        currentQuery,
+        currentCategories,
+        currentDifficulty,
+        newOffset
+      );
+      if (err) throw new Error(err.message);
       setRecipes((prev) => [...prev, ...(data || [])]);
       setHasNext((count || 0) > newOffset + LIMIT);
       setCurrentOffset(newOffset);
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Erro ao carregar mais";
-      setError(errorMsg);
-      console.error("[useRecipesAPI] LoadMore error:", errorMsg);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao carregar mais");
     } finally {
       setLoading(false);
     }
-  }, [currentOffset, hasNext, loading, currentQuery, currentCategory, currentDifficulty]);
+  }, [hasNext, loading, currentOffset, currentQuery, currentCategories, currentDifficulty]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reset = useCallback(() => {
     setRecipes([]);
-    setCategories([]);
     setLoading(false);
     setError(null);
     setTotal(0);
     setHasNext(false);
     setCurrentQuery(null);
-    setCurrentCategory(null);
+    setCurrentCategories(null);
     setCurrentDifficulty(null);
     setCurrentOffset(0);
   }, []);
 
-  return {
-    recipes,
-    categories,
-    loading,
-    error,
-    total,
-    hasNext,
-    search,
-    loadMore,
-    reset,
-  };
+  return { recipes, loading, error, total, hasNext, search, loadMore, reset };
 }

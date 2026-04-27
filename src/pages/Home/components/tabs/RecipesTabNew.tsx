@@ -1,225 +1,288 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useRecipesAPI } from "@/hooks/useRecipesAPI";
-import { Loader2, Search, AlertCircle } from "lucide-react";
+import { Loader2, Search, ChefHat, AlertCircle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { availableCategories } from "@/data/recipeDatabase";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+
+// Simplified categories with DB mapping
+const CATEGORY_GROUPS: { label: string; emoji: string; dbCategories: string[] }[] = [
+  {
+    label: "Café da Manhã",
+    emoji: "☕",
+    dbCategories: ["Café da Manhã", "Cafés", "Panquecas"],
+  },
+  {
+    label: "Carnes",
+    emoji: "🥩",
+    dbCategories: [
+      "Carnes", "Churrasco", "BBQ", "Assados", "Aves", "Porco",
+      "Grelhados", "Grelhados Premium", "Frango Especial",
+    ],
+  },
+  {
+    label: "Massas e Arroz",
+    emoji: "🍝",
+    dbCategories: ["Massas", "Arrozes", "Risotos", "Massa Fresca"],
+  },
+  {
+    label: "Sopas",
+    emoji: "🍲",
+    dbCategories: ["Sopas", "Caldos", "Sopas e Caldos", "Ensopados"],
+  },
+  {
+    label: "Saladas",
+    emoji: "🥗",
+    dbCategories: [
+      "Saladas", "Bowls", "Bowls Saudáveis",
+      "Fitness", "Saudável", "Detox", "Low Carb",
+    ],
+  },
+  {
+    label: "Sobremesas",
+    emoji: "🍰",
+    dbCategories: [
+      "Sobremesas", "Bolos", "Doces", "Chocolates",
+      "Sorvetes", "Sobremesas Gourmet", "Bolos Especiais", "Doces Especiais",
+    ],
+  },
+  {
+    label: "Lanches",
+    emoji: "🥪",
+    dbCategories: [
+      "Lanches", "Petiscos", "Sanduíches",
+      "Finger Food", "Street Food", "Salgados", "Salgados Festa",
+    ],
+  },
+  {
+    label: "Peixes e Mar",
+    emoji: "🐟",
+    dbCategories: ["Peixes", "Frutos do Mar", "Frutos do Mar Premium", "Pratos de Mar BR"],
+  },
+  {
+    label: "Vegetariano",
+    emoji: "🥦",
+    dbCategories: [
+      "Vegetariana", "Vegetariano", "Vegano",
+      "Proteína Vegetal", "Vegetariano Gourmet",
+    ],
+  },
+];
+
+const DIFFICULTIES = [
+  { label: "Fácil", value: "fácil", color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30" },
+  { label: "Médio", value: "médio", color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30" },
+  { label: "Difícil", value: "difícil", color: "text-red-600", bg: "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30" },
+];
 
 export function RecipesTabNew() {
-  const { search, recipes, categories, loading, error, hasNext, loadMore, reset, total } =
-    useRecipesAPI();
+  const { recipes, loading, error, hasNext, loadMore, search, total } = useRecipesAPI();
   const { language } = useLanguage();
+
   const [query, setQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string | undefined>();
-  
+  const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<number | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+
+  const pt = language === "pt-BR";
+
+  const triggerSearch = useCallback(
+    (q: string, catIdx: number | null, diff: string | null) => {
+      const cats = catIdx !== null ? CATEGORY_GROUPS[catIdx].dbCategories : undefined;
+      search(q, cats, diff || undefined);
+    },
+    [search]
+  );
+
+  // Initial load
   useEffect(() => {
-    // Carregar receitas inicialmente
-    search("", undefined, undefined);
+    triggerSearch("", null, null);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const difficulties = ["fácil", "médio", "difícil", "easy", "medium", "hard"];
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const cat = selectedCategory === "all" ? undefined : selectedCategory;
-    const diff = selectedDifficulty === "all" ? undefined : selectedDifficulty;
-
-    if (!query.trim() && !cat && !diff) {
-      // Se nenhum filtro, não fazer nada
-      return;
-    }
-
-    await search(query, cat, diff);
+  const handleQueryChange = (v: string) => {
+    setQuery(v);
   };
 
-  const handleReset = () => {
+  const handleQuerySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    triggerSearch(query, selectedCategoryIndex, selectedDifficulty);
+  };
+
+  const handleCategoryToggle = (idx: number) => {
+    const next = selectedCategoryIndex === idx ? null : idx;
+    setSelectedCategoryIndex(next);
+    triggerSearch(query, next, selectedDifficulty);
+  };
+
+  const handleDifficultyToggle = (val: string) => {
+    const next = selectedDifficulty === val ? null : val;
+    setSelectedDifficulty(next);
+    triggerSearch(query, selectedCategoryIndex, next);
+  };
+
+  const handleClear = () => {
     setQuery("");
-    setSelectedCategory("all");
-    setSelectedDifficulty("all");
-    // Em vez de resetar, fazemos uma nova busca vazia para mostrar o catálogo
+    setSelectedCategoryIndex(null);
+    setSelectedDifficulty(null);
     search("", undefined, undefined);
   };
 
+  const hasFilters = query.trim() || selectedCategoryIndex !== null || selectedDifficulty !== null;
+
   return (
-    <div className="space-y-4 p-4">
-      {/* Header */}
-      <div className="space-y-2">
-        <h2 className="text-xl font-semibold">
-          {language === "pt-BR" ? "🍳 Receitas" : "🍳 Recipes"}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {language === "pt-BR"
-            ? "Pesquise por nome, categoria ou dificuldade"
-            : "Search by name, category or difficulty"}
-        </p>
+    <div className="flex flex-col min-h-0">
+      {/* ── Sticky filters ── */}
+      <div className="px-4 pt-4 pb-2 space-y-3 bg-background">
+        {/* Search */}
+        <form onSubmit={handleQuerySubmit}>
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder={pt ? "Buscar receitas..." : "Search recipes..."}
+              value={query}
+              onChange={(e) => handleQueryChange(e.target.value)}
+              onBlur={() => triggerSearch(query, selectedCategoryIndex, selectedDifficulty)}
+              className="pl-10 h-11 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border-black/[0.06] dark:border-white/[0.08]"
+            />
+          </div>
+        </form>
+
+        {/* Category pills */}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+          {CATEGORY_GROUPS.map((grp, idx) => {
+            const isActive = selectedCategoryIndex === idx;
+            return (
+              <button
+                key={idx}
+                onClick={() => handleCategoryToggle(idx)}
+                className={cn(
+                  "h-8 px-3 rounded-full text-[11px] font-bold shrink-0 transition-all border flex items-center gap-1",
+                  isActive
+                    ? "bg-primary text-white border-transparent shadow-md"
+                    : "bg-white dark:bg-white/5 text-muted-foreground border-black/[0.06] dark:border-white/[0.08]"
+                )}
+              >
+                <span>{grp.emoji}</span>
+                <span>{grp.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Difficulty pills */}
+        <div className="flex gap-2">
+          {DIFFICULTIES.map((d) => {
+            const isActive = selectedDifficulty === d.value;
+            return (
+              <button
+                key={d.value}
+                onClick={() => handleDifficultyToggle(d.value)}
+                className={cn(
+                  "h-7 px-3 rounded-full text-[11px] font-bold shrink-0 transition-all border",
+                  isActive
+                    ? `${d.bg} ${d.color} shadow-sm`
+                    : "bg-white dark:bg-white/5 text-muted-foreground border-black/[0.06] dark:border-white/[0.08]"
+                )}
+              >
+                {d.label}
+              </button>
+            );
+          })}
+          {hasFilters && (
+            <button
+              onClick={handleClear}
+              className="h-7 px-3 rounded-full text-[11px] font-bold shrink-0 bg-black/5 dark:bg-white/10 text-muted-foreground border border-black/[0.06] dark:border-white/[0.08] transition-all"
+            >
+              {pt ? "Limpar" : "Clear"}
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Formulário de busca */}
-      <form onSubmit={handleSearch} className="space-y-3">
-        {/* Campo de busca por nome */}
-        <div className="flex gap-2">
-          <Input
-            type="text"
-            placeholder={language === "pt-BR" ? "Ex: Arroz, Frango..." : "Ex: Rice, Chicken..."}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="flex-1"
-          />
-          <Button type="submit" disabled={loading} className="gap-2">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-            {language === "pt-BR" ? "Buscar" : "Search"}
-          </Button>
-        </div>
-
-        {/* Filtros */}
-        <div className="grid grid-cols-2 gap-2">
-          {/* Categoria */}
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger>
-              <SelectValue
-                placeholder={
-                  language === "pt-BR"
-                    ? "Categoria"
-                    : "Category"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">
-                {language === "pt-BR" ? "Todas" : "All"}
-              </SelectItem>
-              {availableCategories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Dificuldade */}
-          <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-            <SelectTrigger>
-              <SelectValue
-                placeholder={
-                  language === "pt-BR"
-                    ? "Dificuldade"
-                    : "Difficulty"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">
-                {language === "pt-BR" ? "Todas" : "All"}
-              </SelectItem>
-              {difficulties.map((diff) => (
-                <SelectItem key={diff} value={diff}>
-                  {diff.charAt(0).toUpperCase() + diff.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Botão resetar */}
-        {(query || (selectedCategory && selectedCategory !== "all") || (selectedDifficulty && selectedDifficulty !== "all")) && (
-          <Button type="button" variant="outline" onClick={handleReset} className="w-full">
-            {language === "pt-BR" ? "Limpar filtros" : "Clear filters"}
-          </Button>
+      {/* ── Results ── */}
+      <div className="flex-1 overflow-y-auto px-4 pb-24 pt-2 space-y-3">
+        {error && (
+          <div className="flex gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
         )}
-      </form>
 
-      {/* Mensagem de erro */}
-      {error && (
-        <div className="flex gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-red-700">{error}</div>
-        </div>
-      )}
-
-      {/* Resultados */}
-      <>
         {loading && recipes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">
-                {language === "pt-BR" ? "Buscando receitas..." : "Searching recipes..."}
-              </p>
-            </div>
-          ) : recipes.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">
-                {language === "pt-BR"
-                  ? "Nenhuma receita encontrada com esses filtros"
-                  : "No recipes found with these filters"}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                {language === "pt-BR"
-                  ? `Exibindo ${recipes.length} de ${total} receitas`
-                  : `Showing ${recipes.length} of ${total} recipes`}
-              </p>
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">
+              {pt ? "Buscando receitas..." : "Searching recipes..."}
+            </p>
+          </div>
+        ) : recipes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <ChefHat className="h-10 w-10 text-muted-foreground/30 mb-3" />
+            <p className="text-sm font-bold text-muted-foreground">
+              {pt ? "Nenhuma receita encontrada." : "No recipes found."}
+            </p>
+          </div>
+        ) : (
+          <>
+            <p className="text-[11px] font-semibold text-muted-foreground px-1">
+              {pt
+                ? `${recipes.length} de ${total} receitas`
+                : `${recipes.length} of ${total} recipes`}
+            </p>
 
-              {/* Lista de receitas */}
-              <div className="space-y-2">
-                {recipes.map((recipe) => (
-                  <div
-                    key={recipe.id}
-                    className="p-3 border rounded-lg hover:bg-accent cursor-pointer transition"
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="text-2xl">{recipe.emoji}</span>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold truncate">{recipe.name}</h3>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                            {recipe.category}
-                          </span>
-                          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">
-                            {recipe.difficulty}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {recipe.prep_time + recipe.cook_time} min
-                          </span>
-                        </div>
-                      </div>
+            {recipes.map((recipe) => (
+              <div
+                key={recipe.id}
+                className="rounded-[1.5rem] bg-white dark:bg-[#11302c]/40 border border-black/[0.04] dark:border-white/[0.05] overflow-hidden shadow-[0_4px_20px_-8px_rgba(0,0,0,0.06)] transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer group"
+              >
+                <div className="flex items-center gap-4 px-4 py-4">
+                  <div className="h-14 w-14 flex items-center justify-center rounded-[1rem] bg-emerald-500/10 shrink-0 border border-emerald-500/10">
+                    <span className="text-2xl">{recipe.emoji || "🍽️"}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[15px] font-black text-[#1a3d32] dark:text-emerald-50 truncate leading-tight">
+                      {recipe.name}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                      <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                        {recipe.category}
+                      </span>
+                      {recipe.difficulty && (
+                        <span className={cn(
+                          "text-[10px] font-bold px-2 py-0.5 rounded-full",
+                          recipe.difficulty === "fácil"
+                            ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10"
+                            : recipe.difficulty === "médio"
+                            ? "text-amber-700 bg-amber-50 dark:bg-amber-500/10"
+                            : "text-red-700 bg-red-50 dark:bg-red-500/10"
+                        )}>
+                          {recipe.difficulty}
+                        </span>
+                      )}
+                      <span className="text-[10px] text-muted-foreground font-medium">
+                        {(recipe.prep_time ?? 0) + (recipe.cook_time ?? 0)} min
+                      </span>
                     </div>
                   </div>
-                ))}
+                </div>
               </div>
+            ))}
 
-              {/* Botão carregar mais */}
-              {hasNext && (
-                <Button
-                  onClick={loadMore}
-                  disabled={loading}
-                  variant="outline"
-                  className="w-full"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      {language === "pt-BR" ? "Carregando..." : "Loading..."}
-                    </>
-                  ) : (
-                    language === "pt-BR" ? "Carregar mais 50" : "Load more 50"
-                  )}
-                </Button>
-              )}
-            </div>
-          )}
-      </>
+            {hasNext && (
+              <button
+                onClick={loadMore}
+                disabled={loading}
+                className="w-full py-4 rounded-xl text-sm font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 transition-colors active:scale-95 disabled:opacity-50"
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                ) : (
+                  pt ? "Carregar mais receitas" : "Load more recipes"
+                )}
+              </button>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -38,9 +38,13 @@ export function HomeTab() {
     const { items, alerts, dismissAlert, onboardingData, shoppingList, consumables, addToShoppingList, toggleShoppingItem, itemHistory, markAllShoppingComplete, toggleSection: toggleContextSection } = useKaza();
     const { subscription } = useSubscription();
     const { t, language } = useLanguage();
+    const navigate = useNavigate();
     const l = t;
     const firstName = onboardingData?.name?.split(' ')[0] || t.yourHome;
     const residents = onboardingData?.residents ?? 1;
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showSearch, setShowSearch] = useState(false);
+    const [activeSection, setActiveSection] = useState<ActiveSection>(null);
 
     // ── Derived data ──
     const fridgeItems = items.filter(i => i.location === 'fridge');

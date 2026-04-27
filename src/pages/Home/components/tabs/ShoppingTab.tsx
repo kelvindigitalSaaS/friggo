@@ -64,6 +64,7 @@ export function ShoppingTab() {
     shoppingList,
     consumables,
     addToShoppingList,
+    addItem,
     toggleShoppingItem,
     removeFromShoppingList,
     updateShoppingItemQuantity,
@@ -254,6 +255,19 @@ export function ShoppingTab() {
   const lowStockItems = items.filter(
     (item) => item.minStock && item.quantity <= item.minStock
   );
+
+  // Itens críticos: vencendo hoje/amanhã e não estão na lista de compras
+  const criticalItems = items.filter((item) => {
+    if (!item.expirationDate) return false;
+    const days = Math.ceil(
+      (new Date(item.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    );
+    if (days > 1 || days < 0) return false;
+    return !shoppingList.some(
+      (s) => s.name.toLowerCase() === item.name.toLowerCase() && !s.isCompleted
+    );
+  });
+
   const filteredList = shoppingList.filter(
     (item) => activeFilter === "all" || item.store === activeFilter
   );
@@ -462,6 +476,39 @@ export function ShoppingTab() {
     setIsGenerating(false);
   };
 
+  const handleToggleItem = async (item: any) => {
+    const becomingComplete = !item.isCompleted;
+    await toggleShoppingItem(item.id);
+    if (becomingComplete) {
+      const pt = language === "pt-BR";
+      const es = language === "es";
+      toast.success(
+        pt ? `✓ ${item.name} comprado!` : es ? `✓ ${item.name} comprado!` : `✓ ${item.name} purchased!`,
+        {
+          action: {
+            label: pt ? "Adicionar ao estoque" : es ? "Agregar al stock" : "Add to stock",
+            onClick: () => {
+              addItem({
+                name: item.name,
+                category: item.category || "pantry",
+                location: "pantry",
+                quantity: item.quantity || 1,
+                unit: item.unit || "un",
+                addedDate: new Date(),
+              });
+              toast.success(
+                pt ? `${item.name} adicionado ao estoque!`
+                  : es ? `${item.name} agregado al stock!`
+                  : `${item.name} added to stock!`
+              );
+            },
+          },
+          duration: 5000,
+        }
+      );
+    }
+  };
+
   const renderItem = (item: any, index: number) => (
     <div
       key={item.id}
@@ -471,7 +518,7 @@ export function ShoppingTab() {
       )}
     >
       <button
-        onClick={() => toggleShoppingItem(item.id)}
+        onClick={() => handleToggleItem(item)}
         className={cn(
           "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-90"
         )}
@@ -640,6 +687,40 @@ export function ShoppingTab() {
           {groupByCategory ? <LayoutGrid className="h-3.5 w-3.5" /> : <LayoutList className="h-3.5 w-3.5" />}{groupByCategory ? l.groupBy : l.flat}
         </button>
       </div>
+
+      {/* ── Seção Crítica ── */}
+      {criticalItems.length > 0 && (
+        <div className="rounded-2xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/5 p-3 space-y-2">
+          <div className="flex items-center gap-2 px-1">
+            <Zap className="h-4 w-4 text-red-500 shrink-0" />
+            <span className="text-[11px] font-black uppercase tracking-wider text-red-600 dark:text-red-400">
+              {language === "pt-BR" ? "Vencendo hoje — adicionar à lista?" : language === "es" ? "Vence hoy — ¿agregar a la lista?" : "Expiring today — add to list?"}
+            </span>
+          </div>
+          {criticalItems.map((item) => (
+            <div key={item.id} className="flex items-center gap-3 rounded-xl bg-white dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 px-3 py-2">
+              <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />
+              <span className="flex-1 text-sm font-semibold text-foreground truncate">{item.name}</span>
+              <button
+                onClick={() => {
+                  addToShoppingList({
+                    name: item.name,
+                    category: item.category,
+                    quantity: item.minStock || 1,
+                    unit: item.unit,
+                    store: item.category === "fruit" || item.category === "vegetable" ? "fair" : "market",
+                  });
+                  toast.success(language === "pt-BR" ? `${item.name} adicionado à lista!` : `${item.name} added to list!`);
+                }}
+                className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500 text-white text-[11px] font-bold transition-all active:scale-90"
+              >
+                <Plus className="h-3 w-3" />
+                {language === "pt-BR" ? "Comprar" : language === "es" ? "Comprar" : "Buy"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {filteredList.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
