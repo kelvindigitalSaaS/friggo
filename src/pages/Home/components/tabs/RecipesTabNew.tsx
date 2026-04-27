@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
-import { useRecipesAPI } from "@/hooks/useRecipesAPI";
-import { Loader2, Search, ChefHat, AlertCircle } from "lucide-react";
+import { useRecipesAPI, Recipe } from "@/hooks/useRecipesAPI";
+import { Loader2, Search, ChefHat, AlertCircle, ShoppingCart, X, Clock, Users, Check } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useKaza } from "@/contexts/KazaContext";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { AnimatePresence, motion } from "framer-motion";
 
 // Simplified categories with DB mapping
 const CATEGORY_GROUPS: { label: string; emoji: string; dbCategories: string[] }[] = [
@@ -75,6 +78,168 @@ const DIFFICULTIES = [
   { label: "Difícil", value: "difícil", color: "text-red-600", bg: "bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30" },
 ];
 
+function RecipeSheet({ recipe, onClose }: { recipe: Recipe; onClose: () => void }) {
+  const { items, addToShoppingList } = useKaza();
+  const { language } = useLanguage();
+  const pt = language === "pt-BR";
+  const es = language === "es";
+
+  const missingIngredients = recipe.ingredients.filter((ing) => {
+    const nameL = ing.name.toLowerCase();
+    return !items.some((item) => item.name.toLowerCase().includes(nameL) || nameL.includes(item.name.toLowerCase()));
+  });
+
+  const handleAddMissing = async () => {
+    if (missingIngredients.length === 0) {
+      toast.info(pt ? "Você já tem todos os ingredientes!" : es ? "¡Ya tienes todos!" : "You have all ingredients!");
+      return;
+    }
+    for (const ing of missingIngredients) {
+      await addToShoppingList({
+        name: ing.name,
+        quantity: ing.quantity || 1,
+        unit: ing.unit || "un",
+        category: "pantry",
+        store: "market",
+      });
+    }
+    toast.success(
+      pt ? `${missingIngredients.length} ingredientes adicionados à lista!`
+        : es ? `${missingIngredients.length} ingredientes agregados!`
+        : `${missingIngredients.length} ingredients added to list!`
+    );
+    onClose();
+  };
+
+  return (
+    <>
+      <motion.div
+        key="backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
+      <motion.div
+        key="sheet"
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 28, stiffness: 320, mass: 0.8 }}
+        className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl bg-[#fafafa] dark:bg-[#0d2820] shadow-2xl max-h-[85dvh] flex flex-col"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-3 pb-1 shrink-0">
+          <div className="w-10 h-1 rounded-full bg-black/10 dark:bg-white/10" />
+        </div>
+
+        {/* Close */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 h-8 w-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 text-muted-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {/* Scrollable content */}
+        <div className="overflow-y-auto flex-1 px-6 pb-6 pt-2 space-y-5">
+          {/* Header */}
+          <div className="text-center space-y-1">
+            <p className="text-3xl">{recipe.emoji || "🍽️"}</p>
+            <h2 className="text-xl font-black text-foreground">{recipe.name}</h2>
+            <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{(recipe.prep_time ?? 0) + (recipe.cook_time ?? 0)} min</span>
+              <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{recipe.servings} {pt ? "porções" : es ? "porciones" : "servings"}</span>
+              <span className={cn(
+                "font-bold px-2 py-0.5 rounded-full",
+                recipe.difficulty === "fácil" ? "text-emerald-700 bg-emerald-50" :
+                recipe.difficulty === "médio" ? "text-amber-700 bg-amber-50" :
+                "text-red-700 bg-red-50"
+              )}>{recipe.difficulty}</span>
+            </div>
+          </div>
+
+          {/* Ingredients */}
+          <div>
+            <h3 className="text-sm font-black text-foreground mb-3 uppercase tracking-wider">
+              {pt ? "Ingredientes" : es ? "Ingredientes" : "Ingredients"}
+            </h3>
+            <div className="space-y-2">
+              {recipe.ingredients.map((ing, i) => {
+                const nameL = ing.name.toLowerCase();
+                const inStock = items.some(
+                  (item) => item.name.toLowerCase().includes(nameL) || nameL.includes(item.name.toLowerCase())
+                );
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 border",
+                      inStock
+                        ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20"
+                        : "bg-red-50 dark:bg-red-500/10 border-red-100 dark:border-red-500/20"
+                    )}
+                  >
+                    {inStock
+                      ? <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                      : <ShoppingCart className="h-4 w-4 text-red-400 shrink-0" />
+                    }
+                    <span className={cn("flex-1 text-sm font-semibold", inStock ? "text-emerald-800 dark:text-emerald-200" : "text-red-800 dark:text-red-200")}>
+                      {ing.name}
+                    </span>
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {ing.quantity} {ing.unit}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Instructions (if available) */}
+          {recipe.instructions && recipe.instructions.length > 0 && (
+            <div>
+              <h3 className="text-sm font-black text-foreground mb-3 uppercase tracking-wider">
+                {pt ? "Modo de Preparo" : es ? "Preparación" : "Instructions"}
+              </h3>
+              <div className="space-y-3">
+                {recipe.instructions.map((step, i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="h-6 w-6 shrink-0 rounded-full bg-primary/10 text-primary text-xs font-black flex items-center justify-center mt-0.5">
+                      {step.step}
+                    </div>
+                    <p className="text-sm text-foreground leading-relaxed flex-1">{step.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* CTA */}
+        {missingIngredients.length > 0 && (
+          <div className="px-6 pb-6 pt-3 border-t border-black/[0.04] dark:border-white/[0.06] shrink-0">
+            <button
+              onClick={handleAddMissing}
+              className="w-full flex items-center justify-center gap-2 h-14 rounded-2xl text-white font-black text-sm shadow-lg transition-all active:scale-[0.98]"
+              style={{ background: "#165A52" }}
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {pt
+                ? `Adicionar ${missingIngredients.length} ingrediente${missingIngredients.length > 1 ? "s" : ""} faltante${missingIngredients.length > 1 ? "s" : ""} à lista`
+                : es
+                ? `Agregar ${missingIngredients.length} ingrediente${missingIngredients.length > 1 ? "s" : ""} faltante${missingIngredients.length > 1 ? "s" : ""}`
+                : `Add ${missingIngredients.length} missing ingredient${missingIngredients.length > 1 ? "s" : ""} to list`}
+            </button>
+          </div>
+        )}
+      </motion.div>
+    </>
+  );
+}
+
 export function RecipesTabNew() {
   const { recipes, loading, error, hasNext, loadMore, search, total } = useRecipesAPI();
   const { language } = useLanguage();
@@ -82,6 +247,7 @@ export function RecipesTabNew() {
   const [query, setQuery] = useState("");
   const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<number | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
   const pt = language === "pt-BR";
 
@@ -97,15 +263,6 @@ export function RecipesTabNew() {
   useEffect(() => {
     triggerSearch("", null, null);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleQueryChange = (v: string) => {
-    setQuery(v);
-  };
-
-  const handleQuerySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    triggerSearch(query, selectedCategoryIndex, selectedDifficulty);
-  };
 
   const handleCategoryToggle = (idx: number) => {
     const next = selectedCategoryIndex === idx ? null : idx;
@@ -133,13 +290,13 @@ export function RecipesTabNew() {
       {/* ── Sticky filters ── */}
       <div className="px-4 pt-4 pb-2 space-y-3 bg-background">
         {/* Search */}
-        <form onSubmit={handleQuerySubmit}>
+        <form onSubmit={(e) => { e.preventDefault(); triggerSearch(query, selectedCategoryIndex, selectedDifficulty); }}>
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
               placeholder={pt ? "Buscar receitas..." : "Search recipes..."}
               value={query}
-              onChange={(e) => handleQueryChange(e.target.value)}
+              onChange={(e) => setQuery(e.target.value)}
               onBlur={() => triggerSearch(query, selectedCategoryIndex, selectedDifficulty)}
               className="pl-10 h-11 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border-black/[0.06] dark:border-white/[0.08]"
             />
@@ -224,14 +381,13 @@ export function RecipesTabNew() {
         ) : (
           <>
             <p className="text-[11px] font-semibold text-muted-foreground px-1">
-              {pt
-                ? `${recipes.length} de ${total} receitas`
-                : `${recipes.length} of ${total} recipes`}
+              {pt ? `${recipes.length} de ${total} receitas` : `${recipes.length} of ${total} recipes`}
             </p>
 
             {recipes.map((recipe) => (
               <div
                 key={recipe.id}
+                onClick={() => setSelectedRecipe(recipe)}
                 className="rounded-[1.5rem] bg-white dark:bg-[#11302c]/40 border border-black/[0.04] dark:border-white/[0.05] overflow-hidden shadow-[0_4px_20px_-8px_rgba(0,0,0,0.06)] transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer group"
               >
                 <div className="flex items-center gap-4 px-4 py-4">
@@ -258,7 +414,7 @@ export function RecipesTabNew() {
                           {recipe.difficulty}
                         </span>
                       )}
-                      <span className="text-[10px] text-muted-foreground font-medium">
+                      <span className="text-xs text-muted-foreground font-medium">
                         {(recipe.prep_time ?? 0) + (recipe.cook_time ?? 0)} min
                       </span>
                     </div>
@@ -283,6 +439,16 @@ export function RecipesTabNew() {
           </>
         )}
       </div>
+
+      {/* ── Recipe Detail Sheet ── */}
+      <AnimatePresence>
+        {selectedRecipe && (
+          <RecipeSheet
+            recipe={selectedRecipe}
+            onClose={() => setSelectedRecipe(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
