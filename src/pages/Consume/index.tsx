@@ -35,6 +35,7 @@ export default function ConsumePage() {
             confirmConsume: '✓ Confirmar Consumo', confirmCook: '✓ Confirmar Cozimento', confirmDiscard: '✓ Confirmar Descarte',
             consumed: 'consumido', cooked: 'usado em receita', discarded: 'descartado', completely: 'completamente',
             invalidQty: 'Quantidade inválida',
+            insufficientStock: 'Estoque insuficiente',
             frozenWarning: 'Este item está congelado',
             defrostAndConsume: 'Descongelar e Consumir',
             defrostFirst: 'Descongele antes de consumir',
@@ -48,6 +49,7 @@ export default function ConsumePage() {
             confirmConsume: '✓ Confirm Consumption', confirmCook: '✓ Confirm Cooking', confirmDiscard: '✓ Confirm Discard',
             consumed: 'consumed', cooked: 'used in recipe', discarded: 'discarded', completely: 'completely',
             invalidQty: 'Invalid quantity',
+            insufficientStock: 'Insufficient stock',
             frozenWarning: 'This item is frozen',
             defrostAndConsume: 'Defrost & Consume',
             defrostFirst: 'Defrost before consuming',
@@ -61,6 +63,7 @@ export default function ConsumePage() {
             confirmConsume: '✓ Confirmar Consumo', confirmCook: '✓ Confirmar Cocción', confirmDiscard: '✓ Confirmar Descarte',
             consumed: 'consumido', cooked: 'usado en receta', discarded: 'descartado', completely: 'completamente',
             invalidQty: 'Cantidad inválida',
+            insufficientStock: 'Stock insuficiente',
             frozenWarning: 'Este artículo está congelado',
             defrostAndConsume: 'Descongelar y Consumir',
             defrostFirst: 'Descongele antes de consumir',
@@ -119,7 +122,13 @@ export default function ConsumePage() {
             adjustedQty = (consumedQty * (selectedUnit === 'l' ? 1000 : 1)) / (itemUnit === 'l' ? 1000 : 1);
         }
 
-        const newQuantity = Math.max(0, item.quantity - adjustedQty);
+        const newQuantity = item.quantity - adjustedQty;
+
+        // Prevent consuming more than available
+        if (newQuantity < 0) {
+            toast.error(l.insufficientStock);
+            return;
+        }
 
         // If defrost-consume, defrost first then consume
         if (action === 'defrost-consume') {

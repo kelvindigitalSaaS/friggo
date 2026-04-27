@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useRecipesAPI } from "@/hooks/useRecipesAPI";
 import { Loader2, Search, AlertCircle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { availableCategories } from "@/data/recipeDatabase";
 import {
   Select,
   SelectContent,
@@ -19,13 +20,16 @@ export function RecipesTabNew() {
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | undefined>();
-  const [hasSearched, setHasSearched] = useState(false);
+  
+  useEffect(() => {
+    // Carregar receitas inicialmente
+    search("", undefined, undefined);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const difficulties = ["fácil", "médio", "difícil"];
+  const difficulties = ["fácil", "médio", "difícil", "easy", "medium", "hard"];
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    setHasSearched(true);
 
     const cat = selectedCategory === "all" ? undefined : selectedCategory;
     const diff = selectedDifficulty === "all" ? undefined : selectedDifficulty;
@@ -42,8 +46,8 @@ export function RecipesTabNew() {
     setQuery("");
     setSelectedCategory("all");
     setSelectedDifficulty("all");
-    setHasSearched(false);
-    reset();
+    // Em vez de resetar, fazemos uma nova busca vazia para mostrar o catálogo
+    search("", undefined, undefined);
   };
 
   return (
@@ -94,9 +98,9 @@ export function RecipesTabNew() {
               <SelectItem value="all">
                 {language === "pt-BR" ? "Todas" : "All"}
               </SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat.category} value={cat.category}>
-                  {cat.category} ({cat.count})
+              {availableCategories.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -127,7 +131,7 @@ export function RecipesTabNew() {
         </div>
 
         {/* Botão resetar */}
-        {hasSearched && (recipes.length > 0 || query || selectedCategory || selectedDifficulty) && (
+        {(query || (selectedCategory && selectedCategory !== "all") || (selectedDifficulty && selectedDifficulty !== "all")) && (
           <Button type="button" variant="outline" onClick={handleReset} className="w-full">
             {language === "pt-BR" ? "Limpar filtros" : "Clear filters"}
           </Button>
@@ -143,9 +147,8 @@ export function RecipesTabNew() {
       )}
 
       {/* Resultados */}
-      {hasSearched ? (
-        <>
-          {loading && recipes.length === 0 ? (
+      <>
+        {loading && recipes.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
               <p className="text-sm text-muted-foreground">
@@ -216,16 +219,7 @@ export function RecipesTabNew() {
               )}
             </div>
           )}
-        </>
-      ) : (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">
-            {language === "pt-BR"
-              ? "Use a busca acima para encontrar receitas"
-              : "Use the search above to find recipes"}
-          </p>
-        </div>
-      )}
+      </>
     </div>
   );
 }

@@ -1,17 +1,17 @@
 // Service worker custom handlers (plain JS)
 // This file is injected into the Workbox-generated SW via importScripts.
-// It handles notification click, close and push events for the Friggo PWA.
+// It handles notification click, close and push events for the Kaza PWA.
 
 // ── Push event handler (PWA web push) ────────────────────────────────────────
 self.addEventListener("push", (event) => {
   let payload = {};
-  try { payload = event.data ? event.data.json() : {}; } catch { payload = { title: "Friggo", body: event.data && event.data.text ? event.data.text() : "" }; }
-  const title = payload.title || "Friggo";
+  try { payload = event.data ? event.data.json() : {}; } catch { payload = { title: "Kaza", body: event.data && event.data.text ? event.data.text() : "" }; }
+  const title = payload.title || "Kaza";
   const options = {
     body: payload.body || "",
-    icon: payload.icon || "/icon-192.png",
-    badge: payload.badge || "/icon-192.png",
-    tag: payload.tag || payload.category || "friggo",
+    icon: payload.icon || "/icons/100.png",
+    badge: payload.badge || "/icons/badge-96.svg",
+    tag: payload.tag || payload.category || "kaza",
     data: payload.data || payload,
     actions: payload.actions || [],
     vibrate: payload.vibrate,
@@ -44,7 +44,7 @@ self.addEventListener("notificationclick", (event) => {
             notification.title || "🗑️ Lembrete — Coleta de Lixo",
             {
               body: notification.body || "Não esqueça de colocar o lixo!",
-              icon: "/icons/icon-192.png",
+              icon: "/icons/100.png",
               badge: "/icons/badge-96.svg",
               tag: "garbage-snooze-" + Date.now(),
               vibrate: [200, 100, 200, 100, 200],

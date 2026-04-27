@@ -175,6 +175,42 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     };
   }, [user?.user_metadata?.name, language]);
 
+  const updateNotificationPreferences = async (
+    prefs: Partial<NotificationPreferences>
+  ) => {
+    if (!user) return;
+    const hid = homeId || localStorage.getItem("kaza-home-id");
+    if (!hid) return;
+
+    try {
+      const patch: Record<string, unknown> = {
+        user_id: user.id,
+        home_id: hid,
+        ...prefs,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from("notification_preferences")
+        .upsert(patch, { onConflict: 'user_id' });
+
+      if (error) throw error;
+
+      setNotificationPrefs((prev) => (prev ? { ...prev, ...prefs } : null));
+      toast({
+        title: language === "pt-BR" ? "Sucesso" : "Success",
+        description: language === "pt-BR" ? "Preferências salvas!" : "Preferences saved!",
+      });
+    } catch (error) {
+      console.error("Error updating notification preferences:", error);
+      toast({
+        variant: "destructive",
+        title: language === "pt-BR" ? "Erro" : "Error",
+        description: language === "pt-BR" ? "Erro ao salvar preferências" : "Error saving preferences",
+      });
+    }
+  };
+
   // Detect if current user is a sub-account (member of someone else's group, not master)
   useEffect(() => {
     if (!user) { setIsSubAccount(false); return; }
@@ -1132,24 +1168,10 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     };
     if (nightCheckupTime !== undefined) patch.nightly_checkup_time = nightCheckupTime;
     
-    const { data: existing } = await supabase
+    const { error } = await supabase
       .from("notification_preferences")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (existing) {
-      const { error } = await supabase
-        .from("notification_preferences")
-        .update(patch)
-        .eq("user_id", user.id);
-      return { error };
-    } else {
-      const { error } = await supabase
-        .from("notification_preferences")
-        .insert(patch);
-      return { error };
-    }
+      .upsert(patch, { onConflict: 'user_id' });
+    return { error };
   }
 
   const resetOnboarding = async () => {

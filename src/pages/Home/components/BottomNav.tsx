@@ -67,11 +67,14 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
           return (
             <motion.button
               key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              whileTap={{ scale: 0.85 }}
+              onClick={(e) => {
+                e.preventDefault();
+                onTabChange(tab.id);
+              }}
+              whileTap={{ scale: 0.9 }}
               transition={appleSpring}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 relative",
+                "flex flex-1 flex-col items-center justify-center gap-1 py-2 relative cursor-pointer touch-manipulation min-w-[44px]",
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground"

@@ -46,6 +46,7 @@ export default function MealPlannerPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMealType, setSelectedMealType] = useState<string | null>(null);
   const [addedRecipes, setAddedRecipes] = useState<Set<string>>(new Set());
+  const [visibleCount, setVisibleCount] = useState(50);
 
   // Bottom sheet state
   const [showSheet, setShowSheet] = useState(false);
@@ -71,8 +72,9 @@ export default function MealPlannerPage() {
       (r) =>
         r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (r.description ?? "").toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .slice(0, 30);
+    );
+
+  const displayedRecipes = filteredRecipes.slice(0, visibleCount);
 
   const handleAddMeal = (recipeId: string, recipeName: string, mealType?: string) => {
     setPendingMeal({ recipeId, recipeName, mealType });
@@ -163,7 +165,7 @@ export default function MealPlannerPage() {
           <Input
             placeholder="Buscar receitas..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => { setSearchQuery(e.target.value); setVisibleCount(50); }}
             className="pl-10 h-11 rounded-2xl bg-white dark:bg-white/[0.05] border-black/[0.06] dark:border-white/[0.08] focus:ring-primary/30"
           />
         </div>
@@ -177,33 +179,44 @@ export default function MealPlannerPage() {
             <p className="text-sm font-bold text-muted-foreground">Nenhuma receita encontrada.</p>
           </div>
         ) : (
-          filteredRecipes.map((recipe) => (
-            <div
-              key={recipe.id}
-              className="rounded-[1.5rem] bg-white dark:bg-[#11302c]/40 border border-black/[0.04] dark:border-white/[0.05] overflow-hidden shadow-[0_4px_20px_-8px_rgba(0,0,0,0.06)] transition-all hover:scale-[1.01] cursor-pointer group"
-              onClick={() => handleAddMeal(recipe.id, recipe.name, selectedMealType || undefined)}
-            >
-              {/* Recipe header */}
-              <div className="flex items-center gap-4 px-4 py-4 active:bg-black/[0.02] dark:active:bg-white/[0.02]">
-                <div className="h-14 w-14 flex items-center justify-center rounded-[1rem] bg-emerald-500/10 shrink-0 overflow-hidden shadow-sm border border-emerald-500/10">
-                  {recipe.imageUrl ? (
-                    <img src={recipe.imageUrl} className="h-full w-full object-cover transition-transform group-hover:scale-110" alt="" />
-                  ) : (
-                    <ChefHat className="h-6 w-6 text-emerald-500" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0 pr-2">
-                  <p className="text-[16px] font-black text-[#1a3d32] dark:text-emerald-50 truncate leading-tight group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">{recipe.name}</p>
-                  <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest opacity-70 mt-1">
-                    {recipe.category || "Receita"}
-                  </p>
-                </div>
-                <div className="h-11 w-11 flex shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-sm">
-                  <Plus className="h-5 w-5" />
+          <>
+            {displayedRecipes.map((recipe) => (
+              <div
+                key={recipe.id}
+                className="rounded-[1.5rem] bg-white dark:bg-[#11302c]/40 border border-black/[0.04] dark:border-white/[0.05] overflow-hidden shadow-[0_4px_20px_-8px_rgba(0,0,0,0.06)] transition-all hover:scale-[1.01] cursor-pointer group"
+                onClick={() => handleAddMeal(recipe.id, recipe.name, selectedMealType || undefined)}
+              >
+                {/* Recipe header */}
+                <div className="flex items-center gap-4 px-4 py-4 active:bg-black/[0.02] dark:active:bg-white/[0.02]">
+                  <div className="h-14 w-14 flex items-center justify-center rounded-[1rem] bg-emerald-500/10 shrink-0 overflow-hidden shadow-sm border border-emerald-500/10">
+                    {recipe.imageUrl ? (
+                      <img src={recipe.imageUrl} className="h-full w-full object-cover transition-transform group-hover:scale-110" alt="" />
+                    ) : (
+                      <ChefHat className="h-6 w-6 text-emerald-500" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 pr-2">
+                    <p className="text-[16px] font-black text-[#1a3d32] dark:text-emerald-50 truncate leading-tight group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">{recipe.name}</p>
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest opacity-70 mt-1">
+                      {recipe.category || "Receita"}
+                    </p>
+                  </div>
+                  <div className="h-11 w-11 flex shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-sm">
+                    <Plus className="h-5 w-5" />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            ))}
+            
+            {filteredRecipes.length > visibleCount && (
+              <button
+                onClick={() => setVisibleCount((v) => v + 50)}
+                className="w-full py-4 mt-2 rounded-xl text-sm font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 transition-colors active:scale-95"
+              >
+                Carregar mais receitas ({filteredRecipes.length - visibleCount})
+              </button>
+            )}
+          </>
         )}
       </div>
 

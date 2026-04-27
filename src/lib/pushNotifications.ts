@@ -5,10 +5,10 @@ import { isAndroid, isNative } from "./capacitor";
 import { supabase } from "@/integrations/supabase/client";
 
 // ── Notification icon & badge paths — use unified app icon
-const ICON_192 = "/icon.png";
-const ICON_512 = "/icon.png";
+const ICON_192 = "/icons/100.png";
+const ICON_512 = "/icons/100.png";
 const BADGE_ICON = "/icons/badge-96.svg";
-const Kaza_SOUND = "default";
+const KAZA_SOUND = "default";
 
 interface NotificationAction {
   action: string;
@@ -30,12 +30,13 @@ function detectBrowser() {
 const VIBRATE_DEFAULT = [100, 50, 100]; // short double buzz
 const VIBRATE_URGENT = [500, 100, 500, 100, 500, 100, 500, 100, 500]; // ~3s alarm pattern
 const VIBRATE_GENTLE = [80]; // single gentle tap
-// 10-second continuous garbage alarm: 400ms on + 100ms off repeated to reach ~10s
+// 10-second continuous garbage alarm: 400ms on + 100ms off repeated to reach ~10s (20 repetitions)
 const VIBRATE_GARBAGE = [
   400, 100, 400, 100, 400, 100, 400, 100, 400, 100,
   400, 100, 400, 100, 400, 100, 400, 100, 400, 100,
   400, 100, 400, 100, 400, 100, 400, 100, 400, 100,
-]; // ~10s alarm pattern
+  400, 100, 400, 100, 400, 100, 400, 100, 400, 100,
+]; // 10s alarm pattern
 
 /**
  * Triggers a 3-second vibration alarm (best-effort across platforms).
@@ -221,11 +222,15 @@ export function playNotificationSound(type: SoundType = "default") {
     switch (type) {
       case "urgent":
       case "garbage":
-        // Three short alarm beeps
+        // Alarm pattern for 10 seconds
         gain.gain.setValueAtTime(0.3, now);
-        playTone(880, 0, 0.15, 0.3);
-        playTone(880, 0.2, 0.15, 0.3);
-        playTone(1100, 0.4, 0.2, 0.35);
+        for (let i = 0; i < 20; i++) {
+          const start = i * 0.5;
+          playTone(i % 2 === 0 ? 880 : 1100, start, 0.2, 0.3, false);
+          playTone(i % 2 === 0 ? 1100 : 880, start + 0.25, 0.2, 0.3, false);
+        }
+        // Final fade out
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 10);
         break;
       case "checkup":
         // Gentle two-tone chime

@@ -223,7 +223,7 @@
 
   /* BottomNav flutuante: posiciona acima do indicador home do iOS/Android */
   .bottom-nav-float {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
   }
 
   /* Padding do conteúdo principal considerando nav + safe area */
