@@ -32,132 +32,7 @@ import {
 
 type ActiveSection = 'fridge' | 'expiring' | 'alerts' | 'shopping' | null;
 
-const labels = {
-    'pt-BR': {
-        hello: 'Olá',
-        yourHome: 'Início',
-        monthlyReport: 'Relatório Mensal',
-        monthlyReportSub: 'Resumo do mês',
-        nightCheckup: 'Check-up Noturno',
-        nightCheckupSub: 'Revisão diária',
-        expiringSoon: 'Vencendo em breve',
-        items: 'itens',
-        recentlyAdded: 'Adicionados recentemente',
-        inFridge: 'Na geladeira',
-        expiresToday: 'Vence hoje',
-        alerts: 'Alertas',
-        toBuy: 'Comprar',
-        seeAll: 'Ver todos',
-        tagline: 'Menos desperdício, mais economia.',
-        noItems: 'Nenhum item aqui.',
-        shoppingItems: 'Lista de compras',
-        alertsSection: 'Alertas ativos',
-        fridgeSection: 'Itens na geladeira',
-        expiringSection: 'Vencendo hoje',
-        empty: 'Nenhum item para exibir.',
-        searchPlaceholder: 'Buscar itens...',
-        tipOfDay: 'Dica do dia',
-        tryRecipe: 'Experimentar',
-        weeklyProgress: 'Progresso da semana',
-        consumed: 'Consumidos',
-        wasted: 'Desperdiçados',
-        addItem: 'Adicionar item',
-        consumablesLow: 'Consumíveis acabando',
-        daysLeft: 'd restantes',
-        addToList: 'Adicionar à lista',
-        goodMorning: 'Bom dia',
-        goodAfternoon: 'Boa tarde',
-        goodEvening: 'Boa noite',
-        greetingExpiring: 'item(ns) vencendo hoje!',
-        greetingAlerts: 'alerta(s) pendente(s)',
-        greetingAllGood: 'Tudo em dia! 🎉',
-        payList: 'Guardar lista',
-        noResults: 'Nenhum resultado encontrado.',
-        useExpiring: 'Use antes que vença:',
-    },
-    en: {
-        hello: 'Hello',
-        yourHome: 'Home',
-        monthlyReport: 'Monthly Report',
-        monthlyReportSub: 'Month summary',
-        nightCheckup: 'Night Check-up',
-        nightCheckupSub: 'Daily review',
-        expiringSoon: 'Expiring soon',
-        items: 'items',
-        recentlyAdded: 'Recently added',
-        inFridge: 'In fridge',
-        expiresToday: 'Expires today',
-        alerts: 'Alerts',
-        toBuy: 'To buy',
-        seeAll: 'See all',
-        tagline: 'Less waste, more savings.',
-        noItems: 'No items here.',
-        shoppingItems: 'Shopping list',
-        alertsSection: 'Active alerts',
-        fridgeSection: 'Items in fridge',
-        expiringSection: 'Expiring today',
-        empty: 'Nothing to show here.',
-        searchPlaceholder: 'Search items...',
-        tipOfDay: 'Tip of the day',
-        tryRecipe: 'Try it',
-        weeklyProgress: 'Weekly progress',
-        consumed: 'Consumed',
-        wasted: 'Wasted',
-        addItem: 'Add item',
-        consumablesLow: 'Low consumables',
-        daysLeft: 'd left',
-        addToList: 'Add to list',
-        goodMorning: 'Good morning',
-        goodAfternoon: 'Good afternoon',
-        goodEvening: 'Good evening',
-        greetingExpiring: 'item(s) expiring today!',
-        greetingAlerts: 'pending alert(s)',
-        greetingAllGood: 'All good! 🎉',
-        payList: 'Save list',
-        noResults: 'No results found.',
-        useExpiring: 'Use before it expires:',
-    },
-    es: {
-        hello: 'Hola',
-        yourHome: 'Inicio',
-        monthlyReport: 'Reporte Mensual',
-        monthlyReportSub: 'Resumen del mes',
-        nightCheckup: 'Chequeo Nocturno',
-        nightCheckupSub: 'Revisión diaria',
-        expiringSoon: 'Por vencer',
-        items: 'artículos',
-        recentlyAdded: 'Agregados recientemente',
-        inFridge: 'En nevera',
-        expiresToday: 'Vence hoy',
-        alerts: 'Alertas',
-        toBuy: 'Comprar',
-        seeAll: 'Ver todos',
-        tagline: 'Menos desperdicio, más ahorro.',
-        noItems: 'Ningún artículo aquí.',
-        shoppingItems: 'Lista de compras',
-        alertsSection: 'Alertas activas',
-        fridgeSection: 'Artículos en nevera',
-        expiringSection: 'Vence hoy',
-        empty: 'Nada que mostrar aquí.',
-        searchPlaceholder: 'Buscar artículos...',
-        tipOfDay: 'Consejo del día',
-        tryRecipe: 'Probar',
-        weeklyProgress: 'Progreso semanal',
-        consumed: 'Consumidos',
-        wasted: 'Desperdiciados',
-        addItem: 'Agregar artículo',
-        consumablesLow: 'Consumibles bajos',
-        daysLeft: 'd restantes',
-        addToList: 'Agregar a la lista',
-        goodMorning: 'Buenos días',
-        goodAfternoon: 'Buenas tardes',
-        goodEvening: 'Buenas noches',
-        greetingExpiring: 'artículo(s) por vencer hoy!',
-        greetingAlerts: 'alerta(s) pendiente(s)',
-        greetingAllGood: '¡Todo en orden! 🎉',
-        payList: 'Guardar lista',
-        noResults: 'Sin resultados.',
-        useExpiring: 'Usa antes de que venza:',
+ntes de que venza:',
     },
 };
 
@@ -166,16 +41,9 @@ const cardSpring = { type: 'spring' as const, stiffness: 300, damping: 28, mass:
 export function HomeTab() {
     const { items, alerts, dismissAlert, onboardingData, shoppingList, consumables, addToShoppingList, toggleShoppingItem, itemHistory, markAllShoppingComplete, toggleSection: toggleContextSection } = useKaza();
     const { subscription } = useSubscription();
-    const { language } = useLanguage();
-    const { recordShoppingCompletion } = useAchievements();
-    const navigate = useNavigate();
-
-    const [activeSection, setActiveSection] = useState<ActiveSection>(null);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [showSearch, setShowSearch] = useState(false);
-
-    const l = labels[language];
-    const firstName = onboardingData?.name?.split(' ')[0] || l.yourHome;
+    const { t, language } = useLanguage();
+    const l = t;
+    const firstName = onboardingData?.name?.split(' ')[0] || t.yourHome;
     const residents = onboardingData?.residents ?? 1;
 
     // ── Derived data ──

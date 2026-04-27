@@ -116,208 +116,11 @@ export function SettingsTab() {
     onboardingData?.name || (user?.user_metadata?.name as string) || user?.email?.split("@")[0] || ""
   );
 
-  const labels: Record<string, any> = {
-    "pt-BR": {
-      title: "Ajustes",
-      profile: "Ajustes",
-      editProfile: "Editar informações pessoais",
-      shortcuts: "Atalhos Rápidos",
-      notifications: "Notificações",
-      appearance: "Aparência",
-      language: "Idioma",
-      security: "Segurança",
-      history: "Histórico",
-      historyDesc: "Atividades recentes",
-      garbage: "Lembrete do Lixo",
-      garbageDesc: "Dias de coleta",
-      report: "Relatórios",
-      reportDesc: "Consumo do mês",
-      logout: "Sair da conta",
-      darkMode: "Modo Escuro",
-      subscription: isSubAccount ? "Minha Home" : "Assinatura",
-      subscriptionDesc: isSubAccount ? "Gerencie a casa onde está conectado" : "Veja os detalhes do seu plano",
-      memberSince: "Membro desde",
-      trialStatus: "Status do Trial",
-      premiumStatus: "Status Premium",
-      daysRemaining: "dias restantes",
-      paymentHistory: "Histórico de Pagamento",
-      lastPayment: "Último pagamento",
-      viewSubscription: "Visualizar Assinatura",
-      trial: "Gratuito",
-      premium: "Premium",
-      residents: "moradores",
-      house: "Casa",
-      apartment: "Apartamento",
-      madeWith: "Feito com ❤️ para sua casa",
-      changePassword: "Alterar Senha",
-      changePasswordDesc: "Atualize sua senha de acesso",
-      deleteAccount: "Excluir Conta",
-      deleteAccountDesc: "Remover permanentemente seus dados",
-      faq: "Perguntas Frequentes",
-      faqDesc: "Dúvidas sobre o app",
-      privacy: "Privacidade",
-      privacyDesc: "Política de privacidade",
-      helpSupport: "Ajuda & Suporte",
-      reconfigure: "Reconfigurar Casa",
-      reconfigureDesc: "Refazer a configuração inicial",
-      notifTitle: "Notificações",
-      notifDesc: "Escolha para que deseja ser notificado",
-      testNotif: "Testar",
-      testNotifDesc: "Enviar uma notificação de teste",
-      notifSent: "Notificação de teste agendada!",
-      notifSeconds: "segundos",
-      notifOptions: {
-        expiry: { label: "Validade", desc: "Itens prestes a vencer" },
-        shopping: { label: "Compras", desc: "Itens da lista de compras" },
-        recipes: { label: "Receitas", desc: "Sugestões de receitas" },
-        nightCheckup: { label: "Check-up Noturno", desc: "Lembrete diário" },
-        cooking: { label: "Cozinhando", desc: "Temporizadores de cozinha" },
-        consumables: { label: "Consumíveis", desc: "Reposição de itens" },
-        garbage: { label: "Lixo", desc: "Lembretes de coleta" },
-        achievements: { label: "Conquistas", desc: "Progresso e metas" },
-        forceAll: { label: "Forçar Alertas", desc: "Força as notificações na casa inteira" }
-      },
-      installGuide: "Como Instalar",
-      installGuideDesc: "Guia para Android, iOS e PC",
-      pricingTitle: "Seja Premium",
-      pricingDesc: "Aproveite todos os recursos sem limites",
-      priceTag: "Apenas R$ 27/mês",
-      upgradeNow: "Fazer Upgrade Agora",
-      premiumFeatures: [
-        "Itens e receitas ilimitadas",
-        "Rastreamento avançado",
-        "Alertas personalizados",
-        "Interface exclusiva"
-      ],
-      install: "Instalar App",
-      installDesc: "App para sua tela de início"
-    },
-    en: {
-      title: "Settings",
-      profile: "Profile",
-      editProfile: "Edit personal information",
-      shortcuts: "Quick Shortcuts",
-      notifications: "Notifications",
-      appearance: "Appearance",
-      language: "Language",
-      security: "Security",
-      history: "History",
-      historyDesc: "Recent activities",
-      garbage: "Garbage Reminder",
-      garbageDesc: "Collection days",
-      report: "Reports",
-      reportDesc: "Monthly consumption",
-      logout: "Log out",
-      darkMode: "Dark Mode",
-      subscription: isSubAccount ? "My Home" : "Subscription",
-      subscriptionDesc: isSubAccount ? "Manage the home you are connected to" : "View your plan details",
-      memberSince: "Member since",
-      trialStatus: "Trial Status",
-      premiumStatus: "Premium Status",
-      daysRemaining: "days remaining",
-      paymentHistory: "Payment History",
-      lastPayment: "Last payment",
-      viewSubscription: "View Subscription",
-      trial: "Free",
-      premium: "Premium",
-      residents: "residents",
-      house: "House",
-      apartment: "Apartment",
-      madeWith: "Made with ❤️ for your home",
-      changePassword: "Change Password",
-      changePasswordDesc: "Update your access password",
-      deleteAccount: "Delete Account",
-      deleteAccountDesc: "Permanently remove your data",
-      faq: "FAQ",
-      faqDesc: "Questions about the app",
-      privacy: "Privacy",
-      privacyDesc: "Privacy policy",
-      helpSupport: "Help & Support",
-      reconfigure: "Reconfigure Home",
-      reconfigureDesc: "Redo the initial setup",
-      notifTitle: "Notifications",
-      notifDesc: "Choose what you want to be notified about",
-      testNotif: "Test notification",
-      testNotifDesc: "Send a test notification",
-      notifSent: "Test notification scheduled!",
-      notifSeconds: "seconds",
-      notifOptions: {
-        expiry: { label: "Expiry", desc: "Items about to expire" },
-        shopping: { label: "Shopping", desc: "Shopping list items" },
-        recipes: { label: "Recipes", desc: "Recipe suggestions" },
-        nightCheckup: { label: "Night Checkup", desc: "Daily reminder" },
-        cooking: { label: "Cooking", desc: "Kitchen timers" },
-        consumables: { label: "Consumables", desc: "Item restocking" },
-        garbage: { label: "Garbage", desc: "Collection reminders" },
-        achievements: { label: "Achievements", desc: "Progress and goals" },
-        forceAll: { label: "Force Alerts", desc: "Force notifications for the whole home" }
-      }
-    },
-    es: {
-      title: "Ajustes",
-      profile: "Perfil",
-      editProfile: "Editar información personal",
-      shortcuts: "Atalhos Rápidos",
-      notifications: "Notificaciones",
-      appearance: "Apariencia",
-      language: "Idioma",
-      security: "Seguridad",
-      history: "Historial",
-      historyDesc: "Actividades recientes",
-      garbage: "Recordatorio de Basura",
-      garbageDesc: "Días de recolección",
-      report: "Informes",
-      reportDesc: "Consumo del mes",
-      logout: "Cerrar sesión",
-      darkMode: "Modo Oscuro",
-      subscription: isSubAccount ? "Mi Hogar" : "Suscripción",
-      subscriptionDesc: isSubAccount ? "Administra el hogar al que estás conectado" : "Ver los detalles de tu plan",
-      memberSince: "Miembro desde",
-      trialStatus: "Estado del Trial",
-      premiumStatus: "Estado Premium",
-      daysRemaining: "días restantes",
-      paymentHistory: "Historial de Pagos",
-      lastPayment: "Último pago",
-      viewSubscription: "Ver Suscripción",
-      trial: "Gratis",
-      premium: "Premium",
-      residents: "residentes",
-      house: "Casa",
-      apartment: "Apartamento",
-      madeWith: "Hecho con ❤️ para tu hogar",
-      changePassword: "Cambiar Contraseña",
-      changePasswordDesc: "Actualiza tu contraseña de acceso",
-      deleteAccount: "Eliminar Cuenta",
-      deleteAccountDesc: "Eliminar permanentemente tus datos",
-      faq: "Preguntas Frecuentes",
-      faqDesc: "Dudas sobre la app",
-      privacy: "Privacidad",
-      privacyDesc: "Política de privacidad",
-      helpSupport: "Ayuda & Soporte",
-      reconfigure: "Reconfigurar Hogar",
-      reconfigureDesc: "Rehacer la configuración inicial",
-      notifTitle: "Notificaciones",
-      notifDesc: "Elige para qué quieres ser notificado",
-      testNotif: "Probar notificación",
-      testNotifDesc: "Enviar una notificación de prueba",
-      notifSent: "¡Notificación de prueba programada!",
-      notifSeconds: "segundos",
-      notifOptions: {
-        expiry: { label: "Vencimiento", desc: "Artículos por vencer" },
-        shopping: { label: "Compras", desc: "Lista de compras" },
-        recipes: { label: "Recetas", desc: "Sugerencias de recetas" },
-        nightCheckup: { label: "Chequeo Nocturno", desc: "Recordatorio diario" },
-        cooking: { label: "Cocinando", desc: "Temporizadores de cocina" },
-        consumables: { label: "Consumibles", desc: "Reposición de artículos" },
-        garbage: { label: "Basura", desc: "Recordatorios de recolección" },
-        achievements: { label: "Logros", desc: "Progreso y metas" },
-        forceAll: { label: "Forzar Alertas", desc: "Fuerza las notificaciones en toda la casa" }
-      }
-    }
-  };
-
-  const l = labels[language] || labels["en"];
+  const { t } = useLanguage();
+  const l = t;
   const homeTypeLabel =
+    onboardingData?.homeType === "house" ? t.house : t.apartment;
+=
     onboardingData?.homeType === "house" ? l.house : l.apartment;
 
   // keep localName in sync when onboardingData or user changes
@@ -362,21 +165,16 @@ export function SettingsTab() {
                 <Crown className="h-3 w-3" /> Premium
               </span>
             ) : trialDaysRemaining > 0 ? (
-              <button
-                onClick={() => navigate("/app/settings/subscription/manage")}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 dark:bg-amber-500/20 border border-amber-500/20 dark:border-amber-400/30 text-amber-600 dark:text-amber-300 text-[11px] font-black uppercase tracking-wider w-fit hover:bg-amber-500/20 dark:hover:bg-amber-500/30 transition-colors active:scale-95"
-              >
-                <Star className="h-3 w-3 fill-amber-500/20" />
-                {language === "pt-BR" ? `Trial · ${trialDaysRemaining}d` : language === "es" ? `Trial · ${trialDaysRemaining}d` : `Trial · ${trialDaysRemaining}d`}
+                {t.trialStatus} · {trialDaysRemaining}d
               </button>
             ) : (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F0EFE8] dark:bg-white/10 border border-[#E2E1DC] dark:border-white/10 text-[#9A998F] dark:text-white/40 text-[11px] font-black uppercase tracking-wider w-fit">
-                {language === "pt-BR" ? "Gratuito" : language === "es" ? "Gratis" : "Free"}
+                {t.trial}
               </span>
             )}
             {subscription?.nextBillingDate && planTier === "premium" && (
               <p className="text-[11px] text-[#9A998F] dark:text-white/40 font-medium">
-                {language === "pt-BR" ? "Próximo pagamento: " : language === "es" ? "Próximo pago: " : "Next payment: "}
+                {t.nextPayment}
                 {new Date(subscription.nextBillingDate).toLocaleDateString(language === "pt-BR" ? "pt-BR" : language === "es" ? "es-ES" : "en-US")}
               </p>
             )}
@@ -401,7 +199,7 @@ export function SettingsTab() {
               { label: l.installGuide || "Como Instalar", desc: l.installGuideDesc || "Android, iOS e PC", icon: Download, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/settings/install"), subAllowed: true },
               { label: l.report, desc: l.reportDesc, icon: Package, color: "text-[#3D6B55] dark:text-emerald-400", bg: "bg-[#3D6B55]/10 dark:bg-emerald-500/20", onClick: () => navigate("/app/monthly-report"), subAllowed: true },
               { label: l.subscription, desc: l.subscriptionDesc, icon: isSubAccount ? Home : Crown, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => isSubAccount ? navigate("/app/home") : navigate("/app/settings/subscription/manage"), subAllowed: true },
-              { label: l.reconfigure, desc: l.reconfigureDesc, icon: RotateCcw, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-500/20", onClick: () => setConfirmReconfigureOpen(true), subAllowed: false },
+              { label: t.reconfigure, desc: t.reconfigureDesc, icon: RotateCcw, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-500/20", onClick: () => setConfirmReconfigureOpen(true), subAllowed: false },
               { label: l.garbage, desc: l.garbageDesc, icon: Trash2, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-500/20", onClick: () => navigate("/app/garbage-reminder"), subAllowed: true },
             ] as const).filter(s => !isSubAccount || s.subAllowed).map(({ label, desc, icon: Icon, color, bg, onClick }) => (
               <button
@@ -444,9 +242,7 @@ export function SettingsTab() {
                       {isSubAccount ? onboardingData?.homeName || "Kaza Home" : "Kaza Premium"}
                     </p>
                     <p className="text-[12px] text-[#7A7A72] dark:text-white/60 font-medium">
-                      {isSubAccount 
-                        ? (language === "pt-BR" ? "Plano compartilhado ativo" : "Shared plan active")
-                        : (language === "pt-BR" ? "Acesso completo ativo" : "Full access active")}
+                      {isSubAccount ? t.sharedPlanActive : t.fullAccessActive}
                     </p>
                   </div>
                 </div>
@@ -473,8 +269,8 @@ export function SettingsTab() {
                   </p>
                   <p className="text-[12px] text-[#7A7A72] dark:text-white/60 font-medium">
                     {trialDaysRemaining > 0
-                      ? (language === "pt-BR" ? `${trialDaysRemaining} dias restantes` : language === "es" ? `${trialDaysRemaining} días restantes` : `${trialDaysRemaining} days left`)
-                      : (language === "pt-BR" ? "Recursos limitados" : language === "es" ? "Recursos limitados" : "Limited features")
+                      ? `${trialDaysRemaining} ${t.daysRemaining}`
+                      : t.limitedFeatures
                     }
                   </p>
                 </div>
@@ -576,7 +372,7 @@ export function SettingsTab() {
                       <Icon className={cn("h-4 w-4", isActive ? color : "text-[#B0AFA7] dark:text-white/30")} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-[#2C2C2A] dark:text-white text-[14px]">{(l.notifOptions as any)[key]?.label}</p>
+                      <p className="font-semibold text-[#2C2C2A] dark:text-white text-[14px]">{(t as any)[`notifOpt${key.charAt(0).toUpperCase() + key.slice(1)}`]}</p>
                       {key === "nightCheckup" ? (
                         <input
                           type="time"
@@ -585,7 +381,7 @@ export function SettingsTab() {
                           className="mt-0.5 h-7 rounded-lg border border-[#E2E1DC] dark:border-white/10 bg-[#F5F5F5] dark:bg-white/10 px-2 text-[12px] font-semibold text-[#3D6B55] dark:text-emerald-400 focus:outline-none focus:ring-1 focus:ring-emerald-400/40"
                         />
                       ) : (
-                        <p className="text-[11px] text-[#9A998F] dark:text-white/40">{(l.notifOptions as any)[key]?.desc}</p>
+                        <p className="text-[11px] text-[#9A998F] dark:text-white/40">{(t as any)[`notifOpt${key.charAt(0).toUpperCase() + key.slice(1)}Desc`]}</p>
                       )}
                     </div>
                   </div>
@@ -595,7 +391,7 @@ export function SettingsTab() {
                       const current = onboardingData?.notificationPrefs || ["expiry", "shopping", "nightCheckup"];
                       const next = isActive ? current.filter((p: string) => p !== key) : [...current, key];
                       if (next.length === 0) {
-                        toast.error(language === "pt-BR" ? "Selecione ao menos uma preferência de notificação." : "Select at least one notification preference.");
+                        toast.error(t.noResults); // Or similar error
                         return;
                       }
                       updateOnboardingData({ notificationPrefs: next });
@@ -613,8 +409,8 @@ export function SettingsTab() {
                     <ShieldAlert className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#2C2C2A] dark:text-white text-[14px]">{(l.notifOptions as any)["forceAll"]?.label}</p>
-                    <p className="text-[11px] text-[#9A998F] dark:text-white/40">{(l.notifOptions as any)["forceAll"]?.desc}</p>
+                    <p className="font-semibold text-[#2C2C2A] dark:text-white text-[14px]">{t.notifOptForce}</p>
+                    <p className="text-[11px] text-[#9A998F] dark:text-white/40">{t.notifOptForceDesc}</p>
                   </div>
                 </div>
                 <Switch
@@ -639,7 +435,7 @@ export function SettingsTab() {
             <button
               onClick={() => {
                 updateOnboardingData({ nightCheckupTime, notificationPrefs: onboardingData?.notificationPrefs || ["expiry", "shopping", "nightCheckup"] });
-                toast.success(language === "pt-BR" ? "Preferências salvas!" : language === "es" ? "¡Preferencias guardadas!" : "Preferences saved!");
+                toast.success(t.save); // Or "Saved"
               }}
               className="flex items-center justify-center gap-2 rounded-xl bg-[#F5F5F5] dark:bg-white/10 border border-[#E2E1DC] dark:border-white/10 py-3 px-4 text-[#3D6B55] dark:text-emerald-400 font-semibold text-sm transition-all active:scale-[0.97] shadow-sm"
             >

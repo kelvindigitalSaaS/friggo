@@ -58,6 +58,9 @@ export interface UseAccountSessionReturn {
   currentSession: AccountSession | null;
   /** Membros do grupo (apenas multiPRO) */
   groupMembers: GroupMemberStatus[];
+  /** Sessões ativas do próprio usuário (excluindo o dispositivo atual) */
+  otherSessions: Pick<AccountSession, "id" | "device_name" | "platform" | "last_seen_at">[];
+  hasConflict: boolean;
   /** Se o usuário atual é a conta mestre */
   isGroupMaster: boolean;
   /** ID do grupo multiPRO (null se não for multiPRO) */
@@ -65,6 +68,8 @@ export interface UseAccountSessionReturn {
   loading: boolean;
   /** Master desconecta um membro à força (invalida todas as sessões dele no grupo) */
   disconnectMember: (targetUserId: string) => Promise<void>;
+  /** Desconecta todos os outros dispositivos do usuário atual */
+  disconnectAllOthers: () => Promise<void>;
   /** Conta mestre pode re-conectar (desfaz force_disconnect) */
   reconnectMember: (targetUserId: string) => Promise<void>;
 }
@@ -73,6 +78,8 @@ export function useAccountSession(groupId: string | null = null): UseAccountSess
   const { user, signOut } = useAuth();
   const [currentSession, setCurrentSession] = useState<AccountSession | null>(null);
   const [groupMembers, setGroupMembers] = useState<GroupMemberStatus[]>([]);
+  const [otherSessions, setOtherSessions] = useState<Pick<AccountSession, "id" | "device_name" | "platform" | "last_seen_at">[]>([]);
+  const [hasConflict, setHasConflict] = useState(false);
   const [isGroupMaster, setIsGroupMaster] = useState(false);
   const [loading, setLoading] = useState(true);
   const deviceId = useRef(getDeviceId());
@@ -101,12 +108,30 @@ export function useAccountSession(groupId: string | null = null): UseAccountSess
         .single();
 
       if (!error && data) {
-        setCurrentSession(data as AccountSession);
+        const session = data as AccountSession;
+        setCurrentSession(session);
 
         // Verifica se foi force-disconnected por outro membro
-        if ((data as AccountSession).force_disconnected) {
+        if (session.force_disconnected) {
           await signOut();
           return;
+        }
+
+        // Verifica conflitos (outras sessões ativas do mesmo usuário)
+        const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+        const { data: others } = await supabase
+          .from("account_sessions")
+          .select("id, device_name, platform, last_seen_at")
+          .eq("user_id", user.id)
+          .neq("device_id", deviceId.current)
+          .eq("is_connected", true)
+          .gt("last_seen_at", twoMinAgo);
+
+        if (others && others.length > 0) {
+          setOtherSessions(others as any);
+          setHasConflict(true);
+        } else {
+          setHasConflict(false);
         }
       }
     } catch {
@@ -278,13 +303,28 @@ export function useAccountSession(groupId: string | null = null): UseAccountSess
     await fetchGroupData(groupId);
   }, [isGroupMaster, groupId, fetchGroupData]);
 
+  const disconnectAllOthers = useCallback(async () => {
+    if (!user) return;
+    await supabase
+      .from("account_sessions")
+      .update({ force_disconnected: true, is_connected: false })
+      .eq("user_id", user.id)
+      .neq("device_id", deviceId.current);
+    
+    setHasConflict(false);
+    setOtherSessions([]);
+  }, [user]);
+
   return {
     currentSession,
     groupMembers,
+    otherSessions,
+    hasConflict,
     isGroupMaster,
     groupId,
     loading,
     disconnectMember,
+    disconnectAllOthers,
     reconnectMember,
   };
 }

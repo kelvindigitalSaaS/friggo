@@ -37,6 +37,11 @@ export const ACHIEVEMENT_TEMPLATES: AchievementTemplate[] = [
   { id: "garbage_1", category: "garbage", name: "Primeiro Aviso", description: "Configurou o lembrete do lixo", icon: "🗑️", threshold: 1 },
   { id: "garbage_2", category: "garbage", name: "Vizinho Responsável", description: "Marcou o lixo como feito 3 vezes", icon: "✅", threshold: 3 },
   { id: "garbage_3", category: "garbage", name: "Guardião da Coleta", description: "Marcou o lixo como feito 10 vezes", icon: "🌿", threshold: 10 },
+
+  // --- Assinatura ---
+  { id: "sub_1", category: "subscription", name: "Kazeiro Oficial", description: "Primeiro mês de assinatura concluído", icon: "💎", threshold: 1 },
+  { id: "sub_2", category: "subscription", name: "Fiel à Kaza", description: "6 meses de assinatura", icon: "👑", threshold: 6 },
+  { id: "sub_3", category: "subscription", name: "Lenda da Organização", description: "1 ano de assinatura", icon: "🌌", threshold: 12 },
 ];
 
 export type AchievementCounters = {
@@ -48,6 +53,7 @@ export type AchievementCounters = {
   mealPlanCount: number;
   garbageSetups: number;
   garbageDone: number;
+  subscriptionMonths: number;
 };
 
 export function getProgressForAchievement(
@@ -62,6 +68,7 @@ export function getProgressForAchievement(
     case "mealplan": return counters.mealPlanCount;
     case "register": return counters.addedCount;
     case "garbage": return achievement.id === "garbage_1" ? counters.garbageSetups : counters.garbageDone;
+    case "subscription": return counters.subscriptionMonths;
     default: return 0;
   }
 }

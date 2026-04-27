@@ -12,6 +12,7 @@ import {
 } from "@/data/achievements";
 import { useKaza } from "@/contexts/KazaContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAchievementRow } from "@/integrations/supabase/types";
 import { toast } from "sonner";
@@ -56,6 +57,7 @@ const NOOP_CTX: AchievementsContextType = {
 export function AchievementsProvider({ children }: { children: React.ReactNode }) {
   const { isSubAccount, homeId } = useKaza();
   const { user } = useAuth();
+  const { subscription } = useSubscription();
 
   const [dbCounters, setDbCounters] = useState<DbCounters>(EMPTY_DB);
   const dbCountersRef = useRef<DbCounters>(EMPTY_DB);
@@ -107,7 +109,15 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
     mealPlanCount:       dbCountersRef.current.meal_plan_count,
     garbageSetups:       dbCountersRef.current.garbage_setups,
     garbageDone:         dbCountersRef.current.garbage_done,
-  }), [historyCounters]);
+    subscriptionMonths:  (() => {
+      if (!subscription || !subscription.isActive) return 0;
+      const start = new Date(subscription.startedAt);
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - start.getTime());
+      const diffMonths = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 30.44));
+      return Math.max(0, diffMonths) + 1; // +1 because achievement "sub_1" is "first month concluded" (active)
+    })(),
+  }), [historyCounters, subscription]);
 
   const achievements = useMemo(
     () => buildAchievements(buildCounters(), dbCountersRef.current.unlocked ?? {}),

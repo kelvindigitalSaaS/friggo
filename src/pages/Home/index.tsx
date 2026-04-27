@@ -10,6 +10,10 @@ import { SettingsTab } from "./components/tabs/SettingsTab";
 import Onboarding from "@/pages/Onboarding";
 import { motion, AnimatePresence } from "framer-motion";
 import { useHomeLogic } from "./logic/useHomeLogic";
+import { useAccountSession } from "@/hooks/useAccountSession";
+import { SessionConflictModal } from "./components/SessionConflictModal";
+import { useKaza } from "@/contexts/KazaContext";
+import { useAuth } from "@/hooks/useAuth";
 
 function LoadingScreen() {
   return (
@@ -47,6 +51,10 @@ function KazaApp() {
     authLoading
   } = useHomeLogic();
 
+  const { homeId } = useKaza();
+  const { signOut } = useAuth();
+  const { hasConflict, otherSessions, disconnectAllOthers } = useAccountSession(homeId);
+
   if (!authLoading && !user) {
     return <Navigate to="/auth" replace />;
   }
@@ -81,6 +89,13 @@ function KazaApp() {
       </main>
       <FabAddButton activeTab={activeTab} />
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+
+      <SessionConflictModal
+        isOpen={hasConflict}
+        sessions={otherSessions}
+        onDisconnectAll={disconnectAllOthers}
+        onCancel={() => signOut()}
+      />
     </div>
   );
 }

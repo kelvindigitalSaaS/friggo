@@ -13,14 +13,6 @@ import { cn } from '@/lib/utils';
 import { ItemLocation, KazaItem } from '@/types/kaza';
 import { toast } from 'sonner';
 
-const locationFilters: { id: ItemLocation | 'all'; label: string; labelEn: string; labelEs: string; icon: React.ElementType }[] = [
-    { id: 'all', label: 'Todos', labelEn: 'All', labelEs: 'Todos', icon: Package },
-    { id: 'fridge', label: 'Geladeira', labelEn: 'Fridge', labelEs: 'Nevera', icon: Refrigerator },
-    { id: 'freezer', label: 'Freezer', labelEn: 'Freezer', labelEs: 'Congelador', icon: Snowflake },
-    { id: 'pantry', label: 'Dispensa', labelEn: 'Pantry', labelEs: 'Despensa', icon: Package },
-    { id: 'cleaning', label: 'Limpeza', labelEn: 'Cleaning', labelEs: 'Limpieza', icon: Droplets },
-];
-
 export function FridgeTab() {
     const { items, removeItem, updateItem, consumables, onboardingData, toggleSection: toggleContextSection, isSubAccount } = useKaza();
     const { language, t } = useLanguage();
@@ -39,6 +31,27 @@ export function FridgeTab() {
     const [editQty, setEditQty] = useState('');
     const [editLocation, setEditLocation] = useState<ItemLocation>('fridge');
 
+    const locationFilters: { id: ItemLocation | 'all'; label: string; icon: React.ElementType }[] = [
+        { id: 'all', label: t.all, icon: Package },
+        { id: 'fridge', label: t.fridge, icon: Refrigerator },
+        { id: 'freezer', label: t.freezer, icon: Snowflake },
+        { id: 'pantry', label: t.pantry, icon: Package },
+        { id: 'cleaning', label: t.cleaning, icon: Droplets },
+    ];
+
+    const categoryLabels: Record<string, string> = {
+        fruit: t.catFruit,
+        vegetable: t.catVegetable,
+        meat: t.catMeat,
+        dairy: t.catDairy,
+        cooked: t.catCooked,
+        frozen: t.catFrozen,
+        beverage: t.catBeverage,
+        pantry: t.catPantry,
+        cleaning: t.catCleaning,
+        hygiene: t.catHygiene,
+    };
+
     const filteredItems = items.filter((item) => {
         const matchesLocation = activeFilter === 'all' || item.location === activeFilter;
         const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -52,65 +65,8 @@ export function FridgeTab() {
         return acc;
     }, {} as Record<string, typeof items>);
 
-    const categoryLabels: Record<string, Record<string, string>> = {
-        fruit: { 'pt-BR': '🍎 Frutas', en: '🍎 Fruits', es: '🍎 Frutas' },
-        vegetable: { 'pt-BR': '🥬 Legumes e Verduras', en: '🥬 Vegetables', es: '🥬 Verduras' },
-        meat: { 'pt-BR': '🍖 Carnes', en: '🍖 Meat', es: '🍖 Carnes' },
-        dairy: { 'pt-BR': '🥛 Laticínios', en: '🥛 Dairy', es: '🥛 Lácteos' },
-        cooked: { 'pt-BR': '🍲 Comidas Prontas', en: '🍲 Prepared Foods', es: '🍲 Comidas Preparadas' },
-        frozen: { 'pt-BR': '❄️ Congelados', en: '❄️ Frozen', es: '❄️ Congelados' },
-        beverage: { 'pt-BR': '🥤 Bebidas', en: '🥤 Beverages', es: '🥤 Bebidas' },
-        pantry: { 'pt-BR': '🏪 Dispensa', en: '🏪 Pantry', es: '🏪 Despensa' },
-        cleaning: { 'pt-BR': '🧹 Limpeza', en: '🧹 Cleaning', es: '🧹 Limpieza' },
-        hygiene: { 'pt-BR': '🧴 Higiene', en: '🧴 Hygiene', es: '🧴 Higiene' },
-    };
-
-    const labels = {
-        'pt-BR': {
-            pantry: 'Dispensa', itemsTotal: 'itens no total', scanner: 'Scanner',
-            searchItems: 'Buscar itens...', noItems: 'Nenhum item encontrado',
-            tryAnother: 'Tente outra busca', addItems: 'Adicione itens usando o botão +',
-            items: 'Itens', consumables: 'Consumíveis', select: 'Selecionar',
-            selectAll: 'Todos', deleteSelected: 'Excluir', cancel: 'Cancelar',
-            selected: 'selecionados', deleted: 'itens excluídos', edit: 'Editar',
-            editItem: 'Editar Item', save: 'Salvar', qty: 'Quantidade', location: 'Local',
-            refreeze: 'Recongelar', refrozen: 'recongelado', lowStock: 'Estoque baixo',
-            daysLeft: 'dias restantes', runningLow: 'Acabando',
-        },
-        en: {
-            pantry: 'Pantry', itemsTotal: 'total items', scanner: 'Scanner',
-            searchItems: 'Search items...', noItems: 'No items found',
-            tryAnother: 'Try another search', addItems: 'Add items using the + button',
-            items: 'Items', consumables: 'Consumables', select: 'Select',
-            selectAll: 'All', deleteSelected: 'Delete', cancel: 'Cancel',
-            selected: 'selected', deleted: 'items deleted', edit: 'Edit',
-            editItem: 'Edit Item', save: 'Save', qty: 'Quantity', location: 'Location',
-            refreeze: 'Re-freeze', refrozen: 're-frozen', lowStock: 'Low stock',
-            daysLeft: 'days left', runningLow: 'Running low',
-        },
-        es: {
-            pantry: 'Despensa', itemsTotal: 'artículos en total', scanner: 'Escáner',
-            searchItems: 'Buscar artículos...', noItems: 'No se encontraron artículos',
-            tryAnother: 'Intenta otra búsqueda', addItems: 'Añade artículos usando el botón +',
-            items: 'Artículos', consumables: 'Consumibles', select: 'Seleccionar',
-            selectAll: 'Todos', deleteSelected: 'Eliminar', cancel: 'Cancelar',
-            selected: 'seleccionados', deleted: 'artículos eliminados', edit: 'Editar',
-            editItem: 'Editar Artículo', save: 'Guardar', qty: 'Cantidad', location: 'Ubicación',
-            refreeze: 'Recongelar', refrozen: 'recongelado', lowStock: 'Stock bajo',
-            daysLeft: 'días restantes', runningLow: 'Agotándose',
-        },
-    };
-
-    const l = labels[language];
-
     const toggleCategory = (category: string) => {
         setCollapsedCategories((prev) => ({ ...prev, [category]: !prev[category] }));
-    };
-
-    const getFilterLabel = (filter: typeof locationFilters[0]) => {
-        if (language === 'en') return filter.labelEn;
-        if (language === 'es') return filter.labelEs;
-        return filter.label;
     };
 
     // Selection handlers
@@ -135,7 +91,7 @@ export function FridgeTab() {
         const count = selectedItems.size;
         setSelectedItems(new Set());
         setSelectionMode(false);
-        toast.success(`${count} ${l.deleted}`);
+        toast.success(`${count} ${t.deleted}`);
     };
 
     const exitSelectionMode = () => {
@@ -162,7 +118,7 @@ export function FridgeTab() {
     // Re-freeze handler
     const refreezeItem = (item: KazaItem) => {
         updateItem(item.id, { location: 'freezer' });
-        toast.success(`${item.name} ${l.refrozen}`);
+        toast.success(`${item.name} ${t.refrozen}`);
     };
 
     const INTERVAL_FACTORS = {
@@ -182,8 +138,6 @@ export function FridgeTab() {
         return daysLeft <= 7 || c.currentStock <= (c.minStock || 0);
     });
 
-    const allSelected = selectionMode && selectedItems.size === filteredItems.length && filteredItems.length > 0;
-
     return (
         <div className="space-y-4 pb-nav-safe">
 
@@ -193,15 +147,15 @@ export function FridgeTab() {
                     <div className="flex items-center gap-3">
                         <button onClick={selectAll} className="flex items-center gap-2 text-sm font-semibold text-primary active:scale-[0.97] transition-all">
                             {selectedItems.size === filteredItems.length ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
-                            {l.selectAll}
+                            {t.selectAll}
                         </button>
-                        <span className="text-xs text-muted-foreground">{selectedItems.size} {l.selected}</span>
+                        <span className="text-xs text-muted-foreground">{selectedItems.size} {t.selected}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         {selectedItems.size > 0 && !isSubAccount && (
                             <Button onClick={deleteSelected} variant="destructive" size="sm" className="rounded-xl h-9 gap-1.5 active:scale-[0.97] transition-all">
                                 <Trash2 className="h-3.5 w-3.5" />
-                                {l.deleteSelected} ({selectedItems.size})
+                                {t.deleteSelected} ({selectedItems.size})
                             </Button>
                         )}
                         <button
@@ -209,7 +163,7 @@ export function FridgeTab() {
                             className="flex items-center gap-1.5 rounded-xl bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/[0.04] dark:border-white/10 px-3 py-2 text-sm font-semibold text-foreground transition-all active:scale-[0.97] shadow-sm"
                         >
                             <X className="h-4 w-4" />
-                            {l.cancel}
+                            {t.cancel}
                         </button>
                     </div>
                 </div>
@@ -221,7 +175,7 @@ export function FridgeTab() {
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                             <AlertTriangle className="h-4 w-4 text-warning" />
-                            <p className="text-sm font-bold text-warning">{l.runningLow}</p>
+                            <p className="text-sm font-bold text-warning">{t.runningLow}</p>
                         </div>
                         <button
                             onClick={() => toggleContextSection('fridge-low-stock')}
@@ -238,7 +192,7 @@ export function FridgeTab() {
                             return (
                                 <div key={c.id} className="flex items-center justify-between rounded-xl bg-white/60 dark:bg-white/5 px-3 py-2">
                                     <span className="text-sm font-medium">{c.icon} {c.name}</span>
-                                    <span className="text-xs font-bold text-warning">{daysLeft} {l.daysLeft}</span>
+                                    <span className="text-xs font-bold text-warning">{daysLeft} {t.days}</span>
                                 </div>
                             );
                         })}
@@ -251,11 +205,11 @@ export function FridgeTab() {
                 <TabsList className="w-full grid grid-cols-2 h-12 rounded-2xl bg-black/[0.04] dark:bg-white/[0.06] p-1">
                     <TabsTrigger value="items" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-white/10 data-[state=active]:shadow-sm gap-2 font-semibold">
                         <Package className="h-4 w-4" />
-                        {l.items}
+                        {t.items}
                     </TabsTrigger>
                     <TabsTrigger value="consumables" className="rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-white/10 data-[state=active]:shadow-sm gap-2 font-semibold">
                         <TrendingDown className="h-4 w-4" />
-                        {l.consumables}
+                        {t.consumables}
                         {lowStockConsumables.length > 0 && (
                             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-warning text-[10px] font-bold text-warning-foreground">{lowStockConsumables.length}</span>
                         )}
@@ -304,7 +258,7 @@ export function FridgeTab() {
                                                     <div className="flex items-center gap-3">
                                                         <Icon className="h-[18px] w-[18px] opacity-70" />
                                                         <span className="text-[14px]">
-                                                            {filter.id === 'all' ? (language === 'pt-BR' ? 'Todo o Estoque' : 'All Stock') : getFilterLabel(filter)}
+                                                            {filter.id === 'all' ? t.allStock : filter.label}
                                                         </span>
                                                     </div>
                                                     <span className={cn(
@@ -350,7 +304,7 @@ export function FridgeTab() {
                         <div className="relative animate-in slide-in-from-top-2 fade-in duration-200 z-10 -mx-1 mb-3">
                             <Search className="absolute left-5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground opacity-50 pointer-events-none" />
                             <Input
-                                placeholder={l.searchItems}
+                                placeholder={t.searchPlaceholder}
                                 value={searchQuery}
                                 autoFocus
                                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -367,17 +321,15 @@ export function FridgeTab() {
                         </div>
                     )}
 
-                    {/* Location Filters have been moved to dropdown title */}
-
                     {/* Items by Category with Collapsible */}
                     {Object.entries(groupedItems).length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                             <div className="mb-4 rounded-2xl bg-muted/50 p-5">
                                 <Package className="h-12 w-12 text-muted-foreground" />
                             </div>
-                            <p className="text-lg font-semibold text-foreground">{l.noItems}</p>
+                            <p className="text-lg font-semibold text-foreground">{t.noResults}</p>
                             <p className="mt-1 text-sm text-gray-500">
-                                {searchQuery ? l.tryAnother : l.addItems}
+                                {searchQuery ? t.tryAnother : t.addItemsBtn}
                             </p>
                             {searchQuery.trim().length > 0 && (
                                 <button
@@ -399,7 +351,7 @@ export function FridgeTab() {
                                     >
                                         <div className="flex items-center gap-3">
                                             <h2 className="text-[18px] font-black tracking-tight text-[#1a3d32] dark:text-emerald-50 group-hover:text-emerald-600 transition-colors">
-                                                {categoryLabels[category]?.[language] || category}
+                                                {categoryLabels[category] || category}
                                             </h2>
                                             <span className="flex h-5 items-center justify-center rounded-full bg-black/[0.04] dark:bg-white/[0.08] px-2 text-[11px] font-bold text-muted-foreground">
                                                 {categoryItems.length}
@@ -452,7 +404,7 @@ export function FridgeTab() {
                     {lowStockConsumables.length > 0 && !onboardingData?.hiddenSections?.includes('fridge-low-stock') && (
                         <div className="space-y-2 animate-fade-in mb-6">
                             <div className="flex items-center justify-between px-1 mb-2">
-                                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">{l.lowStock}</h3>
+                                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">{t.lowStock}</h3>
                                 <button
                                     onClick={() => toggleContextSection('fridge-low-stock')}
                                     className="flex h-6 w-6 items-center justify-center rounded-full bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted active:scale-90 transition-all"
@@ -506,12 +458,8 @@ export function FridgeTab() {
                                     <TrendingDown className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-foreground">
-                                        {language === 'pt-BR' ? 'Rastrear Consumíveis' : language === 'en' ? 'Track Consumables' : 'Rastrear Consumibles'}
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                        {language === 'pt-BR' ? 'Papel higiênico, detergente, etc.' : language === 'en' ? 'Toilet paper, detergent, etc.' : 'Papel higiénico, detergente, etc.'}
-                                    </p>
+                                    <p className="font-semibold text-foreground">{t.trackConsumables}</p>
+                                    <p className="text-xs text-gray-500">{t.trackConsumablesDesc}</p>
                                 </div>
                             </div>
                             <ChevronDown className={cn("h-5 w-5 text-gray-500 transition-transform duration-300", trackerOpen && "rotate-180")} />
@@ -523,8 +471,6 @@ export function FridgeTab() {
                             </div>
                         )}
                     </div>
-
-
                 </TabsContent>
             </Tabs>
 
@@ -535,11 +481,11 @@ export function FridgeTab() {
                         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-gray-300 dark:bg-gray-600" />
                         <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
                             <Edit3 className="h-5 w-5 text-primary" />
-                            {l.editItem}: {editingItem.name}
+                            {t.editItem}: {editingItem.name}
                         </h2>
                         <div className="space-y-4">
                             <div>
-                                <label className="text-sm font-semibold">{l.qty}</label>
+                                <label className="text-sm font-semibold">{t.qty}</label>
                                 <Input
                                     inputMode="decimal"
                                     type="text"
@@ -552,7 +498,7 @@ export function FridgeTab() {
                                 />
                             </div>
                             <div>
-                                <label className="text-sm font-semibold">{l.location}</label>
+                                <label className="text-sm font-semibold">{t.location}</label>
                                 <div className="flex gap-2 mt-2">
                                     {locationFilters.filter(f => f.id !== 'all').map(loc => (
                                         <button
@@ -565,13 +511,13 @@ export function FridgeTab() {
                                                     : "bg-white/80 dark:bg-white/5 text-muted-foreground border border-black/[0.04] dark:border-white/[0.06]"
                                             )}
                                         >
-                                            {getFilterLabel(loc)}
+                                            {loc.label}
                                         </button>
                                     ))}
                                 </div>
                             </div>
                             <Button onClick={saveEdit} className="w-full h-14 rounded-2xl text-base font-bold shadow-lg shadow-primary/25 transition-all active:scale-[0.97]">
-                                {l.save}
+                                {t.save}
                             </Button>
                         </div>
                     </div>

@@ -11,17 +11,21 @@ import {
     Thermometer,
     Leaf,
     Trophy,
-    Trophy,
     Flame,
     Droplets,
     Star,
-    Award
+    Award,
+    Share2,
+    CheckCircle2,
+    Calculator
 } from 'lucide-react';
 import { useAchievements } from '@/contexts/AchievementsContext';
 import { PageTransition } from '@/components/PageTransition';
 import { cn } from '@/lib/utils';
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { ptBR, es, enUS } from 'date-fns/locale';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 /* ── Ring chart SVG component ── */
 function ProgressRing({ percent, size = 120, stroke = 10, color = '#22c55e', bgColor = '#e5e7eb' }: { percent: number; size?: number; stroke?: number; color?: string; bgColor?: string }) {
@@ -42,7 +46,7 @@ function ProgressRing({ percent, size = 120, stroke = 10, color = '#22c55e', bgC
 function AnimatedNumber({ value, prefix = '', suffix = '' }: { value: number; prefix?: string; suffix?: string }) {
     return (
         <motion.span initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-            {prefix}{value}{suffix}
+            {prefix}{value.toFixed(2).replace('.', ',')}{suffix}
         </motion.span>
     );
 }
@@ -51,83 +55,11 @@ const fadeUp = { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } }
 
 export default function MonthlyReportPage() {
     const navigate = useNavigate();
-    const { language } = useLanguage();
+    const { t, language } = useLanguage();
     const { items, itemHistory } = useKaza();
     const { achievements } = useAchievements();
 
-    const labels = {
-        'pt-BR': {
-            title: 'Relatório Mensal',
-            subtitle: 'Resumo do seu consumo este mês',
-            consumed: 'Consumidos',
-            discarded: 'Descartados',
-            savings: 'Economia Estimada',
-            efficiency: 'Eficiência',
-            impactTitle: 'Seu Impacto Ambiental',
-            wasteReduced: 'menos desperdício',
-            topItems: 'Mais Consumidos',
-            noData: 'Sem dados ainda. Comece a registrar itens!',
-            emptyTopItems: 'Nenhum item registrado ainda.',
-            defrosted: 'Descongelados',
-            waterSaved: 'litros de água economizados',
-            co2Saved: 'kg CO₂ evitados',
-            mealsFromFridge: 'refeições da geladeira',
-            monthOf: 'Mês de',
-            itemsTracked: 'itens rastreados',
-            greatJob: 'Ótimo trabalho!',
-            keepGoing: 'Continue assim!',
-            needsAttention: 'Atenção ao desperdício',
-            perfect: 'Perfeito! Zero desperdício!',
-        },
-        'en': {
-            title: 'Monthly Report',
-            subtitle: 'Summary of your consumption this month',
-            consumed: 'Consumed',
-            discarded: 'Discarded',
-            savings: 'Estimated Savings',
-            efficiency: 'Efficiency',
-            impactTitle: 'Your Environmental Impact',
-            wasteReduced: 'less waste',
-            topItems: 'Most Consumed',
-            noData: 'No data yet. Start tracking items!',
-            emptyTopItems: 'No items registered yet.',
-            defrosted: 'Defrosted',
-            waterSaved: 'liters of water saved',
-            co2Saved: 'kg CO₂ avoided',
-            mealsFromFridge: 'meals from the fridge',
-            monthOf: 'Month of',
-            itemsTracked: 'items tracked',
-            greatJob: 'Great job!',
-            keepGoing: 'Keep it up!',
-            needsAttention: 'Watch your waste',
-            perfect: 'Perfect! Zero waste!',
-        },
-        'es': {
-            title: 'Reporte Mensual',
-            subtitle: 'Resumen de su consumo este mes',
-            consumed: 'Consumidos',
-            discarded: 'Descartados',
-            savings: 'Ahorro Estimado',
-            efficiency: 'Eficiencia',
-            impactTitle: 'Tu Impacto Ambiental',
-            wasteReduced: 'menos desperdicio',
-            topItems: 'Más Consumidos',
-            noData: 'Sin datos aún. ¡Comienza a registrar artículos!',
-            emptyTopItems: 'Ningún artículo registrado todavía.',
-            defrosted: 'Descongelados',
-            waterSaved: 'litros de agua ahorrados',
-            co2Saved: 'kg CO₂ evitados',
-            mealsFromFridge: 'comidas de la nevera',
-            monthOf: 'Mes de',
-            itemsTracked: 'artículos rastreados',
-            greatJob: '¡Buen trabajo!',
-            keepGoing: '¡Sigue así!',
-            needsAttention: 'Atención al desperdicio',
-            perfect: '¡Perfecto! ¡Cero desperdicio!',
-        }
-    };
-
-    const l = labels[language] || labels['pt-BR'];
+    const dateLocale = language === 'pt-BR' ? ptBR : language === 'es' ? es : enUS;
 
     const now = new Date();
     const monthStart = startOfMonth(now);
@@ -147,7 +79,9 @@ export default function MonthlyReportPage() {
     const totalActions = totalConsumed + totalDiscarded;
     const efficiencyPercent = totalActions > 0 ? Math.round((totalConsumed / totalActions) * 100) : 100;
 
-    const estimatedSavings = (totalConsumed * 8).toFixed(2).replace('.', ',');
+    // Honest logic: R$ 8,00 per item consumed (avoided waste)
+    const SAVINGS_PER_ITEM = 8;
+    const totalSavings = totalConsumed * SAVINGS_PER_ITEM;
     const waterSaved = Math.round(totalConsumed * 140); // ~140L per food item
     const co2Saved = (totalConsumed * 0.9).toFixed(1); // ~0.9kg CO2 per item
 
@@ -161,21 +95,45 @@ export default function MonthlyReportPage() {
         .map(([name, quantity]) => ({ name, quantity }));
     const topMax = topItemsRaw[0]?.quantity || 1;
 
-    const statusMsg = efficiencyPercent === 100 && totalActions > 0 ? l.perfect : efficiencyPercent >= 80 ? l.greatJob : efficiencyPercent >= 50 ? l.keepGoing : l.needsAttention;
     const ringColor = efficiencyPercent >= 80 ? '#22c55e' : efficiencyPercent >= 50 ? '#f59e0b' : '#ef4444';
+    const monthName = format(now, 'MMMM yyyy', { locale: dateLocale });
 
-    const monthName = format(now, 'MMMM yyyy');
+    const handleShare = async () => {
+        const shareText = language === 'pt-BR' 
+            ? `Economizei R$ ${totalSavings.toFixed(2).replace('.', ',')} este mês com o Kaza! Minha eficiência foi de ${efficiencyPercent}% e evitei o desperdício de ${totalConsumed} itens. 🍎📉`
+            : `I saved R$ ${totalSavings.toFixed(2).replace('.', ',')} this month with Kaza! My efficiency was ${efficiencyPercent}% and I avoided wasting ${totalConsumed} items. 🍎📉`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Meu Impacto com Kaza',
+                    text: shareText,
+                    url: window.location.origin,
+                });
+            } catch (err) {
+                console.error('Error sharing:', err);
+            }
+        } else {
+            navigator.clipboard.writeText(shareText);
+            toast.success(language === 'pt-BR' ? 'Resumo copiado para a área de transferência!' : 'Summary copied to clipboard!');
+        }
+    };
 
     return (
         <PageTransition direction="left" className="min-h-[100dvh] bg-[#fafafa] dark:bg-[#091f1c] pb-20">
-            <header className="sticky top-0 z-50 flex items-center gap-3 border-b border-black/[0.04] dark:border-white/[0.06] bg-[#fafafa]/80 dark:bg-[#091f1c]/80 px-4 py-4 backdrop-blur-2xl">
-                <button onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-2xl text-foreground bg-white/80 dark:bg-white/10 backdrop-blur-xl active:scale-[0.97] transition-all">
-                    <ArrowLeft className="h-5 w-5" />
-                </button>
-                <div>
-                    <h1 className="text-lg font-bold text-foreground leading-tight">{l.title}</h1>
-                    <p className="text-[11px] text-muted-foreground font-medium capitalize">{l.monthOf} {monthName}</p>
+            <header className="sticky top-0 z-50 flex items-center justify-between border-b border-black/[0.04] dark:border-white/[0.06] bg-[#fafafa]/80 dark:bg-[#091f1c]/80 px-4 py-4 backdrop-blur-2xl">
+                <div className="flex items-center gap-3">
+                    <button onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-2xl text-foreground bg-white/80 dark:bg-white/10 backdrop-blur-xl active:scale-[0.97] transition-all">
+                        <ArrowLeft className="h-5 w-5" />
+                    </button>
+                    <div>
+                        <h1 className="text-lg font-bold text-foreground leading-tight">{t.savingsTitle}</h1>
+                        <p className="text-[11px] text-muted-foreground font-medium capitalize">{t.home} • {monthName}</p>
+                    </div>
                 </div>
+                <button onClick={handleShare} className="flex h-10 w-10 items-center justify-center rounded-2xl text-primary bg-primary/10 active:scale-[0.97] transition-all">
+                    <Share2 className="h-5 w-5" />
+                </button>
             </header>
 
             <main className="mx-auto max-w-lg px-5 py-6 space-y-6">
@@ -186,21 +144,21 @@ export default function MonthlyReportPage() {
                     <div className="flex items-center gap-6">
                         <div className="relative">
                             <ProgressRing percent={efficiencyPercent} size={110} stroke={9} color={ringColor} />
-                            <div className="absolute inset-0 flex flex-col items-center justify-center rotate-0">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
                                 <span className="text-2xl font-black text-foreground">{efficiencyPercent}%</span>
-                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">{l.efficiency}</span>
+                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">{t.efficiency}</span>
                             </div>
                         </div>
                         <div className="flex-1 space-y-3">
                             <div>
-                                <p className="text-xs font-semibold text-muted-foreground">{l.savings}</p>
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t.monthlyReportSub}</p>
                                 <p className="text-3xl font-black text-foreground tracking-tight">
-                                    {totalConsumed > 0 ? <AnimatedNumber value={totalConsumed * 8} prefix="R$ " /> : '—'}
+                                    {totalConsumed > 0 ? <AnimatedNumber value={totalSavings} prefix="R$ " /> : 'R$ 0,00'}
                                 </p>
                             </div>
                             <div className="flex items-center gap-1.5 text-xs font-bold" style={{ color: ringColor }}>
-                                {efficiencyPercent >= 50 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                                {statusMsg}
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                {efficiencyPercent >= 80 ? t.greetingAllGood : t.tagline}
                             </div>
                         </div>
                     </div>
@@ -208,15 +166,29 @@ export default function MonthlyReportPage() {
                     <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full blur-3xl" style={{ background: ringColor, opacity: 0.07 }} />
                 </motion.div>
 
-                {/* ── Stats Strip ── */}
+                {/* ── Honest Methodology Card ── */}
                 <motion.div {...fadeUp} transition={{ duration: 0.5, delay: 0.1 }}
+                    className="rounded-2xl bg-amber-50/50 dark:bg-amber-500/5 border border-amber-200/50 dark:border-amber-500/10 p-4 flex gap-3">
+                    <div className="h-8 w-8 shrink-0 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                        <Calculator className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div className="space-y-1">
+                        <p className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">{t.savingsMethodology}</p>
+                        <p className="text-[11px] leading-relaxed text-amber-700/80 dark:text-amber-400/60 font-medium">
+                            {t.savingsExplanation}
+                        </p>
+                    </div>
+                </motion.div>
+
+                {/* ── Stats Strip ── */}
+                <motion.div {...fadeUp} transition={{ duration: 0.5, delay: 0.2 }}
                     className="grid grid-cols-3 gap-3">
                     {[
-                        { label: l.consumed, value: totalConsumed, icon: Utensils, color: '#22c55e', bg: 'bg-emerald-500/10' },
-                        { label: l.discarded, value: totalDiscarded, icon: Trash2, color: '#ef4444', bg: 'bg-red-500/10' },
-                        { label: l.defrosted, value: totalDefrosted, icon: Thermometer, color: '#3b82f6', bg: 'bg-blue-500/10' },
+                        { label: t.consumed, value: totalConsumed, icon: Utensils, color: '#22c55e', bg: 'bg-emerald-500/10' },
+                        { label: t.wasted, value: totalDiscarded, icon: Trash2, color: '#ef4444', bg: 'bg-red-500/10' },
+                        { label: t.defrosted, value: totalDefrosted, icon: Thermometer, color: '#3b82f6', bg: 'bg-blue-500/10' },
                     ].map((s, i) => (
-                        <motion.div key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.08 }}
+                        <motion.div key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.08 }}
                             className="flex flex-col items-center gap-2 rounded-2xl bg-white dark:bg-white/[0.04] border border-black/[0.04] dark:border-white/[0.06] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
                             <div className={cn('flex h-10 w-10 items-center justify-center rounded-xl', s.bg)}>
                                 <s.icon className="h-5 w-5" style={{ color: s.color }} />
@@ -227,36 +199,19 @@ export default function MonthlyReportPage() {
                     ))}
                 </motion.div>
 
-                {/* ── Fridge summary ── */}
-                <motion.div {...fadeUp} transition={{ duration: 0.5, delay: 0.2 }}
-                    className="flex items-center justify-between rounded-2xl bg-white dark:bg-white/[0.04] border border-black/[0.04] dark:border-white/[0.06] px-5 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
-                            <Flame className="h-4.5 w-4.5 text-primary" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-bold text-foreground">{totalItems} {l.itemsTracked}</p>
-                            <p className="text-[11px] text-muted-foreground capitalize">{monthName}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-primary">
-                        <TrendingUp className="h-3 w-3" /> {totalActions}
-                    </div>
-                </motion.div>
-
                 {/* ── Environmental Impact ── */}
                 <motion.section {...fadeUp} transition={{ duration: 0.5, delay: 0.3 }} className="space-y-3">
-                    <h3 className="text-[11px] font-black text-muted-foreground uppercase tracking-[2px] px-1">{l.impactTitle}</h3>
+                    <h3 className="text-[11px] font-black text-muted-foreground uppercase tracking-[2px] px-1">{t.impactTitle}</h3>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="flex flex-col gap-2 rounded-2xl bg-emerald-50 dark:bg-emerald-500/[0.06] border border-emerald-200/40 dark:border-emerald-500/10 p-4">
                             <Droplets className="h-5 w-5 text-emerald-500" />
-                            <p className="text-xl font-black text-emerald-700 dark:text-emerald-400">{waterSaved > 0 ? waterSaved : '—'}</p>
-                            <p className="text-[10px] font-semibold text-emerald-600/70 dark:text-emerald-400/60 uppercase tracking-wider leading-tight">{l.waterSaved}</p>
+                            <p className="text-xl font-black text-emerald-700 dark:text-emerald-400">{waterSaved > 0 ? `${waterSaved}L` : '—'}</p>
+                            <p className="text-[10px] font-semibold text-emerald-600/70 dark:text-emerald-400/60 uppercase tracking-wider leading-tight">{t.waterSavedDesc}</p>
                         </div>
                         <div className="flex flex-col gap-2 rounded-2xl bg-sky-50 dark:bg-sky-500/[0.06] border border-sky-200/40 dark:border-sky-500/10 p-4">
                             <Leaf className="h-5 w-5 text-sky-500" />
-                            <p className="text-xl font-black text-sky-700 dark:text-sky-400">{totalConsumed > 0 ? co2Saved : '—'}</p>
-                            <p className="text-[10px] font-semibold text-sky-600/70 dark:text-sky-400/60 uppercase tracking-wider leading-tight">{l.co2Saved}</p>
+                            <p className="text-xl font-black text-sky-700 dark:text-sky-400">{totalConsumed > 0 ? `${co2Saved}kg` : '—'}</p>
+                            <p className="text-[10px] font-semibold text-sky-600/70 dark:text-sky-400/60 uppercase tracking-wider leading-tight">{t.co2SavedDesc}</p>
                         </div>
                     </div>
                 </motion.section>
@@ -264,7 +219,7 @@ export default function MonthlyReportPage() {
                 {/* ── Top Items ── */}
                 <motion.section {...fadeUp} transition={{ duration: 0.5, delay: 0.4 }} className="space-y-3">
                     <div className="flex items-center justify-between px-1">
-                        <h3 className="text-[11px] font-black text-muted-foreground uppercase tracking-[2px]">{l.topItems}</h3>
+                        <h3 className="text-[11px] font-black text-muted-foreground uppercase tracking-[2px]">{language === 'pt-BR' ? 'Mais Consumidos' : 'Top Consumed'}</h3>
                         <Trophy className="h-4 w-4 text-amber-400" />
                     </div>
                     <div className="space-y-2">
@@ -289,7 +244,7 @@ export default function MonthlyReportPage() {
                         }) : (
                             <div className="flex items-center gap-3 rounded-2xl bg-white dark:bg-white/[0.04] border border-black/[0.04] dark:border-white/[0.06] px-5 py-4 text-muted-foreground">
                                 <Info className="h-4 w-4 shrink-0" />
-                                <p className="text-sm font-medium">{totalItems > 0 ? l.emptyTopItems : l.noData}</p>
+                                <p className="text-sm font-medium">{t.noResults}</p>
                             </div>
                         )}
                     </div>
@@ -355,6 +310,12 @@ export default function MonthlyReportPage() {
                         })}
                     </div>
                 </motion.section>
+
+                <motion.button onClick={handleShare} {...fadeUp} transition={{ duration: 0.5, delay: 0.6 }}
+                    className="w-full flex items-center justify-center gap-3 bg-primary text-white font-bold py-4 rounded-[22px] shadow-lg shadow-primary/20 active:scale-[0.98] transition-all">
+                    <Share2 className="h-5 w-5" />
+                    {t.shareReport}
+                </motion.button>
             </main>
         </PageTransition>
     );

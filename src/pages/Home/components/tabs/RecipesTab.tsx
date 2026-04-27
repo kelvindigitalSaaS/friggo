@@ -1,38 +1,44 @@
 import { useState, useMemo } from "react";
 import { useKaza } from "@/contexts/KazaContext";
 import { RecipeCard } from "../RecipeCard";
-import { allRecipes, findRecipesByIngredients, availableCategories } from "@/data/recipeDatabase";
-import { Sparkles, Heart, ChefHat, Search, BookOpen, Dumbbell, Tag, X, SlidersHorizontal } from "lucide-react";
+import { allRecipes, availableCategories } from "@/data/recipeDatabase";
+import { Heart, ChefHat, Search, BookOpen, X, SlidersHorizontal, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { PlannerTab } from "./PlannerTab";
-import { CalendarDays } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const FITNESS_KEYWORDS = [
-  "frango", "chicken", "peixe", "fish", "salada", "salad", "quinoa",
-  "ovo", "egg", "iogurte", "yogurt", "aveia", "oat", "proteína", "protein",
-  "brócolis", "broccoli", "batata doce", "sweet potato", "atum", "tuna",
-  "grelhado", "grilled", "vapor", "steam", "light", "fitness", "saudável", "healthy"
-];
-
 export function RecipesTab() {
-  const { shoppingList, addToShoppingList, items, favoriteRecipes, toggleFavoriteRecipe } = useKaza();
-  const { language } = useLanguage();
+  const { favoriteRecipes, toggleFavoriteRecipe } = useKaza();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [subTab, setSubTab] = useState<"recipes" | "planner" | "favorites">("recipes");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string|null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string|null>(null);
   const [visibleCount, setVisibleCount] = useState(30);
+
+  const availableDifficulties = useMemo(() => {
+    const diffs = new Set<string>();
+    allRecipes.forEach(r => {
+      if (r.difficulty) diffs.add(r.difficulty.toLowerCase());
+    });
+    return Array.from(diffs).sort();
+  }, []);
+
   const getFilteredRecipes = () => {
     let baseList = allRecipes;
 
     if (selectedCategory) {
       baseList = baseList.filter(r => r.category === selectedCategory);
+    }
+
+    if (selectedDifficulty) {
+      baseList = baseList.filter(r => r.difficulty?.toLowerCase() === selectedDifficulty.toLowerCase());
     }
 
     if (searchQuery) {
@@ -52,8 +58,6 @@ export function RecipesTab() {
     <div className="space-y-4 pb-nav-safe">
       {/* ── Header ── */}
       <div className="pt-2 flex flex-col gap-4">
-
-
         {/* Segmented control */}
         <div
           className="flex p-1 rounded-2xl w-full"
@@ -69,7 +73,7 @@ export function RecipesTab() {
             )}
           >
             <BookOpen className={cn("h-4 w-4", subTab === "recipes" ? "text-primary" : "text-muted-foreground")} />
-            {language === "en" ? "Catalog" : language === "es" ? "Catálogo" : "Catálogo"}
+            {t.recipesTitle}
           </button>
           <button
             onClick={() => setSubTab("planner")}
@@ -81,7 +85,7 @@ export function RecipesTab() {
             )}
           >
             <CalendarDays className={cn("h-4 w-4", subTab === "planner" ? "text-primary" : "text-muted-foreground")} />
-            {language === "en" ? "Plan" : language === "es" ? "Plan" : "Plano"}
+            {t.home}
           </button>
           <button
             onClick={() => setSubTab("favorites")}
@@ -107,7 +111,7 @@ export function RecipesTab() {
       ) : subTab === "favorites" ? (
         <>
           <p className="text-xs text-muted-foreground">
-            {favoriteRecipes.length} {language === "en" ? "favorite recipe" : language === "es" ? "receta favorita" : "receita favorita"}{favoriteRecipes.length !== 1 ? "s" : ""}
+            {favoriteRecipes.length} {t.recipes}
           </p>
           {favoriteRecipes.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -115,10 +119,10 @@ export function RecipesTab() {
                 <Heart className="h-12 w-12 text-muted-foreground" />
               </div>
               <p className="font-bold text-foreground">
-                {language === "en" ? "No favorites yet" : language === "es" ? "Sin favoritos" : "Nenhum favorito ainda"}
+                {t.noRecipes}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                {language === "en" ? "Tap the heart on a recipe to save it" : language === "es" ? "Toca el corazón en una receta para guardarla" : "Toque o coração em uma receita para salvá-la"}
+                {t.noResults}
               </p>
             </div>
           ) : (
@@ -132,7 +136,7 @@ export function RecipesTab() {
                       onClick={() => navigate(`/app/recipe/${recipe.id}`, { state: { recipe } })}
                     />
                     <button
-                      onClick={(e) => { e.stopPropagation(); toggleFavoriteRecipe(recipe.id); toast.success(language === "en" ? "Removed from favorites" : language === "es" ? "Eliminado de favoritos" : "Removido dos favoritos"); }}
+                      onClick={(e) => { e.stopPropagation(); toggleFavoriteRecipe(recipe.id); toast.success(t.delete); }}
                       className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 dark:bg-black/60 shadow-sm transition-all active:scale-90"
                     >
                       <Heart className="h-4 w-4 fill-red-500 text-red-500" />
@@ -144,14 +148,12 @@ export function RecipesTab() {
         </>
       ) : (
         <>
-
-
           {/* ── Search ── */}
           <div className="flex gap-2 relative">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar receitas..."
+                placeholder={t.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-11 rounded-2xl bg-white/80 dark:bg-white/5 backdrop-blur-xl border-black/[0.04] dark:border-white/[0.06] text-[15px]"
@@ -168,34 +170,56 @@ export function RecipesTab() {
             
             <button
                onClick={() => setFilterOpen(!filterOpen)}
-               className={cn("flex flex-shrink-0 items-center justify-center h-11 w-11 rounded-2xl border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 backdrop-blur-xl transition-all", filterOpen || selectedCategory ? "bg-emerald-500 text-white" : "text-muted-foreground")}
+               className={cn("flex flex-shrink-0 items-center justify-center h-11 w-11 rounded-2xl border-black/[0.04] dark:border-white/[0.06] bg-white/80 dark:bg-white/5 backdrop-blur-xl transition-all relative", filterOpen || selectedCategory || selectedDifficulty ? "bg-emerald-500 text-white" : "text-muted-foreground")}
             >
                <SlidersHorizontal className="h-4 w-4" />
+               {(selectedCategory || selectedDifficulty) && (
+                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full border-2 border-white dark:border-[#0F3D38]" />
+               )}
             </button>
             
             {filterOpen && (
                <>
                  <div className="fixed inset-0 z-40" onClick={() => setFilterOpen(false)} />
-                 <div className="absolute right-0 top-[110%] w-48 bg-white dark:bg-[#11302c] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-black/[0.04] p-2 rounded-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                    <div className="max-h-64 overflow-y-auto no-scrollbar flex flex-col">
-                      <button onClick={() => { setSelectedCategory(null); setFilterOpen(false); }} className={cn("w-full text-left px-3 py-2.5 text-[13px] rounded-xl transition-colors mb-1 shrink-0", !selectedCategory ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 font-bold" : "hover:bg-black/[0.03] dark:hover:bg-white/[0.05] text-foreground")}>
-                        Todas as Categorias
-                      </button>
-                      {availableCategories.map(cat => (
-                        <button key={cat} onClick={() => { setSelectedCategory(cat); setFilterOpen(false); }} className={cn("w-full text-left px-3 py-2.5 text-[13px] rounded-xl transition-colors shrink-0", selectedCategory === cat ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 font-bold" : "hover:bg-black/[0.03] dark:hover:bg-white/[0.05] text-foreground")}>
-                          {cat}
-                        </button>
-                      ))}
+                 <div className="absolute right-0 top-[110%] w-56 bg-white dark:bg-[#11302c] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-black/[0.04] p-3 rounded-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                    <div className="max-h-[70vh] overflow-y-auto no-scrollbar flex flex-col gap-4">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 px-1">{t.appearance}</p>
+                        <div className="flex flex-col gap-0.5">
+                          <button onClick={() => { setSelectedCategory(null); setFilterOpen(false); }} className={cn("w-full text-left px-3 py-2 text-[13px] rounded-xl transition-colors", !selectedCategory ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 font-bold" : "hover:bg-black/[0.03] dark:hover:bg-white/[0.05] text-foreground")}>
+                            Todas
+                          </button>
+                          {availableCategories.map(cat => (
+                            <button key={cat} onClick={() => { setSelectedCategory(cat); setFilterOpen(false); }} className={cn("w-full text-left px-3 py-2 text-[13px] rounded-xl transition-colors", selectedCategory === cat ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 font-bold" : "hover:bg-black/[0.03] dark:hover:bg-white/[0.05] text-foreground")}>
+                              {cat}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="border-t border-black/[0.04] dark:border-white/[0.06] pt-3">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 px-1">{t.security}</p>
+                        <div className="flex flex-col gap-0.5">
+                          <button onClick={() => { setSelectedDifficulty(null); setFilterOpen(false); }} className={cn("w-full text-left px-3 py-2 text-[13px] rounded-xl transition-colors", !selectedDifficulty ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 font-bold" : "hover:bg-black/[0.03] dark:hover:bg-white/[0.05] text-foreground")}>
+                            Todas
+                          </button>
+                          {availableDifficulties.map(diff => (
+                            <button key={diff} onClick={() => { setSelectedDifficulty(diff); setFilterOpen(false); }} className={cn("w-full text-left px-3 py-2 text-[13px] rounded-xl transition-colors capitalize", selectedDifficulty === diff ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 font-bold" : "hover:bg-black/[0.03] dark:hover:bg-white/[0.05] text-foreground")}>
+                              {diff}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                 </div>
+                  </div>
                </>
             )}
           </div>
 
           {/* ── Count ── */}
           <p className="text-xs text-muted-foreground">
-            {filteredRecipes.length} receita{filteredRecipes.length !== 1 ? "s" : ""}
-            {searchQuery ? ` para "${searchQuery}"` : ""}
+            {filteredRecipes.length} {t.recipes}
+            {searchQuery ? ` : "${searchQuery}"` : ""}
           </p>
 
           {/* ── Recipe grid ── */}
@@ -204,9 +228,8 @@ export function RecipesTab() {
               <div className="rounded-2xl bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/[0.04] dark:border-white/[0.06] p-4 mb-4">
                 <ChefHat className="h-12 w-12 text-muted-foreground" />
               </div>
-              <p className="font-bold text-foreground">Nenhuma receita encontrada</p>
-              <p className="text-sm text-muted-foreground mt-1">Tente outra categoria ou busca</p>
-
+              <p className="font-bold text-foreground">{t.noRecipes}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t.noResults}</p>
             </div>
           ) : (
             <>
@@ -231,7 +254,7 @@ export function RecipesTab() {
                   onClick={() => setVisibleCount((v) => v + 30)}
                 >
                   <BookOpen className="h-4 w-4 mr-2" />
-                  Ver mais ({filteredRecipes.length - visibleCount} receitas)
+                  {t.seeAll} ({filteredRecipes.length - visibleCount} {t.recipes})
                 </Button>
               )}
             </>
