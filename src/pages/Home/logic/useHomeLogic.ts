@@ -11,6 +11,9 @@ export function useHomeLogic() {
   
   const [activeTab, setActiveTab] = useState(() => {
     try {
+      // Support deep-link via ?tab=settings (etc)
+      const urlTab = new URLSearchParams(window.location.search).get("tab");
+      if (urlTab && TAB_ORDER.includes(urlTab)) return urlTab;
       const saved = sessionStorage.getItem(TAB_STORAGE_KEY);
       return saved && TAB_ORDER.includes(saved) ? saved : "home";
     } catch {

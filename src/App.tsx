@@ -309,6 +309,7 @@ const App = () => {
                               <Route path="/pagina-de-vendas/privacidade" element={<SalesPrivacyPage />} />
 
                               {/* App interno — todas as rotas protegidas sob /app */}
+                              <Route path="/app" element={<Navigate to="/app/home" replace />} />
                               <Route
                                 path="/app/home"
                                 element={<ProtectedRoute element={<Index />} allowLocked={true} />}

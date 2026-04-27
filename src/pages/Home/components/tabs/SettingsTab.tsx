@@ -42,7 +42,8 @@ import {
   MessageCircle,
   Trophy,
   Bug,
-  ShieldAlert
+  ShieldAlert,
+  RefreshCw
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useKaza } from "@/contexts/KazaContext";
