@@ -18,9 +18,19 @@ export async function invalidateCacheIfNeeded() {
     if (storedVersion !== CACHE_VERSION) {
       console.log(`🔄 Cache version outdated: ${storedVersion} → ${CACHE_VERSION}`);
 
+      // Preserva dados críticos (fila de sync e erros) antes de limpar
+      const syncQueue = localStorage.getItem('kaza_sync_queue');
+      const errorQueue = localStorage.getItem('kaza_error_queue');
+      const userSession = localStorage.getItem('sb-nrfketkwajzndasghxqy-auth-token'); // Preserva sessão para evitar logout surpresa
+
       // Clear all storage
       localStorage.clear();
       sessionStorage.clear();
+
+      // Restaura dados preservados
+      if (syncQueue) localStorage.setItem('kaza_sync_queue', syncQueue);
+      if (errorQueue) localStorage.setItem('kaza_error_queue', errorQueue);
+      if (userSession) localStorage.setItem('sb-nrfketkwajzndasghxqy-auth-token', userSession);
 
       // Clear IndexedDB (if used)
       if (window.indexedDB && 'databases' in window.indexedDB) {

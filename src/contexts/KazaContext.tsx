@@ -185,54 +185,6 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     };
   }, [user?.user_metadata?.name, language]);
 
-  const updateNotificationPreferencesLegacy = async (
-    prefs: Partial<any>
-  ) => {
-    if (!user) {
-      showError("Erro ao salvar preferências", "Usuário não autenticado");
-      return;
-    }
-    const hid = homeId || localStorage.getItem("kaza-home-id");
-    if (!hid) {
-      showError("Erro ao salvar preferências", "Home ID não encontrado");
-      return;
-    }
-
-    try {
-      const patch: Record<string, unknown> = {
-        user_id: user.id,
-        home_id: hid,
-        ...prefs,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { data: existing, error: selectError } = await (supabase as any)
-        .from("notification_preferences")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("home_id", hid)
-        .maybeSingle();
-
-      if (selectError && selectError.code !== "PGRST116") {
-        throw selectError;
-      }
-
-      const { error } = existing
-        ? await (supabase as any).from("notification_preferences").update(patch).eq("user_id", user.id).eq("home_id", hid)
-        : await (supabase as any).from("notification_preferences").insert(patch);
-
-      if (error) throw error;
-
-      setNotificationPrefs((prev) => (prev ? { ...prev, ...prefs } : null));
-      toast({
-        title: language === "pt-BR" ? "Sucesso" : "Success",
-        description: language === "pt-BR" ? "Preferências salvas!" : "Preferences saved!",
-      });
-    } catch (error) {
-      console.error("Error updating notification preferences:", error);
-      showError("Erro ao salvar preferências", error);
-    }
-  };
 
   // Detect if current user is a sub-account (member of someone else's group, not master)
   useEffect(() => {
@@ -444,9 +396,9 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         homeSettingsRes,
         notifPrefsRes
       ] = await Promise.all([
-        supabase.from("items").select("*").eq("home_id", hid).order("created_at", { ascending: false }),
-        supabase.from("shopping_items").select("*").eq("home_id", hid).order("created_at", { ascending: false }),
-        supabase.from("consumables").select("*").eq("home_id", hid),
+        supabase.from("items").select("*").eq("home_id", hid).is("deleted_at", null).order("created_at", { ascending: false }),
+        supabase.from("shopping_items").select("*").eq("home_id", hid).is("deleted_at", null).order("created_at", { ascending: false }),
+        supabase.from("consumables").select("*").eq("home_id", hid).is("deleted_at", null),
         supabase.from("user_recipe_favorites").select("recipe_id").eq("user_id", user.id),
         supabase.from("meal_plans").select("*").eq("home_id", hid).order("planned_date", { ascending: true }),
         supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
@@ -810,16 +762,19 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     }
     try {
       const { error } = await supabase
-        .from("items").delete().eq("id", id).eq("home_id", homeId);
+        .from("items")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id)
+        .eq("home_id", homeId);
       if (error) throw error;
       setItems((prev) => prev.filter((i) => i.id !== id));
     } catch (err) {
       // Offline fallback
       setItems((prev) => prev.filter((i) => i.id !== id));
       addToSyncQueue({
-        method: "DELETE",
+        method: "UPDATE",
         table: "items",
-        payload: { id }
+        payload: { id, deleted_at: new Date().toISOString() }
       });
     }
   };
@@ -932,16 +887,19 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     }
     try {
       const { error } = await supabase
-        .from("shopping_items").delete().eq("id", id).eq("home_id", homeId);
+        .from("shopping_items")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id)
+        .eq("home_id", homeId);
       if (error) throw error;
       setShoppingList((prev) => prev.filter((i) => i.id !== id));
     } catch (err) {
       // Offline fallback
       setShoppingList((prev) => prev.filter((i) => i.id !== id));
       addToSyncQueue({
-        method: "DELETE",
+        method: "UPDATE",
         table: "shopping_items",
-        payload: { id }
+        payload: { id, deleted_at: new Date().toISOString() }
       });
     }
   };
@@ -984,7 +942,9 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     }
     try {
       const { error } = await supabase
-        .from("shopping_items").delete().eq("home_id", homeId);
+        .from("shopping_items")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("home_id", homeId);
       if (error) throw error;
       setShoppingList([]);
     } catch (err) {
@@ -1130,16 +1090,19 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     }
     try {
       const { error } = await supabase
-        .from("consumables").delete().eq("id", id).eq("home_id", homeId);
+        .from("consumables")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id)
+        .eq("home_id", homeId);
       if (error) throw error;
       setConsumables((prev) => prev.filter((i) => i.id !== id));
     } catch (err) {
       // Offline fallback
       setConsumables((prev) => prev.filter((i) => i.id !== id));
       addToSyncQueue({
-        method: "DELETE",
+        method: "UPDATE",
         table: "consumables",
-        payload: { id }
+        payload: { id, deleted_at: new Date().toISOString() }
       });
     }
   };
@@ -1151,7 +1114,9 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     }
     try {
       const { error } = await supabase
-        .from("consumables").delete().eq("home_id", homeId);
+        .from("consumables")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("home_id", homeId);
       if (error) throw error;
       setConsumables([]);
     } catch (err) {
@@ -1249,20 +1214,22 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           created_by: data.created_by
         }]);
 
-        // Schedule local notification if time is set
-        if (entry.planned_time) {
-          const notifTime = new Date(`${entry.planned_date}T${entry.planned_time}`);
-          if (notifTime > new Date()) {
-            await scheduleLocalNotification({
-              title: "Refeição planejada",
-              body: `${entry.recipe_name} — ${entry.meal_type} às ${entry.planned_time}`,
-              scheduleAt: notifTime,
-              category: "meal-plan"
-            }).catch(err => {
-              if (import.meta.env.DEV) console.error("Erro ao agendar notificação local:", err);
-            });
+          if (entry.planned_time) {
+            const notifTime = new Date(`${entry.planned_date}T${entry.planned_time}`);
+            const now = new Date();
+            if (notifTime > now) {
+              const delayMs = notifTime.getTime() - now.getTime();
+              await scheduleLocalNotification(
+                "Refeição planejada",
+                `${entry.recipe_name} — ${entry.meal_type} às ${entry.planned_time}`,
+                delayMs,
+                `meal-${data.id}`,
+                "meal-plan"
+              ).catch(err => {
+                if (import.meta.env.DEV) console.error("Erro ao agendar notificação local:", err);
+              });
+            }
           }
-        }
 
         // Send push to group members if enabled
         if (entry.notify_members) {
@@ -1516,11 +1483,14 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     if (!user || !homeId) return;
     try {
       setLoading(true);
-      // Apagar todos os dados vinculados à casa atual
-      const { error: err1 } = await supabase.from("items").delete().eq("home_id", homeId);
-      const { error: err2 } = await supabase.from("shopping_items").delete().eq("home_id", homeId);
-      const { error: err3 } = await supabase.from("consumables").delete().eq("home_id", homeId);
-      const { error: err4 } = await supabase.from("item_history").delete().eq("home_id", homeId);
+      const now = new Date().toISOString();
+      // Apagar todos os dados vinculados à casa atual (Soft Delete para os auditáveis)
+      const { error: err1 } = await supabase.from("items").update({ deleted_at: now }).eq("home_id", homeId);
+      const { error: err2 } = await supabase.from("shopping_items").update({ deleted_at: now }).eq("home_id", homeId);
+      const { error: err3 } = await supabase.from("consumables").update({ deleted_at: now }).eq("home_id", homeId);
+      const { error: err4 } = await supabase.from("item_history").update({ deleted_at: now }).eq("home_id", homeId);
+      
+      // Tabelas que não possuem soft delete ainda são limpas permanentemente
       const { error: err5 } = await supabase.from("meal_plans").delete().eq("home_id", homeId);
       const { error: err6 } = await supabase.from("home_members").delete().eq("user_id", user.id);
       const { error: err7 } = await supabase.from("notification_preferences").delete().eq("user_id", user.id);

@@ -253,7 +253,7 @@
 **Slide 5 (CTA)**
 > Com o KAZA, você controla validades, planeja refeições e compra só o necessário.
 > Bom pro seu bolso. Bom pro planeta.
-> **Baixe grátis agora.**
+> **Teste grátis agora.**
 
 ---
 
@@ -328,7 +328,7 @@
 **Slide 5 (CTA)**
 > A defesa contra tudo isso é simples: entrar com lista pronta e saber o que já tem em casa.
 > O KAZA monta sua lista automaticamente com base no seu estoque.
-> **Baixe e vá ao mercado só com o que realmente precisa.**
+> **Instale e vá ao mercado só com o que realmente precisa.**
 
 ---
 
@@ -354,32 +354,13 @@
 **Slide 5 (CTA)**
 > Tudo isso começa com um sistema simples.
 > O KAZA foi feito pra isso: organização real, sem complicação.
-> **Crie sua conta grátis hoje.**
+> **Crie sua conta e comece a testar hoje mesmo.**
 
 ---
 
-## Carrossel 15 — Por Que Você Come Mal Mesmo Querendo Comer Bem
 
-**Slide 1 (Gancho)**
-> 74% das pessoas dizem que querem comer mais saudável.
-> Mas só 12% conseguem manter por mais de 2 semanas. Por quê? 👇
 
-**Slide 2**
-> O problema raramente é falta de vontade.
-> É **carga cognitiva:** no final do dia cansativo, você não tem energia pra decidir o que cozinhar.
 
-**Slide 3**
-> Quando a decisão fica pra última hora, o cérebro escolha o **caminho mais fácil:**
-> delivery, congelado, ou o que tiver mais rápido à vista.
-
-**Slide 4**
-> A solução dos nutricionistas é tirar a decisão do momento cansativo.
-> Planejar antes = escolhas melhores com menos esforço.
-
-**Slide 5 (CTA)**
-> O KAZA tem planejador de refeições integrado com o seu estoque.
-> Você decide no início da semana com a cabeça fresca — e só segue o plano.
-> **Experimente 7 dias grátis.**
 
 ---
 
@@ -404,7 +385,7 @@
 **Slide 5 (CTA)**
 > O KAZA organiza seu estoque e sugere receitas com o que você já tem em casa.
 > Menos delivery. Mais dinheiro sobrando.
-> **Baixe grátis agora.**
+> **Instale e teste grátis por 7 dias.**
 
 ---
 
@@ -458,7 +439,7 @@
 **Slide 5 (CTA)**
 > O KAZA digitaliza esses hábitos e os coloca no seu celular.
 > A sabedoria de antigamente com a praticidade de hoje.
-> **Baixe grátis e comece agora.**
+> **Instale hoje mesmo e teste por 7 dias grátis.**
 
 ---
 
