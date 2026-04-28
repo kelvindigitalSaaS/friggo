@@ -227,22 +227,27 @@ export function useConsumableLogic() {
         setScreen('list');
     };
 
-    const handleSaveEdit = () => {
+    const handleSaveEdit = async () => {
         if (!editItem) return;
         const newDaily = editDailyConsumption === '' ? editItem.dailyConsumption : parseFormattedNumber(editDailyConsumption);
         const newMin = editMinStock === '' ? editItem.minStock : parseFormattedNumber(editMinStock);
-        
-        updateConsumable(editItem.id, {
-            name: editName || editItem.name,
-            icon: editIcon || editItem.icon,
-            dailyConsumption: newDaily,
-            usageInterval: editUsageInterval,
-            minStock: newMin,
-        });
-        
-        setEditItem(null);
-        setScreen('list');
-        toast.success(l.save);
+
+        try {
+            await updateConsumable(editItem.id, {
+                name: editName || editItem.name,
+                icon: editIcon || editItem.icon,
+                dailyConsumption: newDaily,
+                usageInterval: editUsageInterval,
+                minStock: newMin,
+            });
+
+            setEditItem(null);
+            setScreen('list');
+            toast.success(l.save);
+        } catch (err) {
+            toast.error(language === 'pt-BR' ? 'Erro ao salvar' : 'Error saving');
+            console.error('Error updating consumable:', err);
+        }
     };
 
     const openEdit = (item: ConsumableItem) => {

@@ -1026,40 +1026,41 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
       return;
     }
+
+    const patch: any = {};
+    if (updates.name !== undefined) patch.name = updates.name;
+    if (updates.icon !== undefined) patch.icon = updates.icon;
+    if (updates.category !== undefined) patch.category = updates.category;
+    if (updates.currentStock !== undefined) patch.current_stock = updates.currentStock;
+    if (updates.unit !== undefined) patch.unit = updates.unit;
+    if (updates.dailyConsumption !== undefined) patch.daily_consumption = updates.dailyConsumption;
+    if (updates.minStock !== undefined) patch.min_stock = updates.minStock;
+    if (updates.usageInterval !== undefined) patch.usage_interval = updates.usageInterval;
+
     try {
-      const patch: any = {};
-      if (updates.name !== undefined) patch.name = updates.name;
-      if (updates.icon !== undefined) patch.icon = updates.icon;
-      if (updates.category !== undefined) patch.category = updates.category;
-      if (updates.currentStock !== undefined) patch.current_stock = updates.currentStock;
-      if (updates.unit !== undefined) patch.unit = updates.unit;
-      if (updates.dailyConsumption !== undefined) patch.daily_consumption = updates.dailyConsumption;
-      if (updates.minStock !== undefined) patch.min_stock = updates.minStock;
-      if (updates.usageInterval !== undefined) patch.usage_interval = updates.usageInterval;
       const { error } = await supabase
-        .from("consumables").update(patch).eq("id", id).eq("home_id", homeId);
-      if (error) throw error;
+        .from("consumables")
+        .update(patch)
+        .eq("id", id)
+        .eq("home_id", homeId);
+
+      if (error) {
+        console.error("Supabase error updating consumable:", error);
+        throw new Error(`Failed to update consumable: ${error.message}`);
+      }
+
       setConsumables((prev) =>
         prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
     } catch (err) {
       // Offline fallback
+      console.warn("Update failed, adding to sync queue:", err);
       setConsumables((prev) =>
         prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
-      
-      const patch: any = { id };
-      if (updates.name !== undefined) patch.name = updates.name;
-      if (updates.icon !== undefined) patch.icon = updates.icon;
-      if (updates.category !== undefined) patch.category = updates.category;
-      if (updates.currentStock !== undefined) patch.current_stock = updates.currentStock;
-      if (updates.unit !== undefined) patch.unit = updates.unit;
-      if (updates.dailyConsumption !== undefined) patch.daily_consumption = updates.dailyConsumption;
-      if (updates.minStock !== undefined) patch.min_stock = updates.minStock;
-      if (updates.usageInterval !== undefined) patch.usage_interval = updates.usageInterval;
 
       addToSyncQueue({
         method: "UPDATE",
         table: "consumables",
-        payload: patch
+        payload: { ...patch, id }
       });
     }
   };
