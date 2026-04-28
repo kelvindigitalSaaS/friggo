@@ -365,37 +365,36 @@ export function RecipesTabNew() {
 
   return (
     <div className="flex flex-col min-h-0">
-      {/* ── Favorites Toggle ── */}
-      {favoriteRecipes.length > 0 && (
-        <div className="px-4 pt-2 pb-1">
-          <button
-            onClick={() => {
-              setShowOnlyFavorites(!showOnlyFavorites);
-              setVisibleCount(VISIBLE_STEP);
-            }}
-            className={cn(
-              "flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-bold transition-all border",
-              showOnlyFavorites
-                ? "bg-red-500/20 text-red-600 border-red-500/30"
-                : "bg-black/[0.03] dark:bg-white/[0.04] text-foreground/60 border-black/[0.08] dark:border-white/[0.10]"
-            )}
-          >
-            <Heart className={cn("h-4 w-4", showOnlyFavorites && "fill-current")} />
-            <span>{favoriteRecipes.length}</span>
-          </button>
-        </div>
-      )}
-
       {/* ── Filters ── */}
-      <div className="px-4 pb-2 space-y-3 bg-background">
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <Input
-            placeholder={pt ? "Buscar receitas..." : "Search recipes..."}
-            value={query}
-            onChange={(e) => { setQuery(e.target.value); setVisibleCount(VISIBLE_STEP); }}
-            className="pl-10 h-11 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border-black/[0.06] dark:border-white/[0.08]"
-          />
+      <div className="px-4 pb-2 space-y-3 bg-background pt-2">
+        {/* Search + Favorites */}
+        <div className="flex gap-2 items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder={pt ? "Buscar receitas..." : "Search recipes..."}
+              value={query}
+              onChange={(e) => { setQuery(e.target.value); setVisibleCount(VISIBLE_STEP); }}
+              className="pl-10 h-11 rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] border-black/[0.06] dark:border-white/[0.08]"
+            />
+          </div>
+          {favoriteRecipes.length > 0 && (
+            <button
+              onClick={() => {
+                setShowOnlyFavorites(!showOnlyFavorites);
+                setVisibleCount(VISIBLE_STEP);
+              }}
+              className={cn(
+                "flex items-center gap-1.5 h-11 px-3 rounded-2xl text-xs font-bold transition-all border shrink-0",
+                showOnlyFavorites
+                  ? "bg-red-500/20 text-red-600 border-red-500/30"
+                  : "bg-black/[0.03] dark:bg-white/[0.04] text-foreground/60 border-black/[0.06] dark:border-white/[0.08]"
+              )}
+            >
+              <Heart className={cn("h-4 w-4", showOnlyFavorites && "fill-current")} />
+              <span>{favoriteRecipes.length}</span>
+            </button>
+          )}
         </div>
 
         {/* Category pills */}
