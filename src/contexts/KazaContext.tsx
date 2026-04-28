@@ -188,9 +188,15 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   const updateNotificationPreferencesLegacy = async (
     prefs: Partial<any>
   ) => {
-    if (!user) return;
+    if (!user) {
+      showError("Erro ao salvar preferências", "Usuário não autenticado");
+      return;
+    }
     const hid = homeId || localStorage.getItem("kaza-home-id");
-    if (!hid) return;
+    if (!hid) {
+      showError("Erro ao salvar preferências", "Home ID não encontrado");
+      return;
+    }
 
     try {
       const patch: Record<string, unknown> = {
@@ -200,12 +206,16 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         updated_at: new Date().toISOString(),
       };
 
-      const { data: existing } = await (supabase as any)
+      const { data: existing, error: selectError } = await (supabase as any)
         .from("notification_preferences")
         .select("id")
         .eq("user_id", user.id)
         .eq("home_id", hid)
         .maybeSingle();
+
+      if (selectError && selectError.code !== "PGRST116") {
+        throw selectError;
+      }
 
       const { error } = existing
         ? await (supabase as any).from("notification_preferences").update(patch).eq("user_id", user.id).eq("home_id", hid)
@@ -220,11 +230,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       });
     } catch (error) {
       console.error("Error updating notification preferences:", error);
-      toast({
-        variant: "destructive",
-        title: language === "pt-BR" ? "Erro" : "Error",
-        description: language === "pt-BR" ? "Erro ao salvar preferências" : "Error saving preferences",
-      });
+      showError("Erro ao salvar preferências", error);
     }
   };
 
@@ -1041,31 +1047,20 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   };
 
   const updateConsumable = async (id: string, updates: Partial<ConsumableItem>) => {
-    if (!user || !homeId) {
+    console.log("updateConsumable called with:", { id, updates, user: !!user, homeId });
+
+    if (!user) {
+      console.warn("No user, updating locally only");
       setConsumables((prev) =>
         prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
       return;
     }
-    try {
-      const patch: any = {};
-      if (updates.name !== undefined) patch.name = updates.name;
-      if (updates.icon !== undefined) patch.icon = updates.icon;
-      if (updates.category !== undefined) patch.category = updates.category;
-      if (updates.currentStock !== undefined) patch.current_stock = updates.currentStock;
-      if (updates.unit !== undefined) patch.unit = updates.unit;
-      if (updates.dailyConsumption !== undefined) patch.daily_consumption = updates.dailyConsumption;
-      if (updates.minStock !== undefined) patch.min_stock = updates.minStock;
-      if (updates.usageInterval !== undefined) patch.usage_interval = updates.usageInterval;
-      const { error } = await supabase
-        .from("consumables").update(patch).eq("id", id).eq("home_id", homeId);
-      if (error) throw error;
+
+    if (!homeId) {
+      console.warn("No homeId, updating locally and queueing for sync");
       setConsumables((prev) =>
         prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
-    } catch (err) {
-      // Offline fallback
-      setConsumables((prev) =>
-        prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
-      
+
       const patch: any = { id };
       if (updates.name !== undefined) patch.name = updates.name;
       if (updates.icon !== undefined) patch.icon = updates.icon;
@@ -1081,6 +1076,50 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         table: "consumables",
         payload: patch
       });
+      return;
+    }
+
+    const patch: any = {};
+    if (updates.name !== undefined) patch.name = updates.name;
+    if (updates.icon !== undefined) patch.icon = updates.icon;
+    if (updates.category !== undefined) patch.category = updates.category;
+    if (updates.currentStock !== undefined) patch.current_stock = updates.currentStock;
+    if (updates.unit !== undefined) patch.unit = updates.unit;
+    if (updates.dailyConsumption !== undefined) patch.daily_consumption = updates.dailyConsumption;
+    if (updates.minStock !== undefined) patch.min_stock = updates.minStock;
+    if (updates.usageInterval !== undefined) patch.usage_interval = updates.usageInterval;
+
+    try {
+      console.log("Updating consumable in Supabase with patch:", patch);
+      const { error, data } = await supabase
+        .from("consumables")
+        .update(patch)
+        .eq("id", id)
+        .eq("home_id", homeId)
+        .select();
+
+      console.log("Supabase response:", { error, data });
+
+      if (error) {
+        console.error("Supabase error updating consumable:", error);
+        throw new Error(`Failed to update consumable: ${error.message}`);
+      }
+
+      setConsumables((prev) =>
+        prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
+      console.log("Consumable updated successfully");
+    } catch (err) {
+      // Offline fallback
+      console.warn("Update failed, adding to sync queue:", err);
+      setConsumables((prev) =>
+        prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
+
+      addToSyncQueue({
+        method: "UPDATE",
+        table: "consumables",
+        payload: { ...patch, id }
+      });
+      throw err;
     }
   };
 
@@ -1160,17 +1199,21 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     const isFav = favoriteRecipes.includes(recipeId);
     try {
       if (isFav) {
-        await supabase
+        const { error } = await supabase
           .from("user_recipe_favorites")
           .delete()
           .eq("user_id", user.id)
           .eq("recipe_id", recipeId);
+        if (error) throw error;
         setFavoriteRecipes((prev) => prev.filter((id) => id !== recipeId));
+        toast({ title: "Removido dos favoritos", duration: 1500 });
       } else {
-        await supabase
+        const { error } = await supabase
           .from("user_recipe_favorites")
           .insert({ user_id: user.id, recipe_id: recipeId });
+        if (error) throw error;
         setFavoriteRecipes((prev) => [...prev, recipeId]);
+        toast({ title: "❤️ Adicionado aos favoritos", duration: 1500 });
       }
     } catch (err) {
       showError("Erro ao favoritar receita", err);
@@ -1410,6 +1453,8 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     hid: string, prefs?: string[], nightCheckupTime?: string
   ): Promise<{ error?: any }> {
     if (!user) return { error: "User not authenticated" };
+    if (!hid) return { error: "Home ID is required" };
+
     const list = prefs ?? DEFAULT_NOTIFICATION_PREFS;
     const patch: Record<string, unknown> = {
       user_id: user.id,
@@ -1425,17 +1470,26 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     };
     if (nightCheckupTime !== undefined) patch.nightly_checkup_time = nightCheckupTime;
 
-    const { data: existing } = await (supabase as any)
-      .from("notification_preferences")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("home_id", hid)
-      .maybeSingle();
+    try {
+      const { data: existing, error: selectError } = await (supabase as any)
+        .from("notification_preferences")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("home_id", hid)
+        .maybeSingle();
 
-    const { error } = existing
-      ? await (supabase as any).from("notification_preferences").update(patch).eq("user_id", user.id).eq("home_id", hid)
-      : await (supabase as any).from("notification_preferences").insert(patch);
-    return { error };
+      if (selectError && selectError.code !== "PGRST116") {
+        return { error: selectError };
+      }
+
+      const { error } = existing
+        ? await (supabase as any).from("notification_preferences").update(patch).eq("user_id", user.id).eq("home_id", hid)
+        : await (supabase as any).from("notification_preferences").insert(patch);
+
+      return { error };
+    } catch (err) {
+      return { error: err };
+    }
   }
 
   const resetOnboarding = async () => {
@@ -1619,7 +1673,16 @@ export function KazaProvider({ children }: { children: ReactNode }) {
 
   const updateOnboardingData = (data: Partial<OnboardingData>) => {
     setOnboardingData((prev) => (prev ? { ...prev, ...data } : null));
-    if (user) updateProfile(data).catch((e) => { if (import.meta.env.DEV) console.error("[DEV] auto-save:", e); });
+    if (user && homeId) {
+      updateProfile(data).catch((e) => { if (import.meta.env.DEV) console.error("[DEV] auto-save:", e); });
+
+      // Se as notificationPrefs foram alteradas, salvar também na tabela notification_preferences
+      if (data.notificationPrefs) {
+        updateNotificationPreferences(homeId, data.notificationPrefs, data.nightCheckupTime).catch((e) => {
+          if (import.meta.env.DEV) console.error("[DEV] notification prefs save:", e);
+        });
+      }
+    }
   };
 
   return (

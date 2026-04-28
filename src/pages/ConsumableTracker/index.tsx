@@ -45,6 +45,8 @@ export default function ConsumableTrackerPage() {
         setEditMinStock,
         editName,
         setEditName,
+        editNotificationsEnabled,
+        setEditNotificationsEnabled,
         parseFormattedNumber,
         handleNumericInput,
         calculateDaysUntilEmpty,
@@ -160,11 +162,25 @@ export default function ConsumableTrackerPage() {
 
                         <div className="space-y-2">
                             <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">{l.minStock}</Label>
-                            <Input 
+                            <Input
                                 inputMode="decimal"
-                                value={newItem.minStock} 
-                                onChange={(e) => handleNumericInput(e.target.value, (v) => setNewItem(p => ({ ...p, minStock: v })))} 
-                                className="h-14 rounded-2xl border-2 focus:border-primary transition-all text-base font-bold" 
+                                value={newItem.minStock}
+                                onChange={(e) => handleNumericInput(e.target.value, (v) => setNewItem(p => ({ ...p, minStock: v })))}
+                                className="h-14 rounded-2xl border-2 focus:border-primary transition-all text-base font-bold"
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between rounded-2xl bg-primary/5 p-4 border border-primary/20">
+                            <div className="flex items-center gap-3">
+                                <Bell className="h-5 w-5 text-primary" />
+                                <div>
+                                    <p className="text-sm font-bold text-foreground">Notificações</p>
+                                    <p className="text-xs text-muted-foreground">Receber avisos ao estoque acabar</p>
+                                </div>
+                            </div>
+                            <Switch
+                                checked={newItem.notificationsEnabled}
+                                onCheckedChange={(v) => setNewItem(p => ({ ...p, notificationsEnabled: v }))}
                             />
                         </div>
                     </div>
@@ -243,11 +259,25 @@ export default function ConsumableTrackerPage() {
 
                         <div className="space-y-2">
                             <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">{l.minStock}</Label>
-                            <Input 
+                            <Input
                                 inputMode="decimal"
-                                value={editMinStock} 
-                                onChange={(e) => handleNumericInput(e.target.value, setEditMinStock)} 
-                                className="h-14 rounded-2xl border-2 focus:border-primary transition-all text-base font-bold" 
+                                value={editMinStock}
+                                onChange={(e) => handleNumericInput(e.target.value, setEditMinStock)}
+                                className="h-14 rounded-2xl border-2 focus:border-primary transition-all text-base font-bold"
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between rounded-2xl bg-primary/5 p-4 border border-primary/20">
+                            <div className="flex items-center gap-3">
+                                <Bell className="h-5 w-5 text-primary" />
+                                <div>
+                                    <p className="text-sm font-bold text-foreground">Notificações</p>
+                                    <p className="text-xs text-muted-foreground">Receber avisos ao estoque acabar</p>
+                                </div>
+                            </div>
+                            <Switch
+                                checked={editNotificationsEnabled}
+                                onCheckedChange={setEditNotificationsEnabled}
                             />
                         </div>
                     </div>

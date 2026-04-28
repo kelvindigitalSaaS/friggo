@@ -134,6 +134,7 @@ export interface ConsumableItem {
   minStock: number;
   usageInterval: "daily" | "weekly" | "fortnightly" | "monthly";
   hidden?: boolean;
+  notificationsEnabled?: boolean;
 }
 
 export interface DefrostTimer {

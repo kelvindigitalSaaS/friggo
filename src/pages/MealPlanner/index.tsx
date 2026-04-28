@@ -24,6 +24,7 @@ import {
   BellOff,
   Plus,
   X,
+  Heart,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { PageTransition } from "@/components/PageTransition";
@@ -38,7 +39,7 @@ const MEAL_CONFIG: Record<string, { label: string; icon: any; color: string; bg:
 export default function MealPlannerPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { addToMealPlan } = useKaza();
+  const { addToMealPlan, toggleFavoriteRecipe, favoriteRecipes } = useKaza();
   const { isMultiPro } = useSubscription();
   const { recordMealPlan } = useAchievements();
 
@@ -118,17 +119,23 @@ export default function MealPlannerPage() {
   return (
     <PageTransition direction="left" className="min-h-[100dvh] bg-[#fafafa] dark:bg-[#091f1c] flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[#fafafa]/90 dark:bg-[#091f1c]/90 backdrop-blur-2xl border-b border-black/[0.04] dark:border-white/[0.06] px-4 h-16 flex items-center gap-3">
-        <button
-          onClick={() => navigate(-1)}
-          className="h-10 w-10 flex items-center justify-center rounded-xl bg-black/5 dark:bg-white/5 text-foreground transition-all active:scale-90 hover:bg-black/10 dark:hover:bg-white/10"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-base font-bold text-foreground">Planejar refeição</h1>
-          <p className="text-xs text-muted-foreground capitalize truncate">{dateLabel}</p>
+      <header className="sticky top-0 z-50 bg-[#fafafa]/90 dark:bg-[#091f1c]/90 backdrop-blur-2xl border-b border-black/[0.04] dark:border-white/[0.06] px-4 h-16 flex items-center gap-3 justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="h-10 w-10 flex items-center justify-center rounded-xl bg-black/5 dark:bg-white/5 text-foreground transition-all active:scale-90 hover:bg-black/10 dark:hover:bg-white/10"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-base font-bold text-foreground">Planejar refeição</h1>
+            <p className="text-xs text-muted-foreground capitalize truncate">{dateLabel}</p>
+          </div>
         </div>
+        <button className="h-11 flex items-center justify-center gap-2 px-3 rounded-2xl bg-pink-500/10 text-pink-600 hover:bg-pink-500/20 transition-all active:scale-90 shrink-0">
+          <Heart className="h-5 w-5" fill="currentColor" />
+          <span className="text-sm font-bold">{favoriteRecipes.length}</span>
+        </button>
       </header>
 
       {/* Meal Type Filter */}
@@ -233,6 +240,18 @@ export default function MealPlannerPage() {
                       {recipe.category || "Receita"}
                     </p>
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavoriteRecipe(recipe.id);
+                    }}
+                    className="h-11 w-11 flex shrink-0 items-center justify-center rounded-full bg-pink-500/10 text-pink-600 group-hover:bg-pink-500 group-hover:text-white transition-all shadow-sm"
+                  >
+                    <Heart
+                      className="h-5 w-5"
+                      fill={favoriteRecipes.includes(recipe.id) ? "currentColor" : "none"}
+                    />
+                  </button>
                   <div className="h-11 w-11 flex shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-sm">
                     <Plus className="h-5 w-5" />
                   </div>

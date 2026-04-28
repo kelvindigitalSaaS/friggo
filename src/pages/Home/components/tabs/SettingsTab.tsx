@@ -394,6 +394,7 @@ export function SettingsTab() {
                         return;
                       }
                       updateOnboardingData({ notificationPrefs: next });
+                      toast.success(language === "pt-BR" ? "✓ Preferências salvas no banco de dados!" : "✓ Preferences saved to database!");
                     }}
                   />
                 </div>

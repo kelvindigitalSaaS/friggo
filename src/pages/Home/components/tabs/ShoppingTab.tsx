@@ -102,6 +102,40 @@ export function ShoppingTab() {
   const [editingName, setEditingName] = useState("");
   const [isNotifying, setIsNotifying] = useState(false);
   const [daysHorizon, setDaysHorizon] = useState<3 | 7 | 15>(7);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+
+  const itemCategories = [
+    { label: "🍎 Frutas", value: "fruit", store: "fair" as const },
+    { label: "🥬 Verduras/Legumes", value: "vegetable", store: "fair" as const },
+    { label: "🥩 Carnes", value: "meat", store: "market" as const },
+    { label: "🧀 Latícinios", value: "dairy", store: "market" as const },
+    { label: "🧃 Bebidas", value: "beverage", store: "market" as const },
+    { label: "🧊 Congelados", value: "frozen", store: "market" as const },
+    { label: "💊 Remédios", value: "medicine", store: "pharmacy" as const },
+    { label: "🧴 Higiene", value: "hygiene", store: "pharmacy" as const },
+    { label: "💪 Suplementos", value: "supplement", store: "pharmacy" as const },
+    { label: "🧹 Limpeza", value: "cleaning", store: "market" as const },
+    { label: "📦 Outros", value: "other", store: "other" as const },
+  ];
+
+  const handleUpdateItemCategory = async (itemId: string, categoryValue: string, storeValue: string) => {
+    const { error } = await supabase
+      .from("shopping_list")
+      .update({
+        category: categoryValue,
+        store: storeValue
+      })
+      .eq("id", itemId);
+
+    if (error) {
+      toast.error("Erro ao atualizar categoria");
+    } else {
+      toast.success("Categoria atualizada!");
+      setEditingItemId(null);
+      setShowCategoryDialog(false);
+    }
+  };
 
   const labels = {
     "pt-BR": {
@@ -535,12 +569,19 @@ export function ShoppingTab() {
     <div
       key={item.id}
       className={cn(
-        "flex items-center gap-2.5 rounded-2xl border bg-white/80 dark:bg-white/5 backdrop-blur-xl border-black/[0.04] dark:border-white/[0.06] p-3 transition-all duration-300 shadow-sm",
+        "flex items-center gap-2.5 rounded-2xl border bg-white/80 dark:bg-white/5 backdrop-blur-xl border-black/[0.04] dark:border-white/[0.06] p-3 transition-all duration-300 shadow-sm cursor-pointer hover:border-primary/30",
         item.isCompleted && "opacity-60"
       )}
+      onClick={() => {
+        setEditingItemId(item.id);
+        setShowCategoryDialog(true);
+      }}
     >
       <button
-        onClick={() => handleToggleItem(item)}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleToggleItem(item);
+        }}
         className={cn(
           "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-90"
         )}
@@ -773,6 +814,36 @@ export function ShoppingTab() {
       ) : (
         <div className="space-y-1.5">{filteredList.map((item, index) => renderItem(item, index))}</div>
       )}
+
+      {/* Category Selection Dialog */}
+      <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              {language === "pt-BR" ? "Selecionar Categoria" : "Select Category"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-3 gap-1.5 max-h-80 overflow-y-auto">
+            {itemCategories.map((cat) => (
+              <button
+                key={cat.value}
+                onClick={() => {
+                  if (editingItemId) {
+                    handleUpdateItemCategory(editingItemId, cat.value, cat.store);
+                  }
+                }}
+                className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-primary/20 bg-white dark:bg-white/5 hover:border-primary hover:bg-primary/10 dark:hover:bg-primary/10 transition-all active:scale-95"
+              >
+                <span className="text-lg">{cat.label.split(" ")[0]}</span>
+                <span className="text-[10px] font-semibold text-center leading-tight">
+                  {cat.label.replace(/^[^\s]+ /, "")}
+                </span>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

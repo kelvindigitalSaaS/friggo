@@ -152,14 +152,15 @@ export function useConsumableLogic() {
     const [hideMissing, setHideMissing] = useState(false);
     const [expandedItem, setExpandedItem] = useState<string | null>(null);
     
-    const [newItem, setNewItem] = useState({ 
-        name: '', 
-        icon: '📦', 
-        dailyConsumption: '1', 
-        unit: 'unidades', 
-        currentStock: '10', 
-        minStock: '2', 
-        usageInterval: 'daily' as ConsumableItem['usageInterval'] 
+    const [newItem, setNewItem] = useState({
+        name: '',
+        icon: '📦',
+        dailyConsumption: '1',
+        unit: 'unidades',
+        currentStock: '10',
+        minStock: '2',
+        usageInterval: 'daily' as ConsumableItem['usageInterval'],
+        notificationsEnabled: true
     });
 
     const [customAction, setCustomAction] = useState<{ id: string; type: 'debit' | 'restock' } | null>(null);
@@ -171,6 +172,7 @@ export function useConsumableLogic() {
     const [editUsageInterval, setEditUsageInterval] = useState<ConsumableItem['usageInterval']>('daily');
     const [editMinStock, setEditMinStock] = useState('');
     const [editName, setEditName] = useState('');
+    const [editNotificationsEnabled, setEditNotificationsEnabled] = useState(false);
 
     const parseFormattedNumber = (val: string): number => {
         if (!val) return 0;
@@ -227,22 +229,44 @@ export function useConsumableLogic() {
         setScreen('list');
     };
 
-    const handleSaveEdit = () => {
-        if (!editItem) return;
+    const handleSaveEdit = async () => {
+        console.log('handleSaveEdit called, editItem:', editItem);
+        if (!editItem) {
+            console.log('No editItem, returning');
+            return;
+        }
+
         const newDaily = editDailyConsumption === '' ? editItem.dailyConsumption : parseFormattedNumber(editDailyConsumption);
         const newMin = editMinStock === '' ? editItem.minStock : parseFormattedNumber(editMinStock);
-        
-        updateConsumable(editItem.id, {
+
+        console.log('Saving consumable:', {
+            id: editItem.id,
             name: editName || editItem.name,
             icon: editIcon || editItem.icon,
             dailyConsumption: newDaily,
             usageInterval: editUsageInterval,
             minStock: newMin,
+            notificationsEnabled: editNotificationsEnabled,
         });
-        
-        setEditItem(null);
-        setScreen('list');
-        toast.success(l.save);
+
+        try {
+            await updateConsumable(editItem.id, {
+                name: editName || editItem.name,
+                icon: editIcon || editItem.icon,
+                dailyConsumption: newDaily,
+                usageInterval: editUsageInterval,
+                minStock: newMin,
+                notificationsEnabled: editNotificationsEnabled,
+            });
+
+            console.log('Consumable saved successfully');
+            setEditItem(null);
+            setScreen('list');
+            toast.success(l.save);
+        } catch (err) {
+            console.error('Error updating consumable:', err);
+            toast.error(language === 'pt-BR' ? 'Erro ao salvar: ' + err : 'Error saving: ' + err);
+        }
     };
 
     const openEdit = (item: ConsumableItem) => {
@@ -252,6 +276,7 @@ export function useConsumableLogic() {
         setEditDailyConsumption(String(item.dailyConsumption).replace('.', ','));
         setEditUsageInterval(item.usageInterval || 'daily');
         setEditMinStock(String(item.minStock).replace('.', ','));
+        setEditNotificationsEnabled(item.notificationsEnabled ?? false);
         setScreen('edit');
     };
 
@@ -281,24 +306,26 @@ export function useConsumableLogic() {
 
     const handleAddNewItem = () => {
         const newConsumable: Omit<ConsumableItem, 'id'> = {
-            name: newItem.name, 
+            name: newItem.name,
             icon: newItem.icon,
             category: 'other',
-            currentStock: parseFormattedNumber(newItem.currentStock), 
+            currentStock: parseFormattedNumber(newItem.currentStock),
             unit: newItem.unit,
-            dailyConsumption: parseFormattedNumber(newItem.dailyConsumption), 
+            dailyConsumption: parseFormattedNumber(newItem.dailyConsumption),
             usageInterval: newItem.usageInterval,
             minStock: parseFormattedNumber(newItem.minStock),
+            notificationsEnabled: newItem.notificationsEnabled
         };
         addConsumable(newConsumable);
-        setNewItem({ 
-            name: '', 
-            icon: '📦', 
-            dailyConsumption: '1', 
-            unit: 'unidades', 
-            currentStock: '10', 
-            minStock: '2', 
-            usageInterval: 'daily' 
+        setNewItem({
+            name: '',
+            icon: '📦',
+            dailyConsumption: '1',
+            unit: 'unidades',
+            currentStock: '10',
+            minStock: '2',
+            usageInterval: 'daily',
+            notificationsEnabled: true
         });
         setScreen('list');
         toast.success(l.itemAdded);
@@ -329,6 +356,8 @@ export function useConsumableLogic() {
         setEditMinStock,
         editName,
         setEditName,
+        editNotificationsEnabled,
+        setEditNotificationsEnabled,
         parseFormattedNumber,
         handleNumericInput,
         calculateDaysUntilEmpty,
