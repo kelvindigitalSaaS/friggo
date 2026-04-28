@@ -470,7 +470,19 @@ export function RecipesTabNew() {
                       <p className="text-[15px] font-black text-[#1a3d32] dark:text-emerald-50 truncate leading-tight">{recipe.name}</p>
                       <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                         {recipe.category && (
-                          <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{recipe.category}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const categoryIdx = CATEGORY_GROUPS.findIndex(g => g.categories.includes(recipe.category!));
+                              if (categoryIdx !== -1) {
+                                setSelectedCategoryIdx(categoryIdx);
+                                setVisibleCount(VISIBLE_STEP);
+                              }
+                            }}
+                            className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full hover:bg-primary/20 transition-colors active:scale-95"
+                          >
+                            {recipe.category}
+                          </button>
                         )}
                         {recipe.difficulty && (
                           <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full",
