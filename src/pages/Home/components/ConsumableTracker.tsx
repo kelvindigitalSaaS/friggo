@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -59,6 +60,9 @@ interface ConsumableItem {
   unit: string;
   dailyConsumption: number;
   minStock: number;
+  category?: string;
+  usageInterval?: "daily" | "weekly" | "fortnightly" | "monthly";
+  notificationsEnabled?: boolean;
 }
 
 const ICON_OPTIONS = [
@@ -286,7 +290,8 @@ export function ConsumableTracker({ open, onClose, inline }: ConsumableTrackerPr
     currentStock: "10",
     minStock: "2",
     category: "hygiene" as any,
-    usageInterval: "daily" as "daily" | "weekly" | "monthly"
+    usageInterval: "daily" as "daily" | "weekly" | "fortnightly" | "monthly",
+    notificationsEnabled: true
   });
 
   const [customAction, setCustomAction] = useState<{
@@ -300,9 +305,9 @@ export function ConsumableTracker({ open, onClose, inline }: ConsumableTrackerPr
   const [editDailyConsumption, setEditDailyConsumption] = useState("");
   const [editMinStock, setEditMinStock] = useState("");
   const [editName, setEditName] = useState("");
-  const [editCategory, setEditCategory] = useState<
-    "cleaning" | "hygiene" | "pantry"
-  >("hygiene");
+  const [editCategory, setEditCategory] = useState<"cleaning" | "hygiene" | "pantry">("hygiene");
+  const [editUsageInterval, setEditUsageInterval] = useState<"daily" | "weekly" | "fortnightly" | "monthly">("daily");
+  const [editNotificationsEnabled, setEditNotificationsEnabled] = useState(false);
 
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
@@ -361,7 +366,9 @@ export function ConsumableTracker({ open, onClose, inline }: ConsumableTrackerPr
       icon: editIcon || editItem.icon,
       dailyConsumption: daily,
       minStock: min,
-      category: editCategory
+      category: editCategory,
+      usageInterval: editUsageInterval,
+      notificationsEnabled: editNotificationsEnabled
     });
     setEditItem(null);
     setScreen("list");
@@ -374,7 +381,9 @@ export function ConsumableTracker({ open, onClose, inline }: ConsumableTrackerPr
     setEditIcon(item.icon);
     setEditDailyConsumption(String(item.dailyConsumption));
     setEditMinStock(String(item.minStock));
-    setEditCategory(item.category);
+    setEditCategory((item.category as any) || "hygiene");
+    setEditUsageInterval(item.usageInterval || "daily");
+    setEditNotificationsEnabled(item.notificationsEnabled ?? false);
     setScreen("edit");
   };
 
@@ -405,7 +414,8 @@ export function ConsumableTracker({ open, onClose, inline }: ConsumableTrackerPr
       dailyConsumption: daily,
       minStock: min,
       category: newItem.category,
-      usageInterval: newItem.usageInterval
+      usageInterval: newItem.usageInterval,
+      notificationsEnabled: newItem.notificationsEnabled
     });
     setNewItem({
       name: "",
@@ -415,7 +425,8 @@ export function ConsumableTracker({ open, onClose, inline }: ConsumableTrackerPr
       currentStock: "10",
       minStock: "2",
       category: "hygiene",
-      usageInterval: "daily"
+      usageInterval: "daily",
+      notificationsEnabled: true
     });
     setScreen("list");
     toast.success(l.itemAdded);
@@ -510,15 +521,16 @@ export function ConsumableTracker({ open, onClose, inline }: ConsumableTrackerPr
         </Label>
         <Select
           value={newItem.usageInterval}
-          onValueChange={(v) => setNewItem((p) => ({ ...p, usageInterval: v as "daily" | "weekly" | "monthly" }))}
+          onValueChange={(v) => setNewItem((p) => ({ ...p, usageInterval: v as "daily" | "weekly" | "fortnightly" | "monthly" }))}
         >
           <SelectTrigger className="h-11 rounded-md mt-1.5">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="daily">{language === "pt-BR" ? "Diário" : language === "en" ? "Daily" : "Diario"}</SelectItem>
-            <SelectItem value="weekly">{language === "pt-BR" ? "Semanal" : language === "en" ? "Weekly" : "Semanal"}</SelectItem>
-            <SelectItem value="monthly">{language === "pt-BR" ? "Mensal" : language === "en" ? "Monthly" : "Mensual"}</SelectItem>
+            <SelectItem value="daily">{language === "pt-BR" ? "Por dia" : language === "en" ? "Per day" : "Por día"}</SelectItem>
+            <SelectItem value="weekly">{language === "pt-BR" ? "Por semana" : language === "en" ? "Per week" : "Por semana"}</SelectItem>
+            <SelectItem value="fortnightly">{language === "pt-BR" ? "Por quinzena" : language === "en" ? "Fortnightly" : "Quincenal"}</SelectItem>
+            <SelectItem value="monthly">{language === "pt-BR" ? "Por mês" : language === "en" ? "Per month" : "Por mes"}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -560,6 +572,26 @@ export function ConsumableTracker({ open, onClose, inline }: ConsumableTrackerPr
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      {/* Notifications toggle */}
+      <div className="flex items-center justify-between rounded-xl bg-primary/5 p-3.5 border border-primary/20">
+        <div className="flex items-center gap-3">
+          <Bell className="h-4 w-4 text-primary" />
+          <div>
+            <p className="text-sm font-bold text-foreground">
+              {language === "pt-BR" ? "Notificações" : language === "en" ? "Notifications" : "Notificaciones"}
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              {language === "pt-BR" ? "Avisar quando estoque acabar" : "Alert when stock runs low"}
+            </p>
+          </div>
+        </div>
+        <Switch
+          checked={newItem.notificationsEnabled}
+          onCheckedChange={(v) => setNewItem((p) => ({ ...p, notificationsEnabled: v }))}
+          className="data-[state=checked]:bg-primary"
+        />
       </div>
 
       <div className="flex gap-3 pt-2">
@@ -673,6 +705,27 @@ export function ConsumableTracker({ open, onClose, inline }: ConsumableTrackerPr
         </div>
       </div>
 
+      {/* Frequency */}
+      <div>
+        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          {language === "pt-BR" ? "Frequência de consumo" : language === "en" ? "Usage frequency" : "Frecuencia de consumo"}
+        </Label>
+        <Select
+          value={editUsageInterval}
+          onValueChange={(v) => setEditUsageInterval(v as any)}
+        >
+          <SelectTrigger className="h-11 rounded-xl mt-1.5 bg-white dark:bg-white/5 border-black/[0.06] dark:border-white/10">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="daily">{language === "pt-BR" ? "Por dia" : language === "en" ? "Per day" : "Por día"}</SelectItem>
+            <SelectItem value="weekly">{language === "pt-BR" ? "Por semana" : language === "en" ? "Per week" : "Por semana"}</SelectItem>
+            <SelectItem value="fortnightly">{language === "pt-BR" ? "Por quinzena" : language === "en" ? "Fortnightly" : "Quincenal"}</SelectItem>
+            <SelectItem value="monthly">{language === "pt-BR" ? "Por mês" : language === "en" ? "Per month" : "Por mes"}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Category */}
       <div>
         <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -703,6 +756,26 @@ export function ConsumableTracker({ open, onClose, inline }: ConsumableTrackerPr
             </SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Notifications toggle */}
+      <div className="flex items-center justify-between rounded-xl bg-primary/5 p-4 border border-primary/20">
+        <div className="flex items-center gap-3">
+          <Bell className="h-5 w-5 text-primary" />
+          <div>
+            <p className="text-sm font-bold text-foreground">
+              {language === "pt-BR" ? "Notificações" : language === "en" ? "Notifications" : "Notificaciones"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {language === "pt-BR" ? "Avisar quando estoque acabar" : language === "en" ? "Alert when stock runs low" : "Avisar cuando se acabe"}
+            </p>
+          </div>
+        </div>
+        <Switch
+          checked={editNotificationsEnabled}
+          onCheckedChange={setEditNotificationsEnabled}
+          className="data-[state=checked]:bg-primary"
+        />
       </div>
 
       <Button className="w-full h-12 rounded-xl font-bold text-[15px]" onClick={handleSaveEdit}>

@@ -1173,17 +1173,21 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     const isFav = favoriteRecipes.includes(recipeId);
     try {
       if (isFav) {
-        await supabase
+        const { error } = await supabase
           .from("user_recipe_favorites")
           .delete()
           .eq("user_id", user.id)
           .eq("recipe_id", recipeId);
+        if (error) throw error;
         setFavoriteRecipes((prev) => prev.filter((id) => id !== recipeId));
+        toast({ title: "Removido dos favoritos", duration: 1500 });
       } else {
-        await supabase
+        const { error } = await supabase
           .from("user_recipe_favorites")
           .insert({ user_id: user.id, recipe_id: recipeId });
+        if (error) throw error;
         setFavoriteRecipes((prev) => [...prev, recipeId]);
+        toast({ title: "❤️ Adicionado aos favoritos", duration: 1500 });
       }
     } catch (err) {
       showError("Erro ao favoritar receita", err);
