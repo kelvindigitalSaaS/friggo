@@ -10,6 +10,12 @@ export interface FeedbackData {
   noPurchaseReason?: string;
   likedFreetext?: string;
   improvementFreetext?: string;
+  npsScore?: number;
+  fairPrice?: number;
+  allowContact?: boolean;
+  contactEmail?: string;
+  mainObjective?: string;
+  usagePlatform?: string;
 }
 
 export function useFeedbackSurvey() {
@@ -35,7 +41,13 @@ export function useFeedbackSurvey() {
             liked_freetext: data.likedFreetext,
             improvement_freetext: data.improvementFreetext,
             trial_days_used: trialDaysUsed,
-            platform: "web"
+            platform: "web",
+            nps_score: data.npsScore,
+            fair_price: data.fairPrice,
+            allow_contact: data.allowContact,
+            contact_email: data.contactEmail,
+            main_objective: data.mainObjective,
+            usage_platform: data.usagePlatform
           }
         ]);
 
