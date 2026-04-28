@@ -84,26 +84,26 @@ export default function RecipePage() {
         <>
         <PageTransition direction="up" className={cn("min-h-[100dvh] bg-[#fafafa] dark:bg-[#091f1c] pb-6", cookingMode && "hidden")}>
             {/* Compact Header */}
-            <header className="sticky top-0 z-50 flex items-center gap-3 border-b border-black/[0.04] dark:border-white/[0.06] bg-[#fafafa]/80 dark:bg-[#091f1c]/80 px-4 py-3 backdrop-blur-2xl">
-                <button onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-xl text-foreground active:scale-[0.97] transition-all">
-                    <ArrowLeft className="h-5 w-5" />
+            <header className="sticky top-0 z-50 flex items-center gap-2 border-b border-black/[0.04] dark:border-white/[0.06] bg-[#fafafa]/80 dark:bg-[#091f1c]/80 px-4 py-3 backdrop-blur-2xl">
+                <button onClick={() => navigate(-1)} className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/80 dark:bg-white/10 backdrop-blur-xl text-foreground active:scale-[0.97] transition-all">
+                    <ArrowLeft className="h-4 w-4" />
                 </button>
-                <span className="text-2xl">{getCategoryEmoji(recipe.category)}</span>
-                <h1 className="flex-1 text-base font-bold text-foreground truncate">{recipe.name}</h1>
-                <div className="flex items-center gap-2">
+                <span className="text-xl">{getCategoryEmoji(recipe.category)}</span>
+                <h1 className="flex-1 text-sm font-bold text-foreground truncate">{recipe.name}</h1>
+                <div className="flex items-center gap-1">
                     {recipe.usesExpiringItems && (
-                        <span className="flex items-center gap-1 rounded-full bg-warning px-2.5 py-1 text-warning-foreground text-[10px] font-bold uppercase">
+                        <span className="flex items-center gap-1 rounded-full bg-warning px-2 py-1 text-warning-foreground text-[9px] font-bold uppercase">
                             <Leaf className="h-3 w-3" />Pri
                         </span>
                     )}
-                    <button 
+                    <button
                         onClick={() => toggleFavoriteRecipe(recipe.id)}
                         className={cn(
-                            "flex h-10 w-10 items-center justify-center rounded-2xl transition-all active:scale-90",
-                            isFavorite ? "bg-red-500/10 text-red-500" : "bg-white/80 dark:bg-white/10 text-foreground"
+                            "flex h-9 w-9 items-center justify-center rounded-xl transition-all active:scale-90",
+                            isFavorite ? "text-red-500" : "text-foreground/60 hover:text-foreground"
                         )}
                     >
-                        <Heart className={cn("h-5 w-5", isFavorite && "fill-current")} />
+                        <Heart className={cn("h-4 w-4", isFavorite && "fill-current")} />
                     </button>
                 </div>
             </header>
@@ -337,19 +337,19 @@ export default function RecipePage() {
                             setCookingMode(false);
                             setRecipeCompleted(false);
                         }}
-                        className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-xl text-white active:scale-[0.97] transition-all hover:bg-white/20"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 backdrop-blur-xl text-white active:scale-[0.97] transition-all hover:bg-white/20"
                     >
-                        <ArrowLeft className="h-5 w-5" />
+                        <ArrowLeft className="h-4 w-4" />
                     </button>
-                    <h1 className="flex-1 text-center text-xl font-bold text-white truncate px-4">{recipe?.name}</h1>
+                    <h1 className="flex-1 text-center text-lg font-bold text-white truncate px-3">{recipe?.name}</h1>
                     <button
                         onClick={() => toggleFavoriteRecipe(recipe?.id || '')}
                         className={cn(
-                            "flex h-10 w-10 items-center justify-center rounded-2xl transition-all active:scale-90",
-                            isFavorite ? "bg-red-500/20 text-red-400" : "bg-white/10 text-white hover:bg-white/20"
+                            "flex h-9 w-9 items-center justify-center rounded-xl transition-all active:scale-90",
+                            isFavorite ? "text-red-400" : "text-white/60 hover:text-white"
                         )}
                     >
-                        <Heart className={cn("h-5 w-5", isFavorite && "fill-current")} />
+                        <Heart className={cn("h-4 w-4", isFavorite && "fill-current")} />
                     </button>
                 </header>
 

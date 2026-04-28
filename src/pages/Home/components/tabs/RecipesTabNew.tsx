@@ -30,7 +30,7 @@ const DIFFICULTIES = [
 
 const VISIBLE_STEP = 50;
 
-function RecipeSheet({ recipe, onClose }: { recipe: Recipe; onClose: () => void }) {
+function RecipeSheet({ recipe, onClose, onFilterByCategory }: { recipe: Recipe; onClose: () => void; onFilterByCategory?: (categoryIdx: number) => void }) {
   const { items, addToShoppingList } = useKaza();
   const { language } = useLanguage();
   const pt = language === "pt-BR";
@@ -114,6 +114,19 @@ function RecipeSheet({ recipe, onClose }: { recipe: Recipe; onClose: () => void 
                 <span className={cn("text-[11px] font-black px-2.5 py-1 rounded-full", diffColor)}>
                   {recipe.difficulty}
                 </span>
+              )}
+              {recipe.category && onFilterByCategory && (
+                <button
+                  onClick={() => {
+                    const categoryIdx = CATEGORY_GROUPS.findIndex(g => g.categories.includes(recipe.category!));
+                    if (categoryIdx !== -1) {
+                      onFilterByCategory(categoryIdx);
+                    }
+                  }}
+                  className="text-[11px] font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full hover:bg-primary/20 transition-colors active:scale-95"
+                >
+                  {recipe.category}
+                </button>
               )}
             </div>
           </div>
@@ -352,31 +365,28 @@ export function RecipesTabNew() {
   return (
     <div className="flex flex-col min-h-0">
       {/* ── Favorites Toggle ── */}
-      <div className="px-4 pt-3 pb-2">
-        <button
-          onClick={() => {
-            setShowOnlyFavorites(!showOnlyFavorites);
-            setVisibleCount(VISIBLE_STEP);
-          }}
-          className={cn(
-            "w-full flex items-center justify-center gap-2 h-10 rounded-2xl font-bold text-sm transition-all border",
-            showOnlyFavorites
-              ? "bg-red-500/10 text-red-500 border-red-500/20"
-              : "bg-black/[0.03] dark:bg-white/[0.04] text-muted-foreground border-black/[0.06] dark:border-white/[0.08]"
-          )}
-        >
-          <Heart className={cn("h-4 w-4", showOnlyFavorites && "fill-current")} />
-          {showOnlyFavorites
-            ? (pt ? "Mostrando Favoritos" : "Showing Favorites")
-            : (pt ? "Ver Favoritos" : "View Favorites")
-          }
-          {favoriteRecipes.length > 0 && (
-            <span className="ml-auto px-2 py-0.5 bg-red-500/20 rounded-full text-xs font-black">
+      {favoriteRecipes.length > 0 && (
+        <div className="px-4 pt-3 pb-2">
+          <button
+            onClick={() => {
+              setShowOnlyFavorites(!showOnlyFavorites);
+              setVisibleCount(VISIBLE_STEP);
+            }}
+            className={cn(
+              "w-full flex items-center justify-center gap-2 h-9 rounded-xl text-sm font-semibold transition-all border",
+              showOnlyFavorites
+                ? "bg-red-500/10 text-red-600 border-red-500/20"
+                : "bg-black/[0.02] dark:bg-white/[0.03] text-foreground/70 border-black/[0.06] dark:border-white/[0.08]"
+            )}
+          >
+            <Heart className={cn("h-3.5 w-3.5", showOnlyFavorites && "fill-current")} />
+            {pt ? "Favoritos" : "Favorites"}
+            <span className="ml-auto text-xs font-bold opacity-70">
               {favoriteRecipes.length}
             </span>
-          )}
-        </button>
-      </div>
+          </button>
+        </div>
+      )}
 
       {/* ── Filters ── */}
       <div className="px-4 pb-2 space-y-3 bg-background">
@@ -448,7 +458,7 @@ export function RecipesTabNew() {
                 <div key={recipe.id} onClick={() => setSelectedRecipe(recipe)}
                   className="rounded-[1.5rem] bg-white dark:bg-[#11302c]/40 border border-black/[0.04] dark:border-white/[0.05] overflow-hidden shadow-[0_4px_20px_-8px_rgba(0,0,0,0.06)] transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer group relative">
                   {isFavorite && (
-                    <div className="absolute top-3 right-3 z-10 flex items-center justify-center h-8 w-8 rounded-full bg-red-500/20 text-red-500">
+                    <div className="absolute top-2.5 right-2.5 z-10 text-red-500">
                       <Heart className="h-4 w-4 fill-current" />
                     </div>
                   )}
@@ -490,7 +500,17 @@ export function RecipesTabNew() {
       </div>
 
       <AnimatePresence>
-        {selectedRecipe && <RecipeSheet recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} />}
+        {selectedRecipe && (
+          <RecipeSheet
+            recipe={selectedRecipe}
+            onClose={() => setSelectedRecipe(null)}
+            onFilterByCategory={(categoryIdx) => {
+              setSelectedCategoryIdx(categoryIdx);
+              setVisibleCount(VISIBLE_STEP);
+              setSelectedRecipe(null);
+            }}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
