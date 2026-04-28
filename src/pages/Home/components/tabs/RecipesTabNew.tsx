@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
-import { Search, ChefHat, ShoppingCart, X, Clock, Users, Check, Play, Pause, ArrowLeft, ArrowRight } from "lucide-react";
+import { Search, ChefHat, ShoppingCart, X, Clock, Users, Check, Play, Pause, ArrowLeft, ArrowRight, Heart } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useKaza } from "@/contexts/KazaContext";
 import { cn } from "@/lib/utils";
@@ -300,11 +300,13 @@ function RecipeSheet({ recipe, onClose }: { recipe: Recipe; onClose: () => void 
 
 export function RecipesTabNew() {
   const { language } = useLanguage();
+  const { favoriteRecipes } = useKaza();
   const [query, setQuery] = useState("");
   const [selectedCategoryIdx, setSelectedCategoryIdx] = useState<number | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(VISIBLE_STEP);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
   const pt = language === "pt-BR";
 
@@ -314,6 +316,7 @@ export function RecipesTabNew() {
     const diff = selectedDifficulty;
 
     return allRecipes.filter((r) => {
+      if (showOnlyFavorites && !favoriteRecipes.includes(r.id)) return false;
       if (q && !r.name.toLowerCase().includes(q) && !(r.description ?? "").toLowerCase().includes(q)) return false;
       if (cats && !cats.includes(r.category ?? "")) return false;
       if (diff) {
@@ -324,7 +327,7 @@ export function RecipesTabNew() {
       }
       return true;
     });
-  }, [query, selectedCategoryIdx, selectedDifficulty]);
+  }, [query, selectedCategoryIdx, selectedDifficulty, showOnlyFavorites, favoriteRecipes]);
 
   const displayed = filtered.slice(0, visibleCount);
   const hasFilters = query.trim() || selectedCategoryIdx !== null || selectedDifficulty !== null;
@@ -348,8 +351,35 @@ export function RecipesTabNew() {
 
   return (
     <div className="flex flex-col min-h-0">
+      {/* ── Favorites Toggle ── */}
+      <div className="px-4 pt-3 pb-2">
+        <button
+          onClick={() => {
+            setShowOnlyFavorites(!showOnlyFavorites);
+            setVisibleCount(VISIBLE_STEP);
+          }}
+          className={cn(
+            "w-full flex items-center justify-center gap-2 h-10 rounded-2xl font-bold text-sm transition-all border",
+            showOnlyFavorites
+              ? "bg-red-500/10 text-red-500 border-red-500/20"
+              : "bg-black/[0.03] dark:bg-white/[0.04] text-muted-foreground border-black/[0.06] dark:border-white/[0.08]"
+          )}
+        >
+          <Heart className={cn("h-4 w-4", showOnlyFavorites && "fill-current")} />
+          {showOnlyFavorites
+            ? (pt ? "Mostrando Favoritos" : "Showing Favorites")
+            : (pt ? "Ver Favoritos" : "View Favorites")
+          }
+          {favoriteRecipes.length > 0 && (
+            <span className="ml-auto px-2 py-0.5 bg-red-500/20 rounded-full text-xs font-black">
+              {favoriteRecipes.length}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* ── Filters ── */}
-      <div className="px-4 pt-4 pb-2 space-y-3 bg-background">
+      <div className="px-4 pb-2 space-y-3 bg-background">
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
@@ -412,34 +442,42 @@ export function RecipesTabNew() {
           </div>
         ) : (
           <>
-            {displayed.map((recipe) => (
-              <div key={recipe.id} onClick={() => setSelectedRecipe(recipe)}
-                className="rounded-[1.5rem] bg-white dark:bg-[#11302c]/40 border border-black/[0.04] dark:border-white/[0.05] overflow-hidden shadow-[0_4px_20px_-8px_rgba(0,0,0,0.06)] transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer group">
-                <div className="flex items-center gap-4 px-4 py-4">
-                  <div className="h-14 w-14 flex items-center justify-center rounded-[1rem] bg-emerald-500/10 shrink-0 border border-emerald-500/10">
-                    <span className="text-2xl">{recipe.emoji || "🍽️"}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[15px] font-black text-[#1a3d32] dark:text-emerald-50 truncate leading-tight">{recipe.name}</p>
-                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                      {recipe.category && (
-                        <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{recipe.category}</span>
-                      )}
-                      {recipe.difficulty && (
-                        <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full",
-                          recipe.difficulty === "fácil" || recipe.difficulty === "easy" ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10" :
-                          recipe.difficulty === "médio" || recipe.difficulty === "medium" ? "text-amber-700 bg-amber-50 dark:bg-amber-500/10" :
-                          "text-red-700 bg-red-50 dark:bg-red-500/10"
-                        )}>{recipe.difficulty}</span>
-                      )}
-                      {recipe.prepTime && (
-                        <span className="text-[10px] text-muted-foreground font-medium">{recipe.prepTime} min</span>
-                      )}
+            {displayed.map((recipe) => {
+              const isFavorite = favoriteRecipes.includes(recipe.id);
+              return (
+                <div key={recipe.id} onClick={() => setSelectedRecipe(recipe)}
+                  className="rounded-[1.5rem] bg-white dark:bg-[#11302c]/40 border border-black/[0.04] dark:border-white/[0.05] overflow-hidden shadow-[0_4px_20px_-8px_rgba(0,0,0,0.06)] transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer group relative">
+                  {isFavorite && (
+                    <div className="absolute top-3 right-3 z-10 flex items-center justify-center h-8 w-8 rounded-full bg-red-500/20 text-red-500">
+                      <Heart className="h-4 w-4 fill-current" />
+                    </div>
+                  )}
+                  <div className="flex items-center gap-4 px-4 py-4">
+                    <div className="h-14 w-14 flex items-center justify-center rounded-[1rem] bg-emerald-500/10 shrink-0 border border-emerald-500/10">
+                      <span className="text-2xl">{recipe.emoji || "🍽️"}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-black text-[#1a3d32] dark:text-emerald-50 truncate leading-tight">{recipe.name}</p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                        {recipe.category && (
+                          <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{recipe.category}</span>
+                        )}
+                        {recipe.difficulty && (
+                          <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full",
+                            recipe.difficulty === "fácil" || recipe.difficulty === "easy" ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-500/10" :
+                            recipe.difficulty === "médio" || recipe.difficulty === "medium" ? "text-amber-700 bg-amber-50 dark:bg-amber-500/10" :
+                            "text-red-700 bg-red-50 dark:bg-red-500/10"
+                          )}>{recipe.difficulty}</span>
+                        )}
+                        {recipe.prepTime && (
+                          <span className="text-[10px] text-muted-foreground font-medium">{recipe.prepTime} min</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {filtered.length > visibleCount && (
               <button onClick={() => setVisibleCount((v) => v + VISIBLE_STEP)}

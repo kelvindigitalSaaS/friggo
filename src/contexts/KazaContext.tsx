@@ -185,9 +185,15 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   const updateNotificationPreferencesLegacy = async (
     prefs: Partial<any>
   ) => {
-    if (!user) return;
+    if (!user) {
+      showError("Erro ao salvar preferências", "Usuário não autenticado");
+      return;
+    }
     const hid = homeId || localStorage.getItem("kaza-home-id");
-    if (!hid) return;
+    if (!hid) {
+      showError("Erro ao salvar preferências", "Home ID não encontrado");
+      return;
+    }
 
     try {
       const patch: Record<string, unknown> = {
@@ -197,12 +203,16 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         updated_at: new Date().toISOString(),
       };
 
-      const { data: existing } = await (supabase as any)
+      const { data: existing, error: selectError } = await (supabase as any)
         .from("notification_preferences")
         .select("id")
         .eq("user_id", user.id)
         .eq("home_id", hid)
         .maybeSingle();
+
+      if (selectError && selectError.code !== "PGRST116") {
+        throw selectError;
+      }
 
       const { error } = existing
         ? await (supabase as any).from("notification_preferences").update(patch).eq("user_id", user.id).eq("home_id", hid)
@@ -217,11 +227,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       });
     } catch (error) {
       console.error("Error updating notification preferences:", error);
-      toast({
-        variant: "destructive",
-        title: language === "pt-BR" ? "Erro" : "Error",
-        description: language === "pt-BR" ? "Erro ao salvar preferências" : "Error saving preferences",
-      });
+      showError("Erro ao salvar preferências", error);
     }
   };
 
@@ -1345,6 +1351,8 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     hid: string, prefs?: string[], nightCheckupTime?: string
   ): Promise<{ error?: any }> {
     if (!user) return { error: "User not authenticated" };
+    if (!hid) return { error: "Home ID is required" };
+
     const list = prefs ?? DEFAULT_NOTIFICATION_PREFS;
     const patch: Record<string, unknown> = {
       user_id: user.id,
@@ -1360,17 +1368,26 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     };
     if (nightCheckupTime !== undefined) patch.nightly_checkup_time = nightCheckupTime;
 
-    const { data: existing } = await (supabase as any)
-      .from("notification_preferences")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("home_id", hid)
-      .maybeSingle();
+    try {
+      const { data: existing, error: selectError } = await (supabase as any)
+        .from("notification_preferences")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("home_id", hid)
+        .maybeSingle();
 
-    const { error } = existing
-      ? await (supabase as any).from("notification_preferences").update(patch).eq("user_id", user.id).eq("home_id", hid)
-      : await (supabase as any).from("notification_preferences").insert(patch);
-    return { error };
+      if (selectError && selectError.code !== "PGRST116") {
+        return { error: selectError };
+      }
+
+      const { error } = existing
+        ? await (supabase as any).from("notification_preferences").update(patch).eq("user_id", user.id).eq("home_id", hid)
+        : await (supabase as any).from("notification_preferences").insert(patch);
+
+      return { error };
+    } catch (err) {
+      return { error: err };
+    }
   }
 
   const resetOnboarding = async () => {

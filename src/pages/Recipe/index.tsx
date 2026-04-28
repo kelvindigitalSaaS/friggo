@@ -36,6 +36,8 @@ import { useRecipeLogic } from './logic/useRecipeLogic';
 
 export default function RecipePage() {
     const { recordMealPlan } = useAchievements();
+    const [recipeCompleted, setRecipeCompleted] = useState(false);
+    const [confirmingSave, setConfirmingSave] = useState(false);
     const {
         recipe,
         currentStep,
@@ -79,7 +81,8 @@ export default function RecipePage() {
     }
 
     return (
-        <PageTransition direction="up" className="min-h-[100dvh] bg-[#fafafa] dark:bg-[#091f1c] pb-6">
+        <>
+        <PageTransition direction="up" className={cn("min-h-[100dvh] bg-[#fafafa] dark:bg-[#091f1c] pb-6", cookingMode && "hidden")}>
             {/* Compact Header */}
             <header className="sticky top-0 z-50 flex items-center gap-3 border-b border-black/[0.04] dark:border-white/[0.06] bg-[#fafafa]/80 dark:bg-[#091f1c]/80 px-4 py-3 backdrop-blur-2xl">
                 <button onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/80 dark:bg-white/10 backdrop-blur-xl text-foreground active:scale-[0.97] transition-all">
@@ -199,20 +202,32 @@ export default function RecipePage() {
                                         ))}
                                     </div>
                                 </div>
-                                <Button 
+                                <Button
                                     className="w-full h-12 rounded-xl mt-4 font-bold"
-                                    onClick={() => {
-                                        addToMealPlan({
-                                            recipe_id: recipe.id,
-                                            recipe_name: recipe.name,
-                                            planned_date: selectedDate,
-                                            meal_type: selectedMeal
-                                        });
-                                        recordMealPlan();
-                                        setPlannerOpen(false);
+                                    disabled={confirmingSave}
+                                    onClick={async () => {
+                                        setConfirmingSave(true);
+                                        try {
+                                            await addToMealPlan({
+                                                recipe_id: recipe.id,
+                                                recipe_name: recipe.name,
+                                                planned_date: selectedDate,
+                                                meal_type: selectedMeal
+                                            });
+                                            recordMealPlan();
+                                            setPlannerOpen(false);
+                                        } catch (err) {
+                                            toast.error("Erro ao agendar refeição. Tente novamente.");
+                                        } finally {
+                                            setConfirmingSave(false);
+                                        }
                                     }}
                                 >
-                                    Confirmar Agendamento
+                                    {confirmingSave ? (
+                                        <div className="h-5 w-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                                    ) : (
+                                        "Confirmar Agendamento"
+                                    )}
                                 </Button>
                             </div>
                         </DialogContent>
@@ -249,126 +264,8 @@ export default function RecipePage() {
                     )}
                 </Button>
 
-                {cookingMode ? (
-                    /* Cooking Mode - Step by Step */
-                    <div className="space-y-6 animate-fade-in">
-                        {/* Progress Bar */}
-                        <div>
-                            <div className="mb-2 flex justify-between text-xs font-bold text-muted-foreground">
-                                <span>Progresso</span>
-                                <span>{Math.round(progress)}%</span>
-                            </div>
-                            <div className="relative h-2.5 overflow-hidden rounded-full bg-muted">
-                                <div
-                                    className="absolute left-0 top-0 h-full bg-primary transition-all duration-500 ease-out"
-                                    style={{ width: `${progress}%` }}
-                                />
-                            </div>
-                            <p className="mt-3 text-center text-sm font-semibold text-muted-foreground">
-                                Passo {currentStep + 1} de {(recipe.instructions ?? []).length}
-                            </p>
-                        </div>
-
-                        {/* Timer */}
-                        <div className="rounded-2xl border border-primary/15 bg-white/80 dark:bg-white/5 backdrop-blur-xl p-4 shadow-sm">
-                            {timer.initialSeconds > 0 ? (
-                                <div className="flex flex-col items-center gap-3">
-                                    <div className="relative flex items-center justify-center">
-                                        <svg className="h-24 w-24 -rotate-90" viewBox="0 0 100 100">
-                                            <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" className="text-muted/30" strokeWidth="6" />
-                                            <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" className="text-primary" strokeWidth="6" strokeLinecap="round"
-                                                strokeDasharray={`${2 * Math.PI * 44}`}
-                                                strokeDashoffset={`${2 * Math.PI * 44 * (1 - timer.progress / 100)}`}
-                                                style={{ transition: 'stroke-dashoffset 1s linear' }}
-                                            />
-                                        </svg>
-                                        <span className="absolute text-2xl font-black tabular-nums text-foreground">{timer.formatTime()}</span>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button size="sm" variant="outline" className="rounded-xl gap-1.5 font-bold" onClick={timer.toggle}>
-                                            {timer.isRunning ? <><Pause className="h-4 w-4" />Pausar</> : <><Play className="h-4 w-4" />Continuar</>}
-                                        </Button>
-                                        <Button size="sm" variant="ghost" className="rounded-xl gap-1.5 font-bold text-destructive" onClick={timer.stop}>
-                                            <TimerOff className="h-4 w-4" />Cancelar
-                                        </Button>
-                                    </div>
-                                </div>
-                            ) : showTimerSetup ? (
-                                <div className="flex flex-col items-center gap-3">
-                                    <p className="text-sm font-bold text-foreground">⏱️ Definir Timer (minutos)</p>
-                                    <div className="flex items-center gap-2">
-                                        {[1, 3, 5, 10, 15, 20, 30].map(m => (
-                                            <button key={m} onClick={() => { timer.start(m); setShowTimerSetup(false); }}
-                                                className="h-10 min-w-[40px] rounded-xl bg-primary/10 text-primary text-sm font-bold transition-all active:scale-95 hover:bg-primary/20 px-2">
-                                                {m}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <input type="number" min="1" placeholder="Min" value={timerMinutes} onChange={e => setTimerMinutes(e.target.value)}
-                                            className="h-10 w-20 rounded-xl bg-muted/50 text-center text-sm font-bold border-none focus:ring-2 focus:ring-primary/30" />
-                                        <Button size="sm" className="rounded-xl font-bold" disabled={!timerMinutes || Number(timerMinutes) <= 0}
-                                            onClick={() => { timer.start(Number(timerMinutes)); setShowTimerSetup(false); setTimerMinutes(''); }}>
-                                            Iniciar
-                                        </Button>
-                                        <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => setShowTimerSetup(false)}>Fechar</Button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <button onClick={() => setShowTimerSetup(true)}
-                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary/5 py-3 text-sm font-bold text-primary transition-all active:scale-[0.98] hover:bg-primary/10">
-                                    <Timer className="h-4 w-4" />
-                                    {language === 'en' ? 'Set Cooking Timer' : language === 'es' ? 'Configurar Temporizador' : 'Definir Timer de Cozimento'}
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Current Step */}
-                        <div className="rounded-2xl border border-primary/15 bg-primary/5 dark:bg-primary/10 p-6 shadow-sm">
-                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-xl font-bold text-primary-foreground shadow-lg shadow-primary/25">
-                                {currentStep + 1}
-                            </div>
-                            <p className="text-lg font-medium leading-relaxed text-foreground">
-                                {(recipe.instructions ?? [])[currentStep]}
-                            </p>
-                        </div>
-
-                        {/* Navigation */}
-                        <div className="flex gap-3">
-                            <Button
-                                variant="outline"
-                                onClick={prevStep}
-                                disabled={currentStep === 0}
-                                className="flex-1 rounded-2xl py-6 font-bold"
-                            >
-                                <ArrowLeft className="mr-2 h-5 w-5" />
-                                Anterior
-                            </Button>
-                            <Button
-                                onClick={() => {
-                                    toggleStep(currentStep);
-                                    nextStep();
-                                }}
-                                className="flex-1 rounded-2xl py-6 font-bold shadow-sm shadow-primary/25"
-                                disabled={currentStep === (recipe.instructions ?? []).length - 1 && completedSteps.includes(currentStep)}
-                            >
-                                {currentStep === (recipe.instructions ?? []).length - 1 ? (
-                                    <>
-                                        <Check className="mr-2 h-5 w-5" />
-                                        Concluir
-                                    </>
-                                ) : (
-                                    <>
-                                        Próximo
-                                        <ArrowRight className="ml-2 h-5 w-5" />
-                                    </>
-                                )}
-                            </Button>
-                        </div>
-                    </div>
-                ) : (
-                    /* Normal View */
-                    <div className="animate-fade-in space-y-8">
+                {/* Normal View - always shown when not in cooking mode */}
+                <div className="animate-fade-in space-y-8">
                         {/* Ingredients */}
                         <section>
                             <h3 className="mb-4 text-lg font-bold text-foreground">Ingredientes</h3>
@@ -426,9 +323,185 @@ export default function RecipePage() {
                                 ))}
                             </div>
                         </section>
-                    </div>
-                )}
+                </div>
             </main>
         </PageTransition>
+
+        {/* Cooking Mode Fullscreen Overlay */}
+        {cookingMode && (
+            <div className="fixed inset-0 z-[100] bg-gradient-to-br from-[#091f1c] via-[#0d2820] to-[#091f1c] flex flex-col">
+                {/* Header */}
+                <header className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+                    <button
+                        onClick={() => {
+                            setCookingMode(false);
+                            setRecipeCompleted(false);
+                        }}
+                        className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-xl text-white active:scale-[0.97] transition-all hover:bg-white/20"
+                    >
+                        <ArrowLeft className="h-5 w-5" />
+                    </button>
+                    <h1 className="flex-1 text-center text-xl font-bold text-white truncate px-4">{recipe?.name}</h1>
+                    <button
+                        onClick={() => toggleFavoriteRecipe(recipe?.id || '')}
+                        className={cn(
+                            "flex h-10 w-10 items-center justify-center rounded-2xl transition-all active:scale-90",
+                            isFavorite ? "bg-red-500/20 text-red-400" : "bg-white/10 text-white hover:bg-white/20"
+                        )}
+                    >
+                        <Heart className={cn("h-5 w-5", isFavorite && "fill-current")} />
+                    </button>
+                </header>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col justify-center">
+                    {recipeCompleted ? (
+                        <div className="flex flex-col items-center justify-center h-full gap-8 animate-fade-in">
+                            <div className="relative flex items-center justify-center">
+                                <div className="absolute h-32 w-32 rounded-full bg-emerald-500/20 animate-pulse" />
+                                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-emerald-500 shadow-2xl shadow-emerald-500/50">
+                                    <Check className="h-12 w-12 text-white" />
+                                </div>
+                            </div>
+                            <div className="text-center space-y-2">
+                                <h2 className="text-3xl font-black text-white">Receita Concluída!</h2>
+                                <p className="text-lg text-emerald-300">🎉 Parabéns!</p>
+                            </div>
+                            <Button
+                                onClick={() => {
+                                    setCookingMode(false);
+                                    setRecipeCompleted(false);
+                                }}
+                                className="gap-2 rounded-2xl py-6 w-full max-w-xs bg-emerald-600 hover:bg-emerald-700 font-bold"
+                            >
+                                <ArrowLeft className="h-5 w-5" />
+                                Voltar à Receita
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="space-y-6">
+                            {/* Progress Bar */}
+                            <div>
+                                <div className="mb-2 flex justify-between text-xs font-bold text-white/60">
+                                    <span>Progresso</span>
+                                    <span>{Math.round(progress)}%</span>
+                                </div>
+                                <div className="relative h-3 overflow-hidden rounded-full bg-white/10">
+                                    <div
+                                        className="absolute left-0 top-0 h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-500 ease-out"
+                                        style={{ width: `${progress}%` }}
+                                    />
+                                </div>
+                                <p className="mt-3 text-center text-sm font-semibold text-white/60">
+                                    Passo {currentStep + 1} de {(recipe?.instructions ?? []).length}
+                                </p>
+                            </div>
+
+                            {/* Timer */}
+                            <div className="rounded-2xl border border-emerald-500/20 bg-white/5 backdrop-blur-xl p-4 shadow-sm">
+                                {timer.initialSeconds > 0 ? (
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="relative flex items-center justify-center">
+                                            <svg className="h-28 w-28 -rotate-90" viewBox="0 0 100 100">
+                                                <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" className="text-white/10" strokeWidth="6" />
+                                                <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" className="text-emerald-400" strokeWidth="6" strokeLinecap="round"
+                                                    strokeDasharray={`${2 * Math.PI * 44}`}
+                                                    strokeDashoffset={`${2 * Math.PI * 44 * (1 - timer.progress / 100)}`}
+                                                    style={{ transition: 'stroke-dashoffset 1s linear' }}
+                                                />
+                                            </svg>
+                                            <span className="absolute text-3xl font-black tabular-nums text-white">{timer.formatTime()}</span>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button size="sm" variant="outline" className="rounded-xl gap-1.5 font-bold bg-white/10 border-white/20 text-white hover:bg-white/20" onClick={timer.toggle}>
+                                                {timer.isRunning ? <><Pause className="h-4 w-4" />Pausar</> : <><Play className="h-4 w-4" />Continuar</>}
+                                            </Button>
+                                            <Button size="sm" variant="ghost" className="rounded-xl gap-1.5 font-bold text-red-400 hover:bg-red-500/20" onClick={timer.stop}>
+                                                <TimerOff className="h-4 w-4" />Cancelar
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ) : showTimerSetup ? (
+                                    <div className="flex flex-col items-center gap-3">
+                                        <p className="text-sm font-bold text-white">⏱️ Definir Timer (minutos)</p>
+                                        <div className="flex items-center gap-2 flex-wrap justify-center">
+                                            {[1, 3, 5, 10, 15, 20, 30].map(m => (
+                                                <button key={m} onClick={() => { timer.start(m); setShowTimerSetup(false); }}
+                                                    className="h-10 min-w-[40px] rounded-xl bg-emerald-500/20 text-emerald-300 text-sm font-bold transition-all active:scale-95 hover:bg-emerald-500/30 px-2">
+                                                    {m}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <div className="flex items-center gap-2 w-full">
+                                            <input type="number" min="1" placeholder="Min" value={timerMinutes} onChange={e => setTimerMinutes(e.target.value)}
+                                                className="h-10 flex-1 rounded-xl bg-white/10 text-center text-sm font-bold border-none focus:ring-2 focus:ring-emerald-500/30 text-white placeholder:text-white/40" />
+                                            <Button size="sm" className="rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700" disabled={!timerMinutes || Number(timerMinutes) <= 0}
+                                                onClick={() => { timer.start(Number(timerMinutes)); setShowTimerSetup(false); setTimerMinutes(''); }}>
+                                                Iniciar
+                                            </Button>
+                                            <Button size="sm" variant="ghost" className="rounded-xl text-white/60" onClick={() => setShowTimerSetup(false)}>Fechar</Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <button onClick={() => setShowTimerSetup(true)}
+                                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500/10 py-3 text-sm font-bold text-emerald-300 transition-all active:scale-[0.98] hover:bg-emerald-500/20">
+                                        <Timer className="h-4 w-4" />
+                                        Definir Timer de Cozimento
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Current Step */}
+                            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-8 shadow-sm">
+                                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500 text-2xl font-bold text-white shadow-lg shadow-emerald-500/50">
+                                    {currentStep + 1}
+                                </div>
+                                <p className="text-xl font-medium leading-relaxed text-white">
+                                    {(recipe?.instructions ?? [])[currentStep]}
+                                </p>
+                            </div>
+
+                            {/* Navigation */}
+                            <div className="flex gap-3">
+                                <Button
+                                    variant="outline"
+                                    onClick={prevStep}
+                                    disabled={currentStep === 0}
+                                    className="flex-1 rounded-2xl py-6 font-bold bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-50"
+                                >
+                                    <ArrowLeft className="mr-2 h-5 w-5" />
+                                    Anterior
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        toggleStep(currentStep);
+                                        if (currentStep === (recipe?.instructions ?? []).length - 1) {
+                                            setRecipeCompleted(true);
+                                            toast.success("Receita concluída! 🎉");
+                                        } else {
+                                            nextStep();
+                                        }
+                                    }}
+                                    className="flex-1 rounded-2xl py-6 font-bold shadow-sm shadow-emerald-500/50 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                >
+                                    {currentStep === (recipe?.instructions ?? []).length - 1 ? (
+                                        <>
+                                            <Check className="mr-2 h-5 w-5" />
+                                            Concluir
+                                        </>
+                                    ) : (
+                                        <>
+                                            Próximo
+                                            <ArrowRight className="ml-2 h-5 w-5" />
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        )}
+        </>
     );
 }
