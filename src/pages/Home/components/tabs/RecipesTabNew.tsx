@@ -367,24 +367,21 @@ export function RecipesTabNew() {
     <div className="flex flex-col min-h-0">
       {/* ── Favorites Toggle ── */}
       {favoriteRecipes.length > 0 && (
-        <div className="px-4 pt-3 pb-2">
+        <div className="px-4 pt-2 pb-1">
           <button
             onClick={() => {
               setShowOnlyFavorites(!showOnlyFavorites);
               setVisibleCount(VISIBLE_STEP);
             }}
             className={cn(
-              "w-full flex items-center justify-center gap-2 h-9 rounded-xl text-sm font-semibold transition-all border",
+              "flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-bold transition-all border",
               showOnlyFavorites
-                ? "bg-red-500/10 text-red-600 border-red-500/20"
-                : "bg-black/[0.02] dark:bg-white/[0.03] text-foreground/70 border-black/[0.06] dark:border-white/[0.08]"
+                ? "bg-red-500/20 text-red-600 border-red-500/30"
+                : "bg-black/[0.03] dark:bg-white/[0.04] text-foreground/60 border-black/[0.08] dark:border-white/[0.10]"
             )}
           >
-            <Heart className={cn("h-3.5 w-3.5", showOnlyFavorites && "fill-current")} />
-            {pt ? "Favoritos" : "Favorites"}
-            <span className="ml-auto text-xs font-bold opacity-70">
-              {favoriteRecipes.length}
-            </span>
+            <Heart className={cn("h-4 w-4", showOnlyFavorites && "fill-current")} />
+            <span>{favoriteRecipes.length}</span>
           </button>
         </div>
       )}

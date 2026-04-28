@@ -824,7 +824,7 @@ export function ShoppingTab() {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-3 gap-1.5 max-h-80 overflow-y-auto">
             {itemCategories.map((cat) => (
               <button
                 key={cat.value}
@@ -833,10 +833,10 @@ export function ShoppingTab() {
                     handleUpdateItemCategory(editingItemId, cat.value, cat.store);
                   }
                 }}
-                className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border-2 border-primary/20 bg-white dark:bg-white/5 hover:border-primary hover:bg-primary/10 dark:hover:bg-primary/10 transition-all active:scale-95 text-sm"
+                className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-primary/20 bg-white dark:bg-white/5 hover:border-primary hover:bg-primary/10 dark:hover:bg-primary/10 transition-all active:scale-95"
               >
-                <span className="text-xl">{cat.label.split(" ")[0]}</span>
-                <span className="text-xs font-semibold text-center leading-tight">
+                <span className="text-lg">{cat.label.split(" ")[0]}</span>
+                <span className="text-[10px] font-semibold text-center leading-tight">
                   {cat.label.replace(/^[^\s]+ /, "")}
                 </span>
               </button>
