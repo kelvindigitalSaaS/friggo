@@ -10,6 +10,7 @@ import {
   Cookie,
   Plus,
   Calendar,
+  Heart,
 } from "lucide-react";
 import {
   format,
@@ -59,7 +60,7 @@ const MEAL_CONFIG: Record<string, { label: string; icon: any; color: string; bg:
 };
 
 export function PlannerTab() {
-  const { mealPlan, removeFromMealPlan } = useKaza();
+  const { mealPlan, removeFromMealPlan, toggleFavoriteRecipe, favoriteRecipes } = useKaza();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>("weekly");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -221,6 +222,15 @@ export function PlannerTab() {
                             <p className="text-[15px] font-bold text-foreground truncate">{meal.recipe_name}</p>
                           </div>
                           <button
+                            onClick={() => toggleFavoriteRecipe(meal.recipe_id)}
+                            className="h-10 w-10 flex items-center justify-center rounded-[14px] bg-pink-500/10 text-pink-500 transition-opacity active:opacity-70"
+                          >
+                            <Heart
+                              className="h-4 w-4"
+                              fill={favoriteRecipes.includes(meal.recipe_id) ? "currentColor" : "none"}
+                            />
+                          </button>
+                          <button
                             onClick={() => removeFromMealPlan(meal.id)}
                             className="h-10 w-10 flex items-center justify-center rounded-[14px] bg-red-500/10 text-red-500 transition-opacity active:opacity-70"
                           >
@@ -345,6 +355,15 @@ export function PlannerTab() {
                         </p>
                         <p className="text-sm font-bold text-foreground truncate">{meal.recipe_name}</p>
                       </div>
+                      <button
+                        onClick={() => toggleFavoriteRecipe(meal.recipe_id)}
+                        className="h-8 w-8 flex items-center justify-center rounded-xl bg-pink-500/10 text-pink-500 opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity"
+                      >
+                        <Heart
+                          className="h-3.5 w-3.5"
+                          fill={favoriteRecipes.includes(meal.recipe_id) ? "currentColor" : "none"}
+                        />
+                      </button>
                       <button
                         onClick={() => removeFromMealPlan(meal.id)}
                         className="h-8 w-8 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity"
