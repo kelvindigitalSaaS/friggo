@@ -331,30 +331,30 @@ export default function RecipePage() {
         {cookingMode && (
             <div className="fixed inset-0 z-[100] bg-gradient-to-br from-[#091f1c] via-[#0d2820] to-[#091f1c] flex flex-col">
                 {/* Header */}
-                <header className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+                <header className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-white/[0.06]">
                     <button
                         onClick={() => {
                             setCookingMode(false);
                             setRecipeCompleted(false);
                         }}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 backdrop-blur-xl text-white active:scale-[0.97] transition-all hover:bg-white/20"
+                        className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg sm:rounded-xl bg-white/10 backdrop-blur-xl text-white active:scale-[0.97] transition-all hover:bg-white/20"
                     >
-                        <ArrowLeft className="h-4 w-4" />
+                        <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </button>
-                    <h1 className="flex-1 text-center text-lg font-bold text-white truncate px-3">{recipe?.name}</h1>
+                    <h1 className="flex-1 text-center text-sm sm:text-lg font-bold text-white truncate px-2 sm:px-3">{recipe?.name}</h1>
                     <button
                         onClick={() => toggleFavoriteRecipe(recipe?.id || '')}
                         className={cn(
-                            "flex h-9 w-9 items-center justify-center rounded-xl transition-all active:scale-90",
+                            "transition-all active:scale-90",
                             isFavorite ? "text-red-400" : "text-white/60 hover:text-white"
                         )}
                     >
-                        <Heart className={cn("h-4 w-4", isFavorite && "fill-current")} />
+                        <Heart className={cn("h-5 w-5 sm:h-5 sm:w-5", isFavorite && "fill-current")} />
                     </button>
                 </header>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col justify-center">
+                <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-3 sm:py-6 flex flex-col justify-center">
                     {recipeCompleted ? (
                         <div className="flex flex-col items-center justify-center h-full gap-8 animate-fade-in">
                             <div className="relative flex items-center justify-center">
@@ -379,30 +379,30 @@ export default function RecipePage() {
                             </Button>
                         </div>
                     ) : (
-                        <div className="space-y-6">
+                        <div className="space-y-3 sm:space-y-6">
                             {/* Progress Bar */}
                             <div>
-                                <div className="mb-2 flex justify-between text-xs font-bold text-white/60">
+                                <div className="mb-2 flex justify-between text-[10px] sm:text-xs font-bold text-white/60">
                                     <span>Progresso</span>
                                     <span>{Math.round(progress)}%</span>
                                 </div>
-                                <div className="relative h-3 overflow-hidden rounded-full bg-white/10">
+                                <div className="relative h-2 sm:h-3 overflow-hidden rounded-full bg-white/10">
                                     <div
                                         className="absolute left-0 top-0 h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-500 ease-out"
                                         style={{ width: `${progress}%` }}
                                     />
                                 </div>
-                                <p className="mt-3 text-center text-sm font-semibold text-white/60">
+                                <p className="mt-2 sm:mt-3 text-center text-[11px] sm:text-sm font-semibold text-white/60">
                                     Passo {currentStep + 1} de {(recipe?.instructions ?? []).length}
                                 </p>
                             </div>
 
                             {/* Timer */}
-                            <div className="rounded-2xl border border-emerald-500/20 bg-white/5 backdrop-blur-xl p-4 shadow-sm">
+                            <div className="rounded-xl sm:rounded-2xl border border-emerald-500/20 bg-white/5 backdrop-blur-xl p-3 sm:p-4 shadow-sm">
                                 {timer.initialSeconds > 0 ? (
-                                    <div className="flex flex-col items-center gap-3">
+                                    <div className="flex flex-col items-center gap-2 sm:gap-3">
                                         <div className="relative flex items-center justify-center">
-                                            <svg className="h-28 w-28 -rotate-90" viewBox="0 0 100 100">
+                                            <svg className="h-20 w-20 sm:h-28 sm:w-28 -rotate-90" viewBox="0 0 100 100">
                                                 <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" className="text-white/10" strokeWidth="6" />
                                                 <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" className="text-emerald-400" strokeWidth="6" strokeLinecap="round"
                                                     strokeDasharray={`${2 * Math.PI * 44}`}
@@ -410,14 +410,14 @@ export default function RecipePage() {
                                                     style={{ transition: 'stroke-dashoffset 1s linear' }}
                                                 />
                                             </svg>
-                                            <span className="absolute text-3xl font-black tabular-nums text-white">{timer.formatTime()}</span>
+                                            <span className="absolute text-2xl sm:text-3xl font-black tabular-nums text-white">{timer.formatTime()}</span>
                                         </div>
-                                        <div className="flex gap-2">
-                                            <Button size="sm" variant="outline" className="rounded-xl gap-1.5 font-bold bg-white/10 border-white/20 text-white hover:bg-white/20" onClick={timer.toggle}>
-                                                {timer.isRunning ? <><Pause className="h-4 w-4" />Pausar</> : <><Play className="h-4 w-4" />Continuar</>}
+                                        <div className="flex gap-1.5 sm:gap-2">
+                                            <Button size="sm" variant="outline" className="rounded-lg sm:rounded-xl gap-1 sm:gap-1.5 font-bold text-xs sm:text-sm bg-white/10 border-white/20 text-white hover:bg-white/20" onClick={timer.toggle}>
+                                                {timer.isRunning ? <><Pause className="h-3 w-3 sm:h-4 sm:w-4" />Pausar</> : <><Play className="h-3 w-3 sm:h-4 sm:w-4" />Continuar</>}
                                             </Button>
-                                            <Button size="sm" variant="ghost" className="rounded-xl gap-1.5 font-bold text-red-400 hover:bg-red-500/20" onClick={timer.stop}>
-                                                <TimerOff className="h-4 w-4" />Cancelar
+                                            <Button size="sm" variant="ghost" className="rounded-lg sm:rounded-xl gap-1 sm:gap-1.5 font-bold text-xs sm:text-sm text-red-400 hover:bg-red-500/20" onClick={timer.stop}>
+                                                <TimerOff className="h-3 w-3 sm:h-4 sm:w-4" />Cancelar
                                             </Button>
                                         </div>
                                     </div>
@@ -452,24 +452,24 @@ export default function RecipePage() {
                             </div>
 
                             {/* Current Step */}
-                            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-8 shadow-sm">
-                                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500 text-2xl font-bold text-white shadow-lg shadow-emerald-500/50">
+                            <div className="rounded-xl sm:rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 sm:p-8 shadow-sm">
+                                <div className="mb-3 sm:mb-6 flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-lg sm:rounded-2xl bg-emerald-500 text-xl sm:text-2xl font-bold text-white shadow-lg shadow-emerald-500/50">
                                     {currentStep + 1}
                                 </div>
-                                <p className="text-xl font-medium leading-relaxed text-white">
+                                <p className="text-sm sm:text-xl font-medium leading-relaxed text-white">
                                     {(recipe?.instructions ?? [])[currentStep]}
                                 </p>
                             </div>
 
                             {/* Navigation */}
-                            <div className="flex gap-3">
+                            <div className="flex gap-2 sm:gap-3">
                                 <Button
                                     variant="outline"
                                     onClick={prevStep}
                                     disabled={currentStep === 0}
-                                    className="flex-1 rounded-2xl py-6 font-bold bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-50"
+                                    className="flex-1 rounded-lg sm:rounded-2xl py-4 sm:py-6 font-bold text-sm sm:text-base bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-50"
                                 >
-                                    <ArrowLeft className="mr-2 h-5 w-5" />
+                                    <ArrowLeft className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                                     Anterior
                                 </Button>
                                 <Button
@@ -482,17 +482,17 @@ export default function RecipePage() {
                                             nextStep();
                                         }
                                     }}
-                                    className="flex-1 rounded-2xl py-6 font-bold shadow-sm shadow-emerald-500/50 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    className="flex-1 rounded-lg sm:rounded-2xl py-4 sm:py-6 font-bold text-sm sm:text-base shadow-sm shadow-emerald-500/50 bg-emerald-600 hover:bg-emerald-700 text-white"
                                 >
                                     {currentStep === (recipe?.instructions ?? []).length - 1 ? (
                                         <>
-                                            <Check className="mr-2 h-5 w-5" />
+                                            <Check className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                                             Concluir
                                         </>
                                     ) : (
                                         <>
                                             Próximo
-                                            <ArrowRight className="ml-2 h-5 w-5" />
+                                            <ArrowRight className="ml-1 sm:ml-2 h-4 w-4 sm:h-5 sm:w-5" />
                                         </>
                                     )}
                                 </Button>

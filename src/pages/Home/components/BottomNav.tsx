@@ -22,7 +22,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
 
   const tabs = [
     { id: "home", label: t.home, icon: Home },
-    { id: "fridge", label: t.fridge, icon: Refrigerator },
+    { id: "fridge", label: language === 'pt-BR' ? 'Dispensa' : language === 'es' ? 'Estoque' : 'Stock', icon: Refrigerator },
     { id: "recipes", label: t.recipes, icon: ChefHat },
     { id: "planner", label: language === 'pt-BR' ? 'Plano' : language === 'es' ? 'Plan' : 'Planner', icon: CalendarDays },
     { id: "shopping", label: t.shopping, icon: ShoppingCart },
