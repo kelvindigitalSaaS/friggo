@@ -105,18 +105,27 @@ export function ShoppingTab() {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
 
-  const categories = [
-    { label: "TODOS", value: "all", emoji: "" },
-    { label: "MERCADO", value: "market", emoji: "🛒" },
-    { label: "FEIRA", value: "fair", emoji: "🌿" },
-    { label: "FARMÁCIA", value: "pharmacy", emoji: "💊" },
-    { label: "OUTRO", value: "other", emoji: "📦" },
+  const itemCategories = [
+    { label: "🍎 Frutas", value: "fruit", store: "fair" as const },
+    { label: "🥬 Verduras/Legumes", value: "vegetable", store: "fair" as const },
+    { label: "🥩 Carnes", value: "meat", store: "market" as const },
+    { label: "🧀 Latícinios", value: "dairy", store: "market" as const },
+    { label: "🧃 Bebidas", value: "beverage", store: "market" as const },
+    { label: "🧊 Congelados", value: "frozen", store: "market" as const },
+    { label: "💊 Remédios", value: "medicine", store: "pharmacy" as const },
+    { label: "🧴 Higiene", value: "hygiene", store: "pharmacy" as const },
+    { label: "💪 Suplementos", value: "supplement", store: "pharmacy" as const },
+    { label: "🧹 Limpeza", value: "cleaning", store: "market" as const },
+    { label: "📦 Outros", value: "other", store: "other" as const },
   ];
 
-  const handleUpdateItemCategory = async (itemId: string, newStore: string) => {
+  const handleUpdateItemCategory = async (itemId: string, categoryValue: string, storeValue: string) => {
     const { error } = await supabase
       .from("shopping_list")
-      .update({ store: newStore })
+      .update({
+        category: categoryValue,
+        store: storeValue
+      })
       .eq("id", itemId);
 
     if (error) {
@@ -808,26 +817,28 @@ export function ShoppingTab() {
 
       {/* Category Selection Dialog */}
       <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
-        <DialogContent className="max-w-xs">
+        <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-center">
               {language === "pt-BR" ? "Selecionar Categoria" : "Select Category"}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="grid grid-cols-2 gap-2">
-            {categories.slice(1).map((cat) => (
+          <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
+            {itemCategories.map((cat) => (
               <button
                 key={cat.value}
                 onClick={() => {
                   if (editingItemId) {
-                    handleUpdateItemCategory(editingItemId, cat.value);
+                    handleUpdateItemCategory(editingItemId, cat.value, cat.store);
                   }
                 }}
-                className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-primary/20 bg-primary/5 hover:border-primary hover:bg-primary/10 transition-all active:scale-95"
+                className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border-2 border-primary/20 bg-white dark:bg-white/5 hover:border-primary hover:bg-primary/10 dark:hover:bg-primary/10 transition-all active:scale-95 text-sm"
               >
-                <span className="text-2xl">{cat.emoji}</span>
-                <span className="text-xs font-bold text-center">{cat.label}</span>
+                <span className="text-xl">{cat.label.split(" ")[0]}</span>
+                <span className="text-xs font-semibold text-center leading-tight">
+                  {cat.label.replace(/^[^\s]+ /, "")}
+                </span>
               </button>
             ))}
           </div>
