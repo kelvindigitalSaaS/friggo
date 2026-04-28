@@ -218,20 +218,27 @@ export function useAccountSession(groupId: string | null = null): UseAccountSess
     init();
 
     // Atualiza last_seen_at a cada 2 minutos
-    const heartbeat = setInterval(() => {
-      if (!user) return;
-      supabase
-        .from("account_sessions")
-        .update({ last_seen_at: new Date().toISOString(), is_connected: true })
-        .eq("user_id", user.id)
-        .eq("device_id", deviceId.current)
-        .select("force_disconnected")
-        .single()
-        .then(({ data }) => {
-          if (data?.force_disconnected) {
-            signOut();
-          }
-        });
+    const heartbeat = setInterval(async () => {
+      if (!user || !mounted) return;
+      try {
+        const { data, error } = await (supabase as any)
+          .from("account_sessions")
+          .update({ last_seen_at: new Date().toISOString(), is_connected: true })
+          .eq("user_id", user.id)
+          .eq("device_id", deviceId.current)
+          .select("force_disconnected")
+          .single();
+
+        if (error) {
+          console.warn("[SESSION] Heartbeat error:", error);
+          return;
+        }
+        if (data && data.force_disconnected && mounted) {
+          await signOut();
+        }
+      } catch (err: unknown) {
+        console.error("[SESSION] Heartbeat failed:", err);
+      }
     }, 2 * 60 * 1000);
 
     return () => {
@@ -239,12 +246,15 @@ export function useAccountSession(groupId: string | null = null): UseAccountSess
       clearInterval(heartbeat);
       // Marca sessão como desconectada ao sair
       if (user) {
-        supabase
+        (supabase as any)
           .from("account_sessions")
           .update({ is_connected: false })
           .eq("user_id", user.id)
           .eq("device_id", deviceId.current)
-          .then(() => {});
+          .then(() => {})
+          .catch((err: unknown) => {
+            if (import.meta.env.DEV) console.error("[SESSION] Cleanup error:", err);
+          });
       }
     };
   }, [user, groupId, upsertSession, fetchGroupData, signOut]);

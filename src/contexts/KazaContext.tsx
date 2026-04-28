@@ -30,10 +30,13 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { scheduleLocalNotification } from "@/lib/pushNotifications";
 import { addToSyncQueue, processSyncQueue } from "@/lib/offlineSync";
 
-const STORAGE_KEYS = {
-  ITEMS: "kaza_items_cache",
-  SHOPPING: "kaza_shopping_cache",
-  CONSUMABLES: "kaza_consumables_cache"
+const getStorageKeys = (userId?: string) => {
+  const suffix = userId ? `_${userId}` : "";
+  return {
+    ITEMS: `kaza_items_cache${suffix}`,
+    SHOPPING: `kaza_shopping_cache${suffix}`,
+    CONSUMABLES: `kaza_consumables_cache${suffix}`
+  };
 };
 
 interface KazaContextType {
@@ -266,9 +269,10 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   // ── Auto-Save to Local Cache ──────────────────────────────────────────────
   useEffect(() => {
     if (loading || !user) return;
-    localStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(items));
-    localStorage.setItem(STORAGE_KEYS.SHOPPING, JSON.stringify(shoppingList));
-    localStorage.setItem(STORAGE_KEYS.CONSUMABLES, JSON.stringify(consumables));
+    const keys = getStorageKeys(user.id);
+    localStorage.setItem(keys.ITEMS, JSON.stringify(items));
+    localStorage.setItem(keys.SHOPPING, JSON.stringify(shoppingList));
+    localStorage.setItem(keys.CONSUMABLES, JSON.stringify(consumables));
   }, [items, shoppingList, consumables, loading, user]);
 
   // ── Connection Status Sync ────────────────────────────────────────────────
@@ -307,14 +311,30 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
 
-      // ── Hydration from Local Cache ──
-      const cachedItems = localStorage.getItem(STORAGE_KEYS.ITEMS);
-      const cachedShopping = localStorage.getItem(STORAGE_KEYS.SHOPPING);
-      const cachedConsumables = localStorage.getItem(STORAGE_KEYS.CONSUMABLES);
-      
-      if (cachedItems) setItems(JSON.parse(cachedItems));
-      if (cachedShopping) setShoppingList(JSON.parse(cachedShopping));
-      if (cachedConsumables) setConsumables(JSON.parse(cachedConsumables));
+      // ── Hydration from Local Cache (keyed by user to prevent cross-user contamination) ──
+      const keys = getStorageKeys(user.id);
+      const cachedItems = localStorage.getItem(keys.ITEMS);
+      const cachedShopping = localStorage.getItem(keys.SHOPPING);
+      const cachedConsumables = localStorage.getItem(keys.CONSUMABLES);
+
+      try {
+        if (cachedItems) setItems(JSON.parse(cachedItems));
+      } catch (err) {
+        console.error(`[KAZA] Failed to hydrate items cache:`, err);
+        localStorage.removeItem(keys.ITEMS);
+      }
+      try {
+        if (cachedShopping) setShoppingList(JSON.parse(cachedShopping));
+      } catch (err) {
+        console.error(`[KAZA] Failed to hydrate shopping cache:`, err);
+        localStorage.removeItem(keys.SHOPPING);
+      }
+      try {
+        if (cachedConsumables) setConsumables(JSON.parse(cachedConsumables));
+      } catch (err) {
+        console.error(`[KAZA] Failed to hydrate consumables cache:`, err);
+        localStorage.removeItem(keys.CONSUMABLES);
+      }
 
       console.log("[KAZA] querying home_members...");
       const { data: membership, error: memberErr } = await supabase
@@ -378,12 +398,18 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           console.log("[KAZA] No pending invite tokens found.");
         }
 
-        setItems([]);
-        setShoppingList([]);
-        setConsumables([]);
+        // Only clear items if there's no local cache (user truly has no home yet)
+        // Don't overwrite valid cached data — the auto-save effect would persist the empty
+        // arrays back to localStorage, destroying the cache for this user.
+        const hasLocalData = !!cachedItems || !!cachedShopping;
+        if (!hasLocalData) {
+          setItems([]);
+          setShoppingList([]);
+          setConsumables([]);
+        }
         setFavoriteRecipes([]);
         setMealPlan([]);
-        
+
         console.log("[KAZA] Fetching partial profile data for onboarding...");
         const { data: profile } = await supabase
           .from("profiles")
@@ -696,7 +722,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         method: "INSERT",
         table: "items",
         payload: {
-          home_id: homeId,
+          home_id: homeId || user.id, // Fallback to user.id to prevent null home_id in payload
           user_id: user.id,
           added_by_user_id: user.id,
           name: item.name,
@@ -1259,20 +1285,59 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   const checkCpf = async (cpf: string) => {
     const raw = cpf.replace(/\D/g, "");
     if (!raw) return true;
-    const { data } = await supabase.rpc("check_cpf_availability", { p_cpf: raw });
-    return !!data;
+    try {
+      const { data, error } = await (supabase as any).rpc("check_cpf_availability", { p_cpf: raw });
+      if (error) {
+        console.error("[KAZA] checkCpf RPC error:", error);
+        throw error;
+      }
+      return !!data;
+    } catch (err) {
+      console.error("[KAZA] checkCpf failed:", err);
+      showError("Erro ao verificar CPF", err);
+      return false;
+    }
   };
 
   const requestPasswordResetByCpf = async (cpf: string) => {
     const raw = cpf.replace(/\D/g, "");
-    const { data, error } = await supabase.rpc("get_email_by_cpf", { p_cpf: raw });
-    if (data && data.length > 0) {
+    try {
+      const { data, error } = await (supabase as any).rpc("get_email_by_cpf", { p_cpf: raw });
+      if (error) {
+        console.error("[KAZA] get_email_by_cpf error:", error);
+        showError("Erro ao recuperar email", error);
+        return false;
+      }
+      if (!data || data.length === 0) {
+        toast({
+          title: language === "pt-BR" ? "CPF não encontrado" : "CPF not found",
+          description: language === "pt-BR"
+            ? "Nenhuma conta registrada com este CPF."
+            : "No account found with this CPF.",
+          variant: "destructive"
+        });
+        return false;
+      }
       const { error: resetErr } = await supabase.auth.resetPasswordForEmail(data[0].email, {
         redirectTo: `${window.location.origin}/auth?type=recovery`
       });
-      return !resetErr;
+      if (resetErr) {
+        console.error("[KAZA] resetPasswordForEmail error:", resetErr);
+        showError("Erro ao enviar reset", resetErr);
+        return false;
+      }
+      toast({
+        title: language === "pt-BR" ? "Email enviado" : "Email sent",
+        description: language === "pt-BR"
+          ? "Verifique seu email para resetar a senha."
+          : "Check your email to reset your password."
+      });
+      return true;
+    } catch (err) {
+      console.error("[KAZA] requestPasswordResetByCpf failed:", err);
+      showError("Erro ao solicitar reset", err);
+      return false;
     }
-    return false;
   };
 
   const completeOnboarding = async (data: OnboardingData) => {
