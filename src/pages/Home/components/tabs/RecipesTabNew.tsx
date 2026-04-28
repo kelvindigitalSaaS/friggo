@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Search, ChefHat, ShoppingCart, X, Clock, Users, Check, Play, Pause, ArrowLeft, ArrowRight, Heart } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -312,13 +313,13 @@ function RecipeSheet({ recipe, onClose, onFilterByCategory }: { recipe: Recipe; 
 }
 
 export function RecipesTabNew() {
+  const navigate = useNavigate();
   const { language } = useLanguage();
   const { favoriteRecipes } = useKaza();
   const [query, setQuery] = useState("");
   const [selectedCategoryIdx, setSelectedCategoryIdx] = useState<number | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(VISIBLE_STEP);
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
   const pt = language === "pt-BR";
@@ -455,7 +456,7 @@ export function RecipesTabNew() {
             {displayed.map((recipe) => {
               const isFavorite = favoriteRecipes.includes(recipe.id);
               return (
-                <div key={recipe.id} onClick={() => setSelectedRecipe(recipe)}
+                <div key={recipe.id} onClick={() => navigate(`/recipe/${recipe.id}`)}
                   className="rounded-[1.5rem] bg-white dark:bg-[#11302c]/40 border border-black/[0.04] dark:border-white/[0.05] overflow-hidden shadow-[0_4px_20px_-8px_rgba(0,0,0,0.06)] transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer group relative">
                   {isFavorite && (
                     <div className="absolute top-2.5 right-2.5 z-10 text-red-500">
@@ -511,19 +512,6 @@ export function RecipesTabNew() {
         )}
       </div>
 
-      <AnimatePresence>
-        {selectedRecipe && (
-          <RecipeSheet
-            recipe={selectedRecipe}
-            onClose={() => setSelectedRecipe(null)}
-            onFilterByCategory={(categoryIdx) => {
-              setSelectedCategoryIdx(categoryIdx);
-              setVisibleCount(VISIBLE_STEP);
-              setSelectedRecipe(null);
-            }}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }
