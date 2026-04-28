@@ -102,6 +102,31 @@ export function ShoppingTab() {
   const [editingName, setEditingName] = useState("");
   const [isNotifying, setIsNotifying] = useState(false);
   const [daysHorizon, setDaysHorizon] = useState<3 | 7 | 15>(7);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+
+  const categories = [
+    { label: "TODOS", value: "all", emoji: "" },
+    { label: "MERCADO", value: "market", emoji: "🛒" },
+    { label: "FEIRA", value: "fair", emoji: "🌿" },
+    { label: "FARMÁCIA", value: "pharmacy", emoji: "💊" },
+    { label: "OUTRO", value: "other", emoji: "📦" },
+  ];
+
+  const handleUpdateItemCategory = async (itemId: string, newStore: string) => {
+    const { error } = await supabase
+      .from("shopping_list")
+      .update({ store: newStore })
+      .eq("id", itemId);
+
+    if (error) {
+      toast.error("Erro ao atualizar categoria");
+    } else {
+      toast.success("Categoria atualizada!");
+      setEditingItemId(null);
+      setShowCategoryDialog(false);
+    }
+  };
 
   const labels = {
     "pt-BR": {
@@ -535,12 +560,19 @@ export function ShoppingTab() {
     <div
       key={item.id}
       className={cn(
-        "flex items-center gap-2.5 rounded-2xl border bg-white/80 dark:bg-white/5 backdrop-blur-xl border-black/[0.04] dark:border-white/[0.06] p-3 transition-all duration-300 shadow-sm",
+        "flex items-center gap-2.5 rounded-2xl border bg-white/80 dark:bg-white/5 backdrop-blur-xl border-black/[0.04] dark:border-white/[0.06] p-3 transition-all duration-300 shadow-sm cursor-pointer hover:border-primary/30",
         item.isCompleted && "opacity-60"
       )}
+      onClick={() => {
+        setEditingItemId(item.id);
+        setShowCategoryDialog(true);
+      }}
     >
       <button
-        onClick={() => handleToggleItem(item)}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleToggleItem(item);
+        }}
         className={cn(
           "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-90"
         )}
@@ -773,6 +805,34 @@ export function ShoppingTab() {
       ) : (
         <div className="space-y-1.5">{filteredList.map((item, index) => renderItem(item, index))}</div>
       )}
+
+      {/* Category Selection Dialog */}
+      <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              {language === "pt-BR" ? "Selecionar Categoria" : "Select Category"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-2">
+            {categories.slice(1).map((cat) => (
+              <button
+                key={cat.value}
+                onClick={() => {
+                  if (editingItemId) {
+                    handleUpdateItemCategory(editingItemId, cat.value);
+                  }
+                }}
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 border-primary/20 bg-primary/5 hover:border-primary hover:bg-primary/10 transition-all active:scale-95"
+              >
+                <span className="text-2xl">{cat.emoji}</span>
+                <span className="text-xs font-bold text-center">{cat.label}</span>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
