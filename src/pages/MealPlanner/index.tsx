@@ -24,6 +24,7 @@ import {
   BellOff,
   Plus,
   X,
+  Heart,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { PageTransition } from "@/components/PageTransition";
@@ -38,7 +39,7 @@ const MEAL_CONFIG: Record<string, { label: string; icon: any; color: string; bg:
 export default function MealPlannerPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { addToMealPlan } = useKaza();
+  const { addToMealPlan, toggleFavoriteRecipe, favoriteRecipes } = useKaza();
   const { isMultiPro } = useSubscription();
   const { recordMealPlan } = useAchievements();
 
@@ -233,6 +234,18 @@ export default function MealPlannerPage() {
                       {recipe.category || "Receita"}
                     </p>
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavoriteRecipe(recipe.id);
+                    }}
+                    className="h-11 w-11 flex shrink-0 items-center justify-center rounded-full bg-pink-500/10 text-pink-600 group-hover:bg-pink-500 group-hover:text-white transition-all shadow-sm"
+                  >
+                    <Heart
+                      className="h-5 w-5"
+                      fill={favoriteRecipes.includes(recipe.id) ? "currentColor" : "none"}
+                    />
+                  </button>
                   <div className="h-11 w-11 flex shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-all shadow-sm">
                     <Plus className="h-5 w-5" />
                   </div>
