@@ -456,7 +456,7 @@ export function RecipesTabNew() {
             {displayed.map((recipe) => {
               const isFavorite = favoriteRecipes.includes(recipe.id);
               return (
-                <div key={recipe.id} onClick={() => navigate(`/recipe/${recipe.id}`, { state: { recipe } })}
+                <div key={recipe.id} onClick={() => navigate(`/app/recipe/${recipe.id}`, { state: { recipe } })}
                   className="rounded-[1.5rem] bg-white dark:bg-[#11302c]/40 border border-black/[0.04] dark:border-white/[0.05] overflow-hidden shadow-[0_4px_20px_-8px_rgba(0,0,0,0.06)] transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer group relative">
                   {isFavorite && (
                     <div className="absolute top-2.5 right-2.5 z-10 text-red-500">

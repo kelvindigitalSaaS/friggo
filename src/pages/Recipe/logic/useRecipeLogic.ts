@@ -1,11 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Recipe } from '@/types/kaza';
 import { useKaza } from '@/contexts/KazaContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { format, addDays, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { allRecipes } from '@/data/recipeDatabase';
 
 const NOTIF_ICON = '/icon.png';
 
@@ -92,7 +93,14 @@ function useTimer() {
 export function useRecipeLogic() {
     const location = useLocation();
     const navigate = useNavigate();
-    const recipe = location.state?.recipe as Recipe | undefined;
+    const { recipeId } = useParams<{ recipeId: string }>();
+
+    // Try to get recipe from location.state first, then fallback to finding by ID
+    let recipe = location.state?.recipe as Recipe | undefined;
+    if (!recipe && recipeId) {
+        recipe = allRecipes.find(r => r.id === recipeId);
+        console.log('[useRecipeLogic] Recipe fetched from allRecipes:', { recipeId, found: !!recipe });
+    }
 
     const [currentStep, setCurrentStep] = useState(0);
     const [cookingMode, setCookingMode] = useState(false);

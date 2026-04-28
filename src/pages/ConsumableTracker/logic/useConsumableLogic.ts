@@ -228,9 +228,23 @@ export function useConsumableLogic() {
     };
 
     const handleSaveEdit = async () => {
-        if (!editItem) return;
+        console.log('handleSaveEdit called, editItem:', editItem);
+        if (!editItem) {
+            console.log('No editItem, returning');
+            return;
+        }
+
         const newDaily = editDailyConsumption === '' ? editItem.dailyConsumption : parseFormattedNumber(editDailyConsumption);
         const newMin = editMinStock === '' ? editItem.minStock : parseFormattedNumber(editMinStock);
+
+        console.log('Saving consumable:', {
+            id: editItem.id,
+            name: editName || editItem.name,
+            icon: editIcon || editItem.icon,
+            dailyConsumption: newDaily,
+            usageInterval: editUsageInterval,
+            minStock: newMin,
+        });
 
         try {
             await updateConsumable(editItem.id, {
@@ -241,12 +255,13 @@ export function useConsumableLogic() {
                 minStock: newMin,
             });
 
+            console.log('Consumable saved successfully');
             setEditItem(null);
             setScreen('list');
             toast.success(l.save);
         } catch (err) {
-            toast.error(language === 'pt-BR' ? 'Erro ao salvar' : 'Error saving');
             console.error('Error updating consumable:', err);
+            toast.error(language === 'pt-BR' ? 'Erro ao salvar: ' + err : 'Error saving: ' + err);
         }
     };
 

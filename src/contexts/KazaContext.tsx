@@ -1021,9 +1021,35 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   };
 
   const updateConsumable = async (id: string, updates: Partial<ConsumableItem>) => {
-    if (!user || !homeId) {
+    console.log("updateConsumable called with:", { id, updates, user: !!user, homeId });
+
+    if (!user) {
+      console.warn("No user, updating locally only");
       setConsumables((prev) =>
         prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
+      return;
+    }
+
+    if (!homeId) {
+      console.warn("No homeId, updating locally and queueing for sync");
+      setConsumables((prev) =>
+        prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
+
+      const patch: any = { id };
+      if (updates.name !== undefined) patch.name = updates.name;
+      if (updates.icon !== undefined) patch.icon = updates.icon;
+      if (updates.category !== undefined) patch.category = updates.category;
+      if (updates.currentStock !== undefined) patch.current_stock = updates.currentStock;
+      if (updates.unit !== undefined) patch.unit = updates.unit;
+      if (updates.dailyConsumption !== undefined) patch.daily_consumption = updates.dailyConsumption;
+      if (updates.minStock !== undefined) patch.min_stock = updates.minStock;
+      if (updates.usageInterval !== undefined) patch.usage_interval = updates.usageInterval;
+
+      addToSyncQueue({
+        method: "UPDATE",
+        table: "consumables",
+        payload: patch
+      });
       return;
     }
 
@@ -1038,11 +1064,15 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     if (updates.usageInterval !== undefined) patch.usage_interval = updates.usageInterval;
 
     try {
-      const { error } = await supabase
+      console.log("Updating consumable in Supabase with patch:", patch);
+      const { error, data } = await supabase
         .from("consumables")
         .update(patch)
         .eq("id", id)
-        .eq("home_id", homeId);
+        .eq("home_id", homeId)
+        .select();
+
+      console.log("Supabase response:", { error, data });
 
       if (error) {
         console.error("Supabase error updating consumable:", error);
@@ -1051,6 +1081,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
 
       setConsumables((prev) =>
         prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
+      console.log("Consumable updated successfully");
     } catch (err) {
       // Offline fallback
       console.warn("Update failed, adding to sync queue:", err);
@@ -1062,6 +1093,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         table: "consumables",
         payload: { ...patch, id }
       });
+      throw err;
     }
   };
 
@@ -1572,7 +1604,16 @@ export function KazaProvider({ children }: { children: ReactNode }) {
 
   const updateOnboardingData = (data: Partial<OnboardingData>) => {
     setOnboardingData((prev) => (prev ? { ...prev, ...data } : null));
-    if (user) updateProfile(data).catch((e) => { if (import.meta.env.DEV) console.error("[DEV] auto-save:", e); });
+    if (user && homeId) {
+      updateProfile(data).catch((e) => { if (import.meta.env.DEV) console.error("[DEV] auto-save:", e); });
+
+      // Se as notificationPrefs foram alteradas, salvar também na tabela notification_preferences
+      if (data.notificationPrefs) {
+        updateNotificationPreferences(homeId, data.notificationPrefs, data.nightCheckupTime).catch((e) => {
+          if (import.meta.env.DEV) console.error("[DEV] notification prefs save:", e);
+        });
+      }
+    }
   };
 
   return (
