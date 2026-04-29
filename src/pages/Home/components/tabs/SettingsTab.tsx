@@ -641,18 +641,22 @@ export function SettingsTab() {
           </h3>
           <div className="rounded-2xl bg-white dark:bg-card border border-border dark:border-white/10 overflow-hidden shadow-sm">
             {[
-              { 
-                label: "Vibração (10s)", 
-                desc: "Testa a vibração do dispositivo", 
-                icon: Smartphone, 
+              {
+                label: "Vibração (10s)",
+                desc: "Testa a vibração do dispositivo",
+                icon: Smartphone,
                 onClick: () => {
-                  if (navigator.vibrate) {
+                  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+
+                  if (navigator.vibrate && !isIOS) {
                     navigator.vibrate(10000);
                     toast.success("Vibração iniciada por 10s");
+                  } else if (isIOS) {
+                    toast.info("📱 iOS: Vibração de 10s não compatível até o momento. Verifique som/notificações nas Configurações");
                   } else {
                     toast.error("Vibração não suportada neste dispositivo");
                   }
-                } 
+                }
               },
               { 
                 label: "Alerta de Lixo", 
