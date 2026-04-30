@@ -243,8 +243,46 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('online', handleOnline);
   }, []);
 
+  const formatDatabaseError = (err: unknown): string => {
+    if (typeof err === "object" && err !== null) {
+      const dbErr = err as any;
+
+      // Handle PostgreSQL unique constraint errors (23505)
+      if (dbErr.code === "23505" || dbErr.message?.includes("duplicate key")) {
+        if (dbErr.message?.includes("meal_plans")) {
+          return "Já existe um plano alimentar para esta categoria nesta data. Edite o existente ou escolha outra data.";
+        }
+        if (dbErr.message?.includes("profiles_cpf")) {
+          return "Este CPF já está cadastrado em outra conta.";
+        }
+        return "Este registro já existe. Verifique os dados e tente novamente.";
+      }
+
+      // Handle NOT NULL constraint errors (23502)
+      if (dbErr.code === "23502") {
+        return "Dados incompletos. Preencha todos os campos obrigatórios.";
+      }
+
+      // Handle foreign key errors (23503)
+      if (dbErr.code === "23503") {
+        return "Não foi possível processar esta ação. Verifique se os dados ainda existem.";
+      }
+
+      // Use custom message if available
+      if (dbErr.message && typeof dbErr.message === "string") {
+        return dbErr.message;
+      }
+    }
+
+    if (err instanceof Error) {
+      return err.message;
+    }
+
+    return "Erro ao processar a solicitação. Tente novamente.";
+  };
+
   const showError = useCallback((title: string, err: unknown) => {
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = formatDatabaseError(err);
     console.error("[KAZA]", title, err);
     toast({ title, description: msg, variant: "destructive" });
   }, [toast]);
@@ -1201,7 +1239,19 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           created_by: user.id
         })
         .select().single();
-      if (error) throw error;
+
+      if (error) {
+        // Treat UNIQUE constraint error with friendly message
+        if (error.code === "23505" && error.message?.includes("meal_plans")) {
+          toast({
+            title: "Plano já existe",
+            description: "Já existe um plano alimentar para esta categoria nesta data. Edite o existente ou escolha outra data.",
+            variant: "destructive"
+          });
+          return;
+        }
+        throw error;
+      }
       if (data) {
         setMealPlan((prev) => [...prev, {
           id: data.id,
