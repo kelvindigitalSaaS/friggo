@@ -1417,15 +1417,18 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   };
 
   async function updateNotificationPreferences(
-    hid: string, prefs?: string[], nightCheckupTime?: string
+    hid?: string, prefs?: string[], nightCheckupTime?: string
   ): Promise<{ error?: any }> {
     if (!user) return { error: "User not authenticated" };
-    if (!hid) return { error: "Home ID is required" };
+
+    // home_id é obrigatório na tabela notification_preferences (NOT NULL constraint)
+    const notificationHomeId = hid || homeId;
+    if (!notificationHomeId) return { error: "Home ID is required" };
 
     const list = prefs ?? DEFAULT_NOTIFICATION_PREFS;
     const patch: Record<string, unknown> = {
       user_id: user.id,
-      home_id: hid,
+      home_id: notificationHomeId,
       expiring_items: list.includes("expiry"),
       shopping_list_updates: list.includes("shopping"),
       low_stock_consumables: list.includes("consumables"),
@@ -1442,7 +1445,6 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         .from("notification_preferences")
         .select("id")
         .eq("user_id", user.id)
-        .eq("home_id", hid)
         .maybeSingle();
 
       if (selectError && selectError.code !== "PGRST116") {
@@ -1450,7 +1452,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       }
 
       const { error } = existing
-        ? await (supabase as any).from("notification_preferences").update(patch).eq("user_id", user.id).eq("home_id", hid)
+        ? await (supabase as any).from("notification_preferences").update(patch).eq("user_id", user.id)
         : await (supabase as any).from("notification_preferences").insert(patch);
 
       return { error };
