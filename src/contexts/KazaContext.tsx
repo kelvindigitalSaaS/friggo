@@ -790,6 +790,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         table: "items",
         payload: patch
       });
+      if (navigator.onLine) showError("Erro ao atualizar item", err);
     }
   };
 
@@ -814,6 +815,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         table: "items",
         payload: { id, deleted_at: new Date().toISOString() }
       });
+      if (navigator.onLine) showError("Erro ao deletar item", err);
     }
   };
 
@@ -939,6 +941,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         table: "shopping_items",
         payload: { id, deleted_at: new Date().toISOString() }
       });
+      if (navigator.onLine) showError("Erro ao remover de lista de compras", err);
     }
   };
 
@@ -1025,7 +1028,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       // Offline fallback
       const localId = crypto.randomUUID();
       setConsumables((prev) => [...prev, { ...item, id: localId }]);
-      
+
       addToSyncQueue({
         method: "INSERT",
         table: "consumables",
@@ -1041,6 +1044,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           usage_interval: item.usageInterval || "daily"
         }
       });
+      if (navigator.onLine) showError("Erro ao adicionar consumível", err);
     }
   };
 
@@ -1142,6 +1146,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         table: "consumables",
         payload: { id, deleted_at: new Date().toISOString() }
       });
+      if (navigator.onLine) showError("Erro ao remover consumível", err);
     }
   };
 

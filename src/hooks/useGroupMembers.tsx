@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 interface GroupMemberWithStatus extends SubAccountMember {
   isOnline?: boolean;
+  member_name?: string;
 }
 
 interface GroupSlot {
@@ -40,7 +41,7 @@ export function useGroupMembers() {
           .eq("id", groupId)
           .maybeSingle();
 
-        // 2. Fetch members
+        // 2. Fetch members with their real names
         const { data: membersData } = await supabase
           .from("sub_account_members")
           .select("*")
@@ -53,26 +54,7 @@ export function useGroupMembers() {
           allMembers = allMembers.filter(m => m.user_id !== groupData.master_user_id && m.role !== "master");
         }
 
-        // Fetch real names from profiles to ensure we don't show IDs
-        if (allMembers.length > 0) {
-          const userIds = allMembers.map(m => m.user_id);
-          const { data: profilesData } = await supabase
-            .from("profiles")
-            .select("user_id, name, avatar_url")
-            .in("user_id", userIds);
-
-          if (profilesData) {
-            const profileMap = new Map(profilesData.map(p => [p.user_id, { name: p.name, avatar: p.avatar_url }]));
-            allMembers = allMembers.map(m => {
-              const p = profileMap.get(m.user_id);
-              return {
-                ...m,
-                display_name: p?.name || m.display_name,
-                avatar_url: p?.avatar || m.avatar_url
-              };
-            });
-          }
-        }
+        // member_name is now populated from profiles via trigger in DB
 
         // 4. Fetch online status from account_sessions
         if (allMembers.length > 0) {
@@ -128,7 +110,7 @@ export function useGroupMembers() {
           if (payload.eventType === "INSERT") {
             const newMember = payload.new as SubAccountMember;
             setMembers((prev) => [...prev, { ...newMember, isOnline: false }]);
-            const name = newMember.display_name || "Uma pessoa";
+            const name = (newMember as any).member_name || "Uma pessoa";
             toast.success(`${name} se juntou ao seu plano!`);
           } else if (payload.eventType === "UPDATE") {
             const updated = payload.new as SubAccountMember;
@@ -271,16 +253,27 @@ export function useGroupMembers() {
   );
 
   const removeMember = useCallback(
-    async (memberId: string, memberName: string, userId: string) => {
+    async (_memberId: string, memberName: string, userId: string) => {
       if (!groupId || !user) return;
 
       try {
-        // Send notification to member before removing
+        // Call new RPC function to convert member to master
+        const { error } = await (supabase as any).rpc(
+          "remove_member_and_convert_to_master",
+          {
+            p_member_user_id: userId,
+            p_group_id: groupId,
+          }
+        );
+
+        if (error) throw error;
+
+        // Send notification to member after successful conversion
         await supabase.functions.invoke("send-push-notification", {
           body: {
-            group_id: groupId,
+            user_id: userId,
             title: "Você agora é uma conta principal",
-            body: `Você foi removido do plano compartilhado. Agora sua conta é principal (Gratuita) e você precisa reconfigurar sua casa ao entrar no app.`,
+            body: `Você foi removido do plano compartilhado. Agora sua conta é principal (Gratuita) com seu próprio plano independente. Configure sua casa ao próximo acesso.`,
             data: {
               type: "member-removed",
             },
@@ -288,24 +281,7 @@ export function useGroupMembers() {
           },
         }).catch(() => {}); // Best effort
 
-        // Remove from sub_account_members
-        const { error } = await supabase
-          .from("sub_account_members")
-          .update({ is_active: false })
-          .eq("id", memberId)
-          .eq("group_id", groupId);
-
-        if (error) throw error;
-
-        // ALSO remove from home_members so they are kicked out of the master's home
-        // and forced to reconfigure their own home when they log in next time
-        await supabase
-          .from("home_members")
-          .delete()
-          .eq("user_id", userId)
-          .eq("home_id", groupId);
-
-        toast.success(`${memberName} foi removido do plano`);
+        toast.success(`${memberName} foi convertido para conta principal com plano independente`);
       } catch (err) {
         if (import.meta.env.DEV) console.error("[DEV] Error removing member:", err);
         toast.error("Erro ao remover membro");

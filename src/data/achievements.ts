@@ -42,6 +42,9 @@ export const ACHIEVEMENT_TEMPLATES: AchievementTemplate[] = [
   { id: "sub_1", category: "subscription", name: "Kazeiro Oficial", description: "Primeiro mês de assinatura concluído", icon: "💎", threshold: 1 },
   { id: "sub_2", category: "subscription", name: "Fiel à Kaza", description: "6 meses de assinatura", icon: "👑", threshold: 6 },
   { id: "sub_3", category: "subscription", name: "Lenda da Organização", description: "1 ano de assinatura", icon: "🌌", threshold: 12 },
+
+  // --- Especial ---
+  { id: "courage", category: "special", name: "Coragem", description: "Assinou um plano pago no primeiro dia!", icon: "🦁", threshold: 1 },
 ];
 
 export type AchievementCounters = {
