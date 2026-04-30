@@ -32,6 +32,8 @@ DECLARE
   v_home_id    uuid;
   v_owned_home uuid;
   v_is_sub     boolean;
+  v_master_home uuid;
+  v_master_id  uuid;
 BEGIN
   -- Detectar se é sub-conta ativa de outro master
   SELECT EXISTS (
@@ -39,42 +41,58 @@ BEGIN
     WHERE user_id = v_user_id AND is_active = true
   ) INTO v_is_sub;
 
-  -- Buscar casa que o próprio usuário é OWNER
-  SELECT home_id INTO v_owned_home
-  FROM public.home_members
-  WHERE user_id    = v_user_id
-    AND role::text = 'owner'
-    AND is_active  = true
-  LIMIT 1;
+  -- Se é sub-conta, buscar home_id do master
+  IF v_is_sub THEN
+    SELECT hm.home_id, sag.master_user_id
+    INTO v_master_home, v_master_id
+    FROM public.sub_account_members sam
+    JOIN public.sub_account_groups sag ON sam.group_id = sag.id
+    JOIN public.home_members hm ON hm.user_id = sag.master_user_id
+      AND hm.role::text = 'owner'
+      AND hm.is_active = true
+    WHERE sam.user_id = v_user_id
+      AND sam.is_active = true
+    LIMIT 1;
 
-  IF v_is_sub AND v_owned_home IS NULL THEN
-    -- Sub-conta sem casa própria: cria uma casa pessoal separada.
-    INSERT INTO public.homes (name, owner_user_id, home_type, residents)
-    VALUES (p_home_name, v_user_id, p_home_type, p_residents)
-    RETURNING id INTO v_home_id;
+    IF v_master_home IS NOT NULL THEN
+      -- Vincular sub-conta à casa do master
+      v_home_id := v_master_home;
+      INSERT INTO public.home_members (home_id, user_id, role, is_active)
+      VALUES (v_home_id, v_user_id, 'member', true)
+      ON CONFLICT (home_id, user_id) DO UPDATE
+        SET is_active = true, role = 'member';
+    END IF;
+  END IF;
 
-    INSERT INTO public.home_members (home_id, user_id, role, is_active)
-    VALUES (v_home_id, v_user_id, 'owner', true)
-    ON CONFLICT (home_id, user_id) DO NOTHING;
+  -- Se não é sub-conta ou não encontrou home do master, usar lógica normal
+  IF v_home_id IS NULL THEN
+    -- Buscar casa que o próprio usuário é OWNER
+    SELECT home_id INTO v_owned_home
+    FROM public.home_members
+    WHERE user_id    = v_user_id
+      AND role::text = 'owner'
+      AND is_active  = true
+    LIMIT 1;
 
-  ELSIF v_owned_home IS NOT NULL THEN
-    -- Usuário já é owner: atualiza a casa existente (re-onboarding)
-    v_home_id := v_owned_home;
-    UPDATE public.homes
-    SET name      = p_home_name,
-        home_type = p_home_type,
-        residents = p_residents
-    WHERE id = v_home_id;
+    IF v_owned_home IS NOT NULL THEN
+      -- Usuário já é owner: atualiza a casa existente (re-onboarding)
+      v_home_id := v_owned_home;
+      UPDATE public.homes
+      SET name      = p_home_name,
+          home_type = p_home_type,
+          residents = p_residents
+      WHERE id = v_home_id;
 
-  ELSE
-    -- Usuário novo sem casa: criar casa e vincular como owner
-    INSERT INTO public.homes (name, owner_user_id, home_type, residents)
-    VALUES (p_home_name, v_user_id, p_home_type, p_residents)
-    RETURNING id INTO v_home_id;
+    ELSE
+      -- Usuário novo sem casa: criar casa e vincular como owner
+      INSERT INTO public.homes (name, owner_user_id, home_type, residents)
+      VALUES (p_home_name, v_user_id, p_home_type, p_residents)
+      RETURNING id INTO v_home_id;
 
-    INSERT INTO public.home_members (home_id, user_id, role, is_active)
-    VALUES (v_home_id, v_user_id, 'owner', true)
-    ON CONFLICT (home_id, user_id) DO NOTHING;
+      INSERT INTO public.home_members (home_id, user_id, role, is_active)
+      VALUES (v_home_id, v_user_id, 'owner', true)
+      ON CONFLICT (home_id, user_id) DO NOTHING;
+    END IF;
   END IF;
 
   -- Configurações da geladeira
