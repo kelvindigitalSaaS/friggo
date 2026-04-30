@@ -172,6 +172,7 @@ export function useAuthLogic() {
         navigate("/app/home");
       }
     } catch (error: any) {
+      console.error("[AUTH] handleSubmit error:", error);
       toast.error(error.message || "Erro ao processar");
     } finally {
       setLoading(false);
