@@ -788,7 +788,7 @@ function OnboardingForm() {
             variants={staggerContainer}
             initial="enter"
             animate="center"
-            className="flex flex-1 flex-col justify-center px-5"
+            className="flex flex-1 flex-col justify-center px-5 pb-6"
           >
             <motion.div variants={staggerItem} className="text-center mb-6">
               <div
@@ -863,10 +863,10 @@ function OnboardingForm() {
               Sem cartão. Cancele quando quiser.
             </motion.p>
             
-            <motion.div variants={staggerItem} className="mt-6">
+            <motion.div variants={staggerItem} className="mt-6 pb-safe px-0">
               <button
                 onClick={handleNext}
-                className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors"
+                className="w-full h-14 rounded-2xl bg-primary text-primary-foreground text-base font-bold shadow-lg shadow-primary/25 hover:bg-primary/90 transition-colors"
               >
                 {language === "pt-BR" ? "Começar Teste Grátis" : language === "es" ? "Empezar Prueba Gratuita" : "Start Free Trial"}
               </button>
@@ -1715,7 +1715,7 @@ function OnboardingForm() {
           {renderStep()}
         </motion.div>
       </AnimatePresence>
-      <motion.div
+      {steps[currentStep] !== "planSelection" && <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ ...appleSpring, delay: 0.2 }}
@@ -1757,17 +1757,13 @@ function OnboardingForm() {
                 className="w-full h-14 rounded-2xl text-base font-bold shadow-lg shadow-primary/25 transition-all"
                 size="lg"
               >
-                {currentStep === 0
-                  ? l.startSetup
-                  : steps[currentStep] === "notifications"
-                  ? language === "pt-BR" ? "Começar Teste Grátis" : language === "es" ? "Empezar Prueba Gratuita" : "Start Free Trial"
-                  : l.continue}
+                {currentStep === 0 ? l.startSetup : l.continue}
                 <ChevronRight className="ml-2 h-5 w-5" />
               </Button>
             </motion.div>
           </div>
         )}
-      </motion.div>
+      </motion.div>}
     </motion.div>
   );
 }

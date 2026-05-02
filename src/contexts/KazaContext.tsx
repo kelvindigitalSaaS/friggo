@@ -1189,7 +1189,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       }));
       const { data, error } = await supabase
         .from("consumables")
-        .insert(rows)
+        .upsert(rows, { onConflict: "home_id,name", ignoreDuplicates: true })
         .select();
       if (error) throw error;
       // Merge new items into existing list (avoid duplicates by name)
