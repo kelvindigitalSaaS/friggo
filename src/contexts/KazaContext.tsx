@@ -27,7 +27,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { scheduleLocalNotification } from "@/lib/pushNotifications";
+import { scheduleLocalNotification, saveWebPushSubscription } from "@/lib/pushNotifications";
+import { isNative } from "@/lib/capacitor";
 import { addToSyncQueue, processSyncQueue } from "@/lib/offlineSync";
 
 const getStorageKeys = (userId?: string) => {
@@ -476,6 +477,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       if (np?.daily_summary) notifPrefs.push("recipes");
       if (np?.night_checkup) notifPrefs.push("nightCheckup");
       if (np?.cooking_reminders) notifPrefs.push("cooking");
+      if (np?.low_stock_consumables) notifPrefs.push("consumables");
       if (np?.garbage_reminder) notifPrefs.push("garbage");
       if (np?.achievement_updates) notifPrefs.push("achievements");
 
@@ -519,9 +521,13 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   // Fetch initial data when user changes
   useEffect(() => {
     if (authLoading) return; // Wait for auth to initialize before making assumptions
-    
+
     if (user?.id) {
       fetchData();
+      // Refresh push subscription if permission already granted (renew after VAPID key change)
+      if (!isNative && typeof window !== "undefined" && (window as any).Notification?.permission === "granted") {
+        saveWebPushSubscription().catch(() => {});
+      }
     } else {
       // No user session -> Reset state to show demo items
       fetchData();
@@ -846,6 +852,18 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         .select().single();
       if (error) throw error;
       setShoppingList((prev) => [...prev, toShoppingItem(data)]);
+      // Notify other home members
+      if (homeId && user) {
+        supabase.functions.invoke("send-push-notification", {
+          body: {
+            home_id: homeId,
+            title: "🛒 Lista de Compras",
+            body: `${item.name} foi adicionado à lista`,
+            type: "shopping",
+            exclude_user_id: user.id,
+          }
+        }).catch(() => {});
+      }
     } catch (err) {
       // Offline fallback
       const localItem: ShoppingItem = { ...item, id: crypto.randomUUID(), isCompleted: false };
@@ -1287,27 +1305,23 @@ export function KazaProvider({ children }: { children: ReactNode }) {
             }
           }
 
-        // Send push to group members if enabled
-        if (entry.notify_members) {
-          try {
-            await supabase.functions.invoke("send-push-notification", {
-              body: {
-                group_id: null, // Will be fetched from user's group
-                title: "Nova refeição planejada",
-                body: `${entry.recipe_name} em ${entry.planned_date} às ${entry.planned_time || 'sem horário específico'}`,
-                data: {
-                  type: "meal-plan",
-                  recipe_name: entry.recipe_name,
-                  planned_date: entry.planned_date,
-                  planned_time: entry.planned_time || ""
-                }
-              }
-            }).catch(err => {
-              if (import.meta.env.DEV) console.error("Erro ao enviar push notification:", err);
-            });
-          } catch (err) {
-            // Silently fail if push notification fails
-          }
+        // Send push to home members
+        if (homeId) {
+          const mealEmoji: Record<string, string> = {
+            breakfast: "☕ Café", lunch: "🍽️ Almoço",
+            dinner: "🌙 Jantar", snack: "🍪 Lanche",
+          };
+          const mealLabel = mealEmoji[entry.meal_type || ""] || "🍽️ Refeição";
+          supabase.functions.invoke("send-push-notification", {
+            body: {
+              home_id: homeId,
+              title: `${mealLabel} planejado`,
+              body: `${entry.recipe_name}${entry.planned_time ? ` às ${entry.planned_time}` : ""}`,
+              type: "recipes",
+              exclude_user_id: user.id,
+              data: { type: "meal-plan", planned_date: entry.planned_date }
+            }
+          }).catch(() => {});
         }
 
         toast({ title: "Agendado!", description: "Refeição adicionada ao seu plano." });

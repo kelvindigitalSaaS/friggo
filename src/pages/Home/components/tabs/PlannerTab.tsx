@@ -60,7 +60,7 @@ const MEAL_CONFIG: Record<string, { label: string; icon: any; color: string; bg:
 };
 
 export function PlannerTab() {
-  const { mealPlan, removeFromMealPlan, toggleFavoriteRecipe, favoriteRecipes } = useKaza();
+  const { mealPlan, removeFromMealPlan, toggleFavoriteRecipe, favoriteRecipes, isSubAccount } = useKaza();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>("weekly");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -177,13 +177,15 @@ export function PlannerTab() {
                   <h3 className="text-lg font-bold text-foreground capitalize">
                     {activeDayObj.label}, {activeDayObj.dayNum} de {format(activeDayObj.date, "MMM", { locale: ptBR })}
                   </h3>
-                  <button
-                    onClick={() => openAddDialog(activeDayObj.dateStr)}
-                    className="h-9 w-9 flex items-center justify-center rounded-xl transition-all active:scale-90 shadow-sm"
-                    style={{ background: "#165A52", color: "white" }}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
+                  {!isSubAccount && (
+                    <button
+                      onClick={() => openAddDialog(activeDayObj.dateStr)}
+                      className="h-9 w-9 flex items-center justify-center rounded-xl transition-all active:scale-90 shadow-sm"
+                      style={{ background: "#165A52", color: "white" }}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
 
                 {activeDayObj.meals.length === 0 ? (
@@ -230,12 +232,14 @@ export function PlannerTab() {
                               fill={favoriteRecipes.includes(meal.recipe_id) ? "currentColor" : "none"}
                             />
                           </button>
-                          <button
-                            onClick={() => removeFromMealPlan(meal.id)}
-                            className="h-10 w-10 flex items-center justify-center rounded-[14px] bg-red-500/10 text-red-500 transition-opacity active:opacity-70"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {!isSubAccount && (
+                            <button
+                              onClick={() => removeFromMealPlan(meal.id)}
+                              className="h-10 w-10 flex items-center justify-center rounded-[14px] bg-red-500/10 text-red-500 transition-opacity active:opacity-70"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       );
                     })}
@@ -302,7 +306,7 @@ export function PlannerTab() {
                 return (
                   <button
                     key={dateStr}
-                    onClick={() => openAddDialog(dateStr)}
+                    onClick={() => isSubAccount ? setSelectedDate(dateStr) : openAddDialog(dateStr)}
                     className={cn(
                       "aspect-square flex flex-col items-center justify-center rounded-xl text-xs font-bold transition-all active:scale-90 relative",
                       today ? "text-white shadow-md" : hasMeals ? "text-primary bg-primary/10" : "text-foreground bg-white/60 dark:bg-white/5 hover:bg-primary/5"
@@ -331,12 +335,14 @@ export function PlannerTab() {
                   <h3 className="text-sm font-bold text-foreground">
                     {format(new Date(selectedDate + "T00:00:00"), "eeee, dd 'de' MMMM", { locale: ptBR })}
                   </h3>
-                  <button
-                    onClick={() => openAddDialog(selectedDate)}
-                    className="text-xs font-bold text-primary flex items-center gap-1 active:opacity-70"
-                  >
-                    <Plus className="h-3.5 w-3.5" /> Adicionar
-                  </button>
+                  {!isSubAccount && (
+                    <button
+                      onClick={() => openAddDialog(selectedDate)}
+                      className="text-xs font-bold text-primary flex items-center gap-1 active:opacity-70"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Adicionar
+                    </button>
+                  )}
                 </div>
                 {mealPlan.filter((p) => p.planned_date === selectedDate).map((meal) => {
                   const config = MEAL_CONFIG[meal.meal_type] || MEAL_CONFIG.lunch;
@@ -364,12 +370,14 @@ export function PlannerTab() {
                           fill={favoriteRecipes.includes(meal.recipe_id) ? "currentColor" : "none"}
                         />
                       </button>
-                      <button
-                        onClick={() => removeFromMealPlan(meal.id)}
-                        className="h-8 w-8 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      {!isSubAccount && (
+                        <button
+                          onClick={() => removeFromMealPlan(meal.id)}
+                          className="h-8 w-8 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
                   );
                 })}

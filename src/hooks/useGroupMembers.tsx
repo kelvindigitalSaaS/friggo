@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription, PLAN_DETAILS } from "@/contexts/SubscriptionContext";
+import { useKaza } from "@/contexts/KazaContext";
 import { SubAccountMember, SubAccountInvite } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
@@ -20,6 +21,7 @@ interface GroupSlot {
 export function useGroupMembers() {
   const { user } = useAuth();
   const { subscription } = useSubscription();
+  const { isSubAccount } = useKaza();
   const [members, setMembers] = useState<GroupMemberWithStatus[]>([]);
   const [pendingInvites, setPendingInvites] = useState<SubAccountInvite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,33 +51,49 @@ export function useGroupMembers() {
 
         let allMembers: GroupMemberWithStatus[] = membersData || [];
 
-        // Exclude the master from the dependents list
-        if (groupData?.master_user_id) {
+        // Sub-accounts see everyone; master sees only dependents (not themselves)
+        if (!isSubAccount && groupData?.master_user_id) {
           allMembers = allMembers.filter(m => m.user_id !== groupData.master_user_id && m.role !== "master");
         }
 
-        // member_name is now populated from profiles via trigger in DB
-
-        // 4. Fetch online status from account_sessions
         if (allMembers.length > 0) {
-          const { data: sessionsData } = await supabase
-            .from("account_sessions")
-            .select("user_id, is_connected, last_seen_at")
-            .eq("group_id", groupId);
+          const userIds = allMembers.map(m => m.user_id).filter(Boolean);
 
-          const onlineMap = new Map(
-            (sessionsData || []).map((s) => [
-              s.user_id,
-              s.is_connected && new Date(s.last_seen_at).getTime() > Date.now() - 2 * 60000,
-            ])
-          );
+          // Fetch real names and avatars from profiles
+          const { data: profilesData } = await supabase
+            .from("profiles")
+            .select("user_id, name, avatar_url")
+            .in("user_id", userIds);
+          const profileMap = new Map((profilesData || []).map(p => [p.user_id, p]));
+
+          // Fetch online status from account_sessions (best-effort)
+          let onlineMap = new Map<string, boolean>();
+          try {
+            const { data: sessionsData } = await supabase
+              .from("account_sessions")
+              .select("user_id, is_connected, last_seen_at")
+              .eq("group_id", groupId);
+            onlineMap = new Map(
+              (sessionsData || []).map((s) => [
+                s.user_id,
+                s.is_connected && new Date(s.last_seen_at).getTime() > Date.now() - 5 * 60000,
+              ])
+            );
+          } catch { /* table may not exist yet */ }
 
           setMembers(
-            allMembers.map((m) => ({
-              ...m,
-              isOnline: onlineMap.get(m.user_id) ?? false,
-            }))
+            allMembers.map((m) => {
+              const profile = profileMap.get(m.user_id);
+              return {
+                ...m,
+                member_name: profile?.name || m.display_name || "Membro",
+                avatar_url: profile?.avatar_url || m.avatar_url,
+                isOnline: onlineMap.get(m.user_id) ?? false,
+              };
+            })
           );
+        } else {
+          setMembers([]);
         }
 
         // Fetch pending invites
@@ -153,11 +171,37 @@ export function useGroupMembers() {
       )
       .subscribe();
 
+    // Subscribe to account_sessions for live online status
+    const sessionsChannel = supabase
+      .channel(`group_sessions_${groupId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "account_sessions",
+        },
+        (payload) => {
+          const updated = payload.new as any;
+          setMembers((prev) =>
+            prev.map((m) => {
+              if (m.user_id !== updated.user_id) return m;
+              const isOnline =
+                updated.is_connected &&
+                new Date(updated.last_seen_at).getTime() > Date.now() - 5 * 60000;
+              return { ...m, isOnline };
+            })
+          );
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(membersChannel);
       supabase.removeChannel(invitesChannel);
+      supabase.removeChannel(sessionsChannel);
     };
-  }, [groupId, user]);
+  }, [groupId, user, isSubAccount]);
 
   // Calculate slots — derive maxSlots from PLAN_DETAILS based on effective plan
   const effectivePlan = subscription?.plan ?? "free";

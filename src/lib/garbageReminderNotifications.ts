@@ -70,6 +70,17 @@ export async function initGarbageReminderNotifications() {
       `garbage-${date.getTime()}`,
       "garbage"
     );
+
+    // Also push to other home members when the alarm fires
+    const homeId = localStorage.getItem("kaza-home-id");
+    if (homeId) {
+      setTimeout(async () => {
+        try {
+          const { notifyHomeMembers } = await import("./pushNotifications");
+          await notifyHomeMembers({ home_id: homeId, title, body, type: "garbage" });
+        } catch { /* best-effort */ }
+      }, delayMs);
+    }
   }
 }
 

@@ -39,7 +39,7 @@ const MEAL_CONFIG: Record<string, { label: string; icon: any; color: string; bg:
 export default function MealPlannerPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { addToMealPlan, toggleFavoriteRecipe, favoriteRecipes } = useKaza();
+  const { addToMealPlan, toggleFavoriteRecipe, favoriteRecipes, isSubAccount } = useKaza();
   const { isMultiPro } = useSubscription();
   const { recordMealPlan } = useAchievements();
 
@@ -84,6 +84,10 @@ export default function MealPlannerPage() {
   const displayedRecipes = filteredRecipes.slice(0, visibleCount);
 
   const handleAddMeal = (recipeId: string, recipeName: string, mealType?: string) => {
+    if (isSubAccount) {
+      toast.error("Conta secundária não pode adicionar refeições ao plano.");
+      return;
+    }
     setPendingMeal({ recipeId, recipeName, mealType });
     setPlannedTime("");
     setNotifyMembers(true);

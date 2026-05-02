@@ -184,10 +184,10 @@ export function SettingsTab() {
           </div>
         </section>
 
-        {/* Group Members Card (MultiPRO only) */}
-        {isMultiPro && (
+        {/* Group Members Card — primary (MultiPRO) can manage; secondary can view */}
+        {(isMultiPro || isSubAccount) && (
           <section>
-            <GroupMembersCard />
+            <GroupMembersCard readOnly={isSubAccount} />
           </section>
         )}
 

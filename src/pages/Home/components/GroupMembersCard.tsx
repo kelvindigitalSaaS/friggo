@@ -21,7 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const SESSION_KEY = "kaza_group_card_collapsed";
 
-export function GroupMembersCard() {
+export function GroupMembersCard({ readOnly = false }: { readOnly?: boolean }) {
   const { slots, filledSlots, maxSlots, inviteByEmail, removeMember, cancelInvite, resendInvite, loading } =
     useGroupMembers();
   const { language } = useLanguage();
@@ -233,7 +233,7 @@ export function GroupMembersCard() {
                         </p>
                       </div>
                     </div>
-                    {slot.member.role === "member" && (
+                    {slot.member.role === "member" && !readOnly && (
                       <button
                         onClick={() =>
                           setRemoveConfirm({
@@ -250,7 +250,7 @@ export function GroupMembersCard() {
                   </>
                 )}
 
-                {slot.type === "pending" && slot.invite && (
+                {slot.type === "pending" && slot.invite && !readOnly && (
                   <>
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
@@ -287,7 +287,7 @@ export function GroupMembersCard() {
                   </>
                 )}
 
-                {slot.type === "empty" && (
+                {slot.type === "empty" && !readOnly && (
                   isMultiPro ? (
                     <button
                       onClick={() => setShowInviteDialog(true)}

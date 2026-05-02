@@ -451,6 +451,7 @@ export async function notifyHomeMembers(payload: {
   title: string;
   body: string;
   exclude_user_id?: string;
+  type?: "expiry" | "shopping" | "recipes" | "nightCheckup" | "cooking" | "consumables" | "garbage" | "achievement";
   data?: Record<string, string>;
 }) {
   try {

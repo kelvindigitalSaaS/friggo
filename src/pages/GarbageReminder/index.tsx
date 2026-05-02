@@ -226,6 +226,43 @@ export default function GarbageReminderPage() {
     }
 
     recordGarbageSetup();
+
+    // Notify others that garbage reminder was configured
+    if (enabled && homeId && user && selectedDays.length > 0) {
+      try {
+        const profileRes = await supabase.from("profiles").select("name").eq("user_id", user.id).single();
+        const userName = profileRes.data?.name || (language === "pt-BR" ? "Alguém" : "Someone");
+
+        // Calculate next collection date
+        const [h, m] = reminderTime.split(":").map(Number);
+        const now = new Date();
+        let nextDate: Date | null = null;
+        for (let i = 1; i <= 14; i++) {
+          const d = new Date(now);
+          d.setDate(d.getDate() + i);
+          if (selectedDays.includes(d.getDay())) {
+            d.setHours(h, m, 0, 0);
+            nextDate = d;
+            break;
+          }
+        }
+
+        const nextStr = nextDate
+          ? format(nextDate, "EEEE, d 'de' MMMM", { locale: ptBR })
+          : selectedDays.map(d => weekdays[d]).join(", ");
+
+        const verb = garbageLocation === "building" ? "descer" : "colocar";
+
+        await notifyHomeMembers({
+          home_id: homeId,
+          title: "🗑️ Coleta de Lixo Configurada",
+          body: `Configurado por ${userName} — alguém deve ${verb} o lixo até ${reminderTime} na ${nextStr}`,
+          exclude_user_id: user.id,
+          type: "garbage",
+        });
+      } catch { /* best-effort */ }
+    }
+
     toast.success(l.saved, { duration: 2000 });
     navigate(-1);
   };
