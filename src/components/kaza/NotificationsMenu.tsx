@@ -9,10 +9,15 @@ import {
   SheetTrigger
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, CheckCheck, ShoppingCart, ChefHat, Trash2, Package, Trophy, AlertTriangle } from "lucide-react";
+import { Bell, CheckCheck, ShoppingCart, ChefHat, Trash2, Package, Trophy, AlertTriangle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useNotificationStore } from "@/hooks/useNotificationStore";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { notifyHomeMembers } from "@/lib/pushNotifications";
+import { toast } from "sonner";
+import { useState } from "react";
 
 interface NotificationsMenuProps {
   children?: React.ReactNode;
@@ -77,9 +82,32 @@ function relativeTime(iso: string, language: string): string {
 }
 
 export function NotificationsMenu({ children }: NotificationsMenuProps) {
-  const { alerts, dismissAlert } = useKaza();
+  const { alerts, dismissAlert, homeId } = useKaza();
   const { language } = useLanguage();
+  const { user } = useAuth();
   const l = labels[language as keyof typeof labels] || labels["pt-BR"];
+  const [markingGarbageDone, setMarkingGarbageDone] = useState(false);
+
+  const handleMarkGarbageDone = async () => {
+    if (!homeId || !user || markingGarbageDone) return;
+    setMarkingGarbageDone(true);
+    try {
+      await supabase.from("garbage_reminders").update({
+        last_done_at: new Date().toISOString(),
+        last_done_by_user_id: user.id,
+      }).eq("home_id", homeId);
+      const profile = await supabase.from("profiles").select("name").eq("user_id", user.id).single();
+      const userName = profile.data?.name || (language === "pt-BR" ? "Alguém" : "Someone");
+      await notifyHomeMembers({
+        home_id: homeId,
+        title: language === "pt-BR" ? "🗑️ Lixo Retirado!" : "🗑️ Garbage Taken Out!",
+        body: language === "pt-BR" ? `${userName} já colocou o lixo para fora! 🏠` : `${userName} already took out the trash! 🏠`,
+        exclude_user_id: user.id,
+      });
+      toast.success(language === "pt-BR" ? "Ótimo! Casa notificada 🏠" : "Great! Home notified 🏠");
+    } catch { toast.error(language === "pt-BR" ? "Erro ao registrar" : "Error marking done"); }
+    setMarkingGarbageDone(false);
+  };
 
   const { notifications: storedNotifs, dismiss: handleDismissStored, clearAll: clearStoredAll } = useNotificationStore();
 
@@ -172,18 +200,30 @@ export function NotificationsMenu({ children }: NotificationsMenuProps) {
                     <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">{l.activity}</h3>
                     <div className="space-y-2">
                       {storedNotifs.map((notif) => (
-                        <div key={notif.id} className={cn("flex items-start gap-3 rounded-2xl border p-3 transition-all", "border-primary/20 bg-primary/5")}>
-                          <div className="h-8 w-8 rounded-xl bg-muted flex items-center justify-center shrink-0 mt-0.5">
-                            {typeIcon[notif.type] || <AlertTriangle className="h-4 w-4 text-muted-foreground" />}
+                        <div key={notif.id} className={cn("flex flex-col gap-2 rounded-2xl border p-3 transition-all", "border-primary/20 bg-primary/5")}>
+                          <div className="flex items-start gap-3">
+                            <div className="h-8 w-8 rounded-xl bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                              {typeIcon[notif.type] || <AlertTriangle className="h-4 w-4 text-muted-foreground" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-foreground leading-tight">{notif.title}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{notif.body}</p>
+                              <p className="text-[10px] text-muted-foreground/60 mt-1">{relativeTime(notif.created_at, language)}</p>
+                            </div>
+                            <button onClick={() => handleDismissStored(notif.id)} className="h-6 w-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-black/5 shrink-0">
+                              <CheckCheck className="h-3.5 w-3.5" />
+                            </button>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-foreground leading-tight">{notif.title}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{notif.body}</p>
-                            <p className="text-[10px] text-muted-foreground/60 mt-1">{relativeTime(notif.created_at, language)}</p>
-                          </div>
-                          <button onClick={() => handleDismissStored(notif.id)} className="h-6 w-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-black/5 shrink-0">
-                            <CheckCheck className="h-3.5 w-3.5" />
-                          </button>
+                          {notif.type === "garbage" && (
+                            <button
+                              onClick={handleMarkGarbageDone}
+                              disabled={markingGarbageDone}
+                              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-green-600 py-2 text-xs font-bold text-white transition-all active:scale-95 disabled:opacity-50"
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                              {language === "pt-BR" ? "Já levei o lixo ✓" : "Garbage taken out ✓"}
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>

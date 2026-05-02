@@ -107,6 +107,14 @@ export function ShoppingTab() {
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const [showBatchAdd, setShowBatchAdd] = useState(false);
   const [batchText, setBatchText] = useState("");
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showCreateBatchDialog, setShowCreateBatchDialog] = useState(false);
+  const [batchName, setBatchName] = useState("");
+  const [showAddToStockDialog, setShowAddToStockDialog] = useState(false);
+  const [stockCandidates, setStockCandidates] = useState<Array<{ id: string; name: string; quantity: number; unit: string; store: string; category: string }>>([]);
+  const [selectedForStock, setSelectedForStock] = useState<Set<string>>(new Set());
+  const [pendingDeletes, setPendingDeletes] = useState<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const itemCategories = [
     { label: "🍎 Frutas", value: "fruit", store: "fair" as const },
@@ -307,7 +315,7 @@ export function ShoppingTab() {
   });
 
   const filteredList = shoppingList.filter(
-    (item) => activeFilter === "all" || item.store === activeFilter
+    (item) => (activeFilter === "all" || item.store === activeFilter) && !pendingDeletes.has(item.id)
   );
   const pendingCount = shoppingList.filter((i) => !i.isCompleted).length;
 
@@ -359,9 +367,13 @@ export function ShoppingTab() {
       toast.error(error.message);
       return;
     }
+    const candidates = shoppingList.map(i => ({ id: i.id, name: i.name, quantity: i.quantity || 1, unit: i.unit || "un", store: i.store || "market", category: i.category || "pantry" }));
     await clearAllShoppingList();
     recordShoppingCompletion();
     toast.success(l.allBought);
+    setStockCandidates(candidates);
+    setSelectedForStock(new Set(candidates.map(c => c.id)));
+    setShowAddToStockDialog(true);
   };
 
   const handleLoadSavedList = (list: any) => {
@@ -454,6 +466,43 @@ export function ShoppingTab() {
     setBatchText("");
     setShowBatchAdd(false);
     toast.success(language === "pt-BR" ? `${lines.length} itens adicionados!` : `${lines.length} items added!`);
+  };
+
+  const toggleSelectItem = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleMarkSelectedAsBought = async () => {
+    const toToggle = filteredList.filter(i => selectedIds.has(i.id) && !i.isCompleted);
+    for (const item of toToggle) await toggleShoppingItem(item.id);
+    setSelectedIds(new Set());
+    setSelectionMode(false);
+  };
+
+  const handleCreateBatch = async () => {
+    if (!user || !homeId) return;
+    const selected = shoppingList.filter(i => selectedIds.has(i.id));
+    if (!selected.length) return;
+    const buyerName = onboardingData?.name || user.email?.split("@")[0] || (language === "pt-BR" ? "Alguém" : "Someone");
+    const dateStr = new Date().toLocaleDateString(language === "pt-BR" ? "pt-BR" : language === "es" ? "es-ES" : "en-US");
+    const name = batchName.trim() || `${buyerName} — ${dateStr}`;
+    const { error } = await supabase.from("saved_shopping_lists").insert({
+      home_id: homeId,
+      user_id: user.id,
+      name,
+      items: selected.map(i => ({ name: i.name, quantity: i.quantity, unit: i.unit, store: i.store })),
+    });
+    if (error) { toast.error(error.message); return; }
+    for (const item of selected) await removeFromShoppingList(item.id);
+    toast.success(language === "pt-BR" ? `Lote "${name}" salvo!` : `Batch "${name}" saved!`);
+    setShowCreateBatchDialog(false);
+    setBatchName("");
+    setSelectedIds(new Set());
+    setSelectionMode(false);
   };
 
   const handleGenerateSmartList = async () => {
@@ -586,29 +635,43 @@ export function ShoppingTab() {
       key={item.id}
       className={cn(
         "flex items-center gap-2.5 rounded-2xl border bg-white/80 dark:bg-white/5 backdrop-blur-xl border-black/[0.04] dark:border-white/[0.06] p-3 transition-all duration-300 shadow-sm cursor-pointer hover:border-primary/30",
-        item.isCompleted && "opacity-60"
+        item.isCompleted && "opacity-60",
+        selectionMode && selectedIds.has(item.id) && "border-primary/50 bg-primary/5"
       )}
       onClick={() => {
-        setEditingItemId(item.id);
-        setShowCategoryDialog(true);
+        if (selectionMode) {
+          toggleSelectItem(item.id);
+        } else {
+          setEditingItemId(item.id);
+          setShowCategoryDialog(true);
+        }
       }}
     >
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          handleToggleItem(item);
-        }}
-        className={cn(
-          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-90"
-        )}
-        style={{
-          borderColor: "#165A52",
-          background: item.isCompleted ? "#165A52" : "transparent",
-          color: "#fff"
-        }}
-      >
-        {item.isCompleted && <Check className="h-3.5 w-3.5" />}
-      </button>
+      {selectionMode ? (
+        <div className={cn(
+          "flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-all duration-200",
+          selectedIds.has(item.id) ? "border-primary bg-primary" : "border-muted-foreground/40 bg-transparent"
+        )}>
+          {selectedIds.has(item.id) && <Check className="h-3.5 w-3.5 text-white" />}
+        </div>
+      ) : (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleToggleItem(item);
+          }}
+          className={cn(
+            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200 active:scale-90"
+          )}
+          style={{
+            borderColor: "#165A52",
+            background: item.isCompleted ? "#165A52" : "transparent",
+            color: "#fff"
+          }}
+        >
+          {item.isCompleted && <Check className="h-3.5 w-3.5" />}
+        </button>
+      )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <p className={cn("text-sm font-semibold text-foreground transition-all", item.isCompleted && "line-through text-muted-foreground")}>
@@ -642,7 +705,34 @@ export function ShoppingTab() {
         </button>
       </div>
       {!isSubAccount && <button
-        onClick={() => removeFromShoppingList(item.id)}
+        onClick={(e) => {
+          e.stopPropagation();
+          const copy = { ...item };
+          setPendingDeletes(prev => {
+            const next = new Map(prev);
+            const tid = setTimeout(() => {
+              removeFromShoppingList(copy.id);
+              setPendingDeletes(p => { const n = new Map(p); n.delete(copy.id); return n; });
+            }, 4500);
+            next.set(copy.id, tid);
+            return next;
+          });
+          toast(language === "pt-BR" ? `"${item.name}" removido` : `"${item.name}" removed`, {
+            duration: 4500,
+            action: {
+              label: language === "pt-BR" ? "Desfazer" : "Undo",
+              onClick: () => {
+                setPendingDeletes(prev => {
+                  const next = new Map(prev);
+                  const tid = next.get(copy.id);
+                  if (tid) clearTimeout(tid);
+                  next.delete(copy.id);
+                  return next;
+                });
+              },
+            },
+          });
+        }}
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-all active:bg-destructive/10 active:text-destructive active:scale-90"
       >
         <Trash2 className="h-3.5 w-3.5" />
@@ -703,6 +793,12 @@ export function ShoppingTab() {
       {shoppingList.length > 0 && (
         <div className="flex gap-2">
           {!isSubAccount && <button onClick={() => setShowDeleteDialog(true)} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-destructive/10 text-destructive transition-all active:scale-[0.97]"><Trash2 className="h-4 w-4" /></button>}
+          <button
+            onClick={() => { setSelectionMode(v => !v); setSelectedIds(new Set()); }}
+            className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border transition-all active:scale-[0.97]",
+              selectionMode ? "bg-primary text-white border-primary" : "bg-white/80 dark:bg-white/5 border-black/[0.06] text-foreground")}
+            title={language === "pt-BR" ? "Selecionar itens" : "Select items"}
+          ><CheckSquare className="h-4 w-4" /></button>
           <button onClick={() => { loadSavedLists(); setShowSavedLists(true); }} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-black/[0.06] bg-white/80 dark:bg-white/5 text-foreground text-sm font-semibold h-12 px-4 transition-all active:scale-[0.97]"><Save className="h-4 w-4 text-primary" /><span>{l.listasSalvas}</span></button>
         </div>
       )}
@@ -867,6 +963,160 @@ export function ShoppingTab() {
       ) : (
         <div className="space-y-1.5">{filteredList.map((item, index) => renderItem(item, index))}</div>
       )}
+
+      {/* Add-to-Stock Dialog */}
+      <Dialog open={showAddToStockDialog} onOpenChange={setShowAddToStockDialog}>
+        <DialogContent className="rounded-2xl max-w-sm mx-auto max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              {language === "pt-BR" ? "Adicionar ao estoque?" : "Add to inventory?"}
+            </DialogTitle>
+            <DialogDescription className="text-center text-sm">
+              {language === "pt-BR" ? "Selecione os itens comprados para registrar no estoque" : "Select purchased items to add to your inventory"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-between px-1 py-1">
+            <button className="text-xs text-primary font-semibold" onClick={() => setSelectedForStock(new Set(stockCandidates.map(c => c.id)))}>
+              {language === "pt-BR" ? "Selecionar todos" : "Select all"}
+            </button>
+            <button className="text-xs text-muted-foreground font-semibold" onClick={() => setSelectedForStock(new Set())}>
+              {language === "pt-BR" ? "Limpar" : "Clear"}
+            </button>
+          </div>
+          <div className="overflow-y-auto flex-1 space-y-1.5 px-0.5">
+            {stockCandidates.map(c => (
+              <button
+                key={c.id}
+                onClick={() => setSelectedForStock(prev => {
+                  const next = new Set(prev);
+                  if (next.has(c.id)) next.delete(c.id); else next.add(c.id);
+                  return next;
+                })}
+                className={cn("w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all border",
+                  selectedForStock.has(c.id) ? "border-primary/40 bg-primary/5" : "border-transparent bg-muted/40")}
+              >
+                <div className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all",
+                  selectedForStock.has(c.id) ? "border-primary bg-primary" : "border-muted-foreground/40"
+                )}>
+                  {selectedForStock.has(c.id) && <Check className="h-3 w-3 text-white" />}
+                </div>
+                <span className="flex-1 text-sm font-semibold text-foreground truncate">{c.name}</span>
+                <span className="text-xs text-muted-foreground shrink-0">{c.quantity} {c.unit}</span>
+              </button>
+            ))}
+          </div>
+          <DialogFooter className="flex flex-row gap-2 mt-2">
+            <Button variant="outline" className="flex-1 rounded-xl h-11 text-xs" onClick={() => setShowAddToStockDialog(false)}>
+              {language === "pt-BR" ? "Pular" : "Skip"}
+            </Button>
+            <Button
+              disabled={selectedForStock.size === 0}
+              className="flex-1 rounded-xl h-11 text-xs font-bold"
+              style={{ background: "#165A52" }}
+              onClick={() => {
+                stockCandidates.filter(c => selectedForStock.has(c.id)).forEach(c => {
+                  addItem({
+                    name: c.name,
+                    category: c.category as any,
+                    location: c.store === "pharmacy" ? "cleaning" : c.store === "fair" ? "fridge" : "pantry",
+                    quantity: c.quantity,
+                    unit: c.unit,
+                    addedDate: new Date(),
+                  });
+                });
+                setShowAddToStockDialog(false);
+                toast.success(language === "pt-BR" ? `${selectedForStock.size} itens adicionados ao estoque!` : `${selectedForStock.size} items added to inventory!`);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-1.5" />
+              {language === "pt-BR" ? `Adicionar (${selectedForStock.size})` : `Add (${selectedForStock.size})`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Floating Selection Bar */}
+      {selectionMode && (
+        <div className="fixed bottom-[80px] left-4 right-4 z-50 rounded-2xl bg-[#165A52] text-white shadow-2xl p-3">
+          <div className="flex items-center justify-between mb-2.5">
+            <span className="text-xs font-bold">
+              {selectedIds.size > 0
+                ? (language === "pt-BR" ? `${selectedIds.size} selecionado${selectedIds.size > 1 ? "s" : ""}` : `${selectedIds.size} selected`)
+                : (language === "pt-BR" ? "Nenhum selecionado" : "None selected")}
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  if (selectedIds.size === filteredList.length) {
+                    setSelectedIds(new Set());
+                  } else {
+                    setSelectedIds(new Set(filteredList.map(i => i.id)));
+                  }
+                }}
+                className="text-[11px] font-semibold underline underline-offset-2 opacity-80"
+              >
+                {selectedIds.size === filteredList.length
+                  ? (language === "pt-BR" ? "Desmarcar todos" : "Deselect all")
+                  : (language === "pt-BR" ? "Selecionar todos" : "Select all")}
+              </button>
+              <button onClick={() => { setSelectionMode(false); setSelectedIds(new Set()); }} className="opacity-70 text-[11px] font-semibold">
+                {language === "pt-BR" ? "Cancelar" : "Cancel"}
+              </button>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              disabled={selectedIds.size === 0}
+              onClick={handleMarkSelectedAsBought}
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-white/20 py-2.5 text-xs font-bold transition-all active:scale-95 disabled:opacity-40"
+            >
+              <Check className="h-4 w-4" />
+              {language === "pt-BR" ? "Marcar comprados" : "Mark as bought"}
+            </button>
+            <button
+              disabled={selectedIds.size === 0}
+              onClick={() => setShowCreateBatchDialog(true)}
+              className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-white/20 py-2.5 text-xs font-bold transition-all active:scale-95 disabled:opacity-40"
+            >
+              <Save className="h-4 w-4" />
+              {language === "pt-BR" ? "Criar Lote" : "Create Batch"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Create Batch Dialog */}
+      <Dialog open={showCreateBatchDialog} onOpenChange={setShowCreateBatchDialog}>
+        <DialogContent className="rounded-2xl max-w-sm mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              {language === "pt-BR" ? "Criar Lote" : "Create Batch"}
+            </DialogTitle>
+            <DialogDescription className="text-center text-sm">
+              {language === "pt-BR"
+                ? `${selectedIds.size} item${selectedIds.size > 1 ? "s" : ""} selecionado${selectedIds.size > 1 ? "s" : ""}. Dê um nome ao lote:`
+                : `${selectedIds.size} item${selectedIds.size > 1 ? "s" : ""} selected. Name this batch:`}
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            placeholder={language === "pt-BR" ? "Ex: Compras do mês, Feira da semana…" : "E.g. Weekly groceries…"}
+            value={batchName}
+            onChange={e => setBatchName(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleCreateBatch()}
+            className="rounded-xl h-12"
+            autoFocus
+          />
+          <DialogFooter className="flex flex-row gap-2 mt-1">
+            <Button variant="outline" className="flex-1 rounded-xl h-12 text-xs" onClick={() => setShowCreateBatchDialog(false)}>
+              {language === "pt-BR" ? "Cancelar" : "Cancel"}
+            </Button>
+            <Button className="flex-1 rounded-xl h-12 text-xs font-bold" style={{ background: "#165A52" }} onClick={handleCreateBatch}>
+              <Save className="h-4 w-4 mr-1.5" />
+              {language === "pt-BR" ? "Salvar Lote" : "Save Batch"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Category Selection Dialog */}
       <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>

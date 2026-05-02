@@ -15,7 +15,6 @@ import {
 import {
   format,
   addDays,
-  startOfWeek,
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
@@ -67,7 +66,8 @@ export function PlannerTab() {
   const [selectedWeeklyDate, setSelectedWeeklyDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+  // Rolling 7-day window: always starts from today so future days are never in the past
+  const weekStart = new Date();
 
   const weekDays = Array.from({ length: 7 }).map((_, i) => {
     const date = addDays(weekStart, i);
