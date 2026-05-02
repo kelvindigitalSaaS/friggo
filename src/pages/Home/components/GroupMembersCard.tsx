@@ -193,7 +193,7 @@ export function GroupMembersCard({ readOnly = false }: { readOnly?: boolean }) {
             </p>
             <p className="text-xs text-muted-foreground">
               {isSubAccount
-                ? `${filledSlots} ${language === "pt-BR" ? "membros" : "members"}`
+                ? `${filledSlots} de ${maxSlots + 1} ${language === "pt-BR" ? "membros" : "members"}`
                 : `${filledSlots} de ${maxSlots} ${t.slots}`}
             </p>
           </div>

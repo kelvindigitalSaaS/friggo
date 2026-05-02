@@ -346,11 +346,13 @@ export function ShoppingTab() {
       toast.error(language === "pt-BR" ? "Faça login para salvar listas" : "Login to save lists");
       return;
     }
+    const buyerName = onboardingData?.name || user.email?.split("@")[0] || (language === "pt-BR" ? "Alguém" : "Someone");
+    const dateStr = new Date().toLocaleDateString(language === "pt-BR" ? "pt-BR" : language === "es" ? "es-ES" : "en-US");
     const itemsToSave = shoppingList.map(i => ({ name: i.name, quantity: i.quantity, unit: i.unit, store: i.store }));
     const { error } = await supabase.from("saved_shopping_lists").insert({
       home_id: homeId,
       user_id: user.id,
-      name: new Date().toLocaleDateString(),
+      name: `${buyerName} — ${dateStr}`,
       items: itemsToSave,
     });
     if (error) {

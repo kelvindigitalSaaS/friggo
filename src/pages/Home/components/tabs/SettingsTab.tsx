@@ -77,6 +77,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { sendWebNotification } from "@/lib/pushNotifications";
+import { useGroupMembers } from "@/hooks/useGroupMembers";
 // Brand hidden in settings per preference
 
 export function SettingsTab() {
@@ -87,6 +88,9 @@ export function SettingsTab() {
   const { canInstall, install } = usePWA();
   const { getPlanTier, subscription, trialDaysRemaining, isMultiPro } = useSubscription();
   const navigate = useNavigate();
+  const { members: groupMembers } = useGroupMembers();
+  const masterMember = isSubAccount ? groupMembers.find(m => (m.role as string) === "master") : null;
+  const masterDisplayName = masterMember?.member_name;
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const [confirmReconfigureOpen, setConfirmReconfigureOpen] = useState(false);
@@ -242,7 +246,7 @@ export function SettingsTab() {
                   </div>
                   <div className="text-left">
                     <p className="font-bold text-[#2C2C2A] dark:text-white text-[15px] leading-tight">
-                      {isSubAccount ? onboardingData?.homeName || "Kaza Home" : "Kaza Premium"}
+                      {isSubAccount ? (masterDisplayName ? `Plano de ${masterDisplayName}` : onboardingData?.homeName || "Kaza Home") : "Kaza Premium"}
                     </p>
                     <p className="text-[12px] text-[#7A7A72] dark:text-white/60 font-medium">
                       {isSubAccount ? t.sharedPlanActive : t.fullAccessActive}

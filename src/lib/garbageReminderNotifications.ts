@@ -2,7 +2,6 @@
 import { isNative } from "./capacitor";
 import {
   scheduleLocalNotification,
-  sendWebNotification
 } from "./pushNotifications";
 
 interface GarbageReminderConfig {
@@ -14,28 +13,22 @@ interface GarbageReminderConfig {
 }
 
 /**
- * Inicializa o sistema de notificações de coleta de lixo.
- * Para PWA: dispara 3 notificações (24h antes, 12h antes, 1h antes)
- * Para App nativo: dispara 1 notificação no horário exato
+ * Initializes local device notifications for garbage collection.
+ * For PWA: schedules 3 notifications (24h, 12h, 1h before)
+ * For native: schedules 1 notification at exact time
  */
 export async function initGarbageReminderNotifications() {
   const config = getGarbageReminderConfig();
-  if (!config.enabled || config.selectedDays.length === 0) {
-    return;
-  }
+  if (!config.enabled || config.selectedDays.length === 0) return;
 
-  // Calcular próximas datas de coleta
   const nextCollectionDates = getNextCollectionDates(
     config.selectedDays,
     config.reminderTime,
-    isNative ? 1 : 3 // 1 notificação para nativo, 3 para PWA
+    isNative ? 1 : 3
   );
 
-  if (nextCollectionDates.length === 0) {
-    return;
-  }
+  if (nextCollectionDates.length === 0) return;
 
-  // Agendar notificações
   for (const date of nextCollectionDates) {
     const delayMs = Math.max(0, date.getTime() - Date.now());
     const hoursUntil = Math.round(delayMs / (1000 * 60 * 60));
@@ -70,25 +63,93 @@ export async function initGarbageReminderNotifications() {
       `garbage-${date.getTime()}`,
       "garbage"
     );
-
-    // Also push to other home members when the alarm fires
-    const homeId = localStorage.getItem("kaza-home-id");
-    if (homeId) {
-      setTimeout(async () => {
-        try {
-          const { notifyHomeMembers } = await import("./pushNotifications");
-          await notifyHomeMembers({ home_id: homeId, title, body, type: "garbage" });
-        } catch { /* best-effort */ }
-      }, delayMs);
-    }
   }
 }
 
 /**
- * Retorna as próximas datas de coleta de lixo
- * Para PWA: retorna 3 datas (24h antes, 12h antes, 1h antes)
- * Para nativo: retorna 1 data (no horário exato)
+ * Fire-now check: called every 5 minutes by the monitoring loop.
+ * If a garbage notification time has arrived (within the last 6 minutes)
+ * and hasn't been sent yet (per localStorage dedup), push to all home members.
  */
+async function fireGarbagePushIfDue(config: GarbageReminderConfig) {
+  const homeId = localStorage.getItem("kaza-home-id");
+  if (!homeId) return;
+
+  const now = Date.now();
+  const FIRE_WINDOW_MS = 6 * 60 * 1000;
+
+  const notifTimes = getNotificationTimesForCheck(config.selectedDays, config.reminderTime);
+
+  for (const { date, hoursUntilCollection } of notifTimes) {
+    const diff = now - date.getTime();
+    if (diff < 0 || diff > FIRE_WINDOW_MS) continue;
+
+    const key = `kaza-garbage-pushed-${date.getTime()}`;
+    if (localStorage.getItem(key)) continue;
+    localStorage.setItem(key, "1");
+
+    const title =
+      config.garbageLocation === "building"
+        ? "🗑️ Kaza — Hora de Descer o Lixo!"
+        : "🗑️ Kaza — Coleta de Lixo";
+
+    let body: string;
+    if (hoursUntilCollection <= 1) {
+      body =
+        config.garbageLocation === "building"
+          ? `Agora! Desça o lixo${config.buildingFloor ? ` do ${config.buildingFloor}` : ""} antes que o caminhão passe 🚛`
+          : "Agora! Coloque o lixo para fora antes que o caminhão passe 🚛";
+    } else if (hoursUntilCollection <= 12) {
+      body =
+        config.garbageLocation === "building"
+          ? `Em ${hoursUntilCollection}h passa a coleta. Prepare o lixo${config.buildingFloor ? ` do ${config.buildingFloor}` : ""} 🏢`
+          : `Em ${hoursUntilCollection}h passa a coleta. Separe o lixo! ♻️`;
+    } else {
+      body =
+        config.garbageLocation === "building"
+          ? `Amanhã tem coleta! Lembre de descer o lixo${config.buildingFloor ? ` do ${config.buildingFloor}` : ""} 📋`
+          : "Amanhã tem coleta! Prepare os sacos de lixo para amanhã 📋";
+    }
+
+    try {
+      const { notifyHomeMembers } = await import("./pushNotifications");
+      await notifyHomeMembers({ home_id: homeId, title, body, type: "garbage" });
+    } catch { /* best-effort */ }
+  }
+}
+
+/**
+ * Returns notification trigger times for the upcoming (or very recently passed) collection.
+ * Includes times within the last 24h to catch notifications missed while app was closed.
+ */
+function getNotificationTimesForCheck(
+  selectedDays: number[],
+  reminderTime: string
+): Array<{ date: Date; hoursUntilCollection: number }> {
+  const now = new Date();
+  const [hours, minutes] = reminderTime.split(":").map(Number);
+
+  // Look from yesterday forward to find the next collection day
+  for (let i = -1; i <= 14; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() + i);
+    if (!selectedDays.includes(d.getDay())) continue;
+
+    d.setHours(hours, minutes, 0, 0);
+
+    // Skip if collection already passed by more than 25h
+    if (d.getTime() < now.getTime() - 25 * 60 * 60 * 1000) continue;
+
+    return [
+      { date: new Date(d.getTime() - 24 * 60 * 60 * 1000), hoursUntilCollection: 24 },
+      { date: new Date(d.getTime() - 12 * 60 * 60 * 1000), hoursUntilCollection: 12 },
+      { date: new Date(d.getTime() - 1 * 60 * 60 * 1000), hoursUntilCollection: 1 },
+    ];
+  }
+
+  return [];
+}
+
 function getNextCollectionDates(
   selectedDays: number[],
   reminderTime: string,
@@ -98,7 +159,6 @@ function getNextCollectionDates(
   const [hours, minutes] = reminderTime.split(":").map(Number);
   const dates: Date[] = [];
 
-  // Encontrar os próximos dias de coleta
   const nextCollectionDays: Date[] = [];
 
   for (let i = 0; i < 14 && nextCollectionDays.length < 3; i++) {
@@ -108,83 +168,46 @@ function getNextCollectionDates(
 
     if (selectedDays.includes(dayOfWeek)) {
       date.setHours(hours, minutes, 0, 0);
-
-      // Se for hoje e já passou a hora, pula
-      if (i === 0 && date.getTime() < now.getTime()) {
-        continue;
-      }
-
+      if (i === 0 && date.getTime() < now.getTime()) continue;
       nextCollectionDays.push(date);
     }
   }
 
-  if (nextCollectionDays.length === 0) {
-    return [];
-  }
+  if (nextCollectionDays.length === 0) return [];
 
-  // Usar apenas o próximo dia de coleta
   const nextCollectionDate = nextCollectionDays[0];
 
   if (notificationCount === 1) {
-    // App nativo: 1 notificação no horário exato
     dates.push(nextCollectionDate);
   } else if (notificationCount === 3) {
-    // PWA: 3 notificações
-    // 1. 24 horas antes
     const notif24h = new Date(nextCollectionDate);
     notif24h.setDate(notif24h.getDate() - 1);
-    if (notif24h.getTime() > now.getTime()) {
-      dates.push(notif24h);
-    }
+    if (notif24h.getTime() > now.getTime()) dates.push(notif24h);
 
-    // 2. 12 horas antes
     const notif12h = new Date(nextCollectionDate);
     notif12h.setHours(notif12h.getHours() - 12);
-    if (notif12h.getTime() > now.getTime()) {
-      dates.push(notif12h);
-    }
+    if (notif12h.getTime() > now.getTime()) dates.push(notif12h);
 
-    // 3. 1 hora antes
     const notif1h = new Date(nextCollectionDate);
     notif1h.setHours(notif1h.getHours() - 1);
-    if (notif1h.getTime() > now.getTime()) {
-      dates.push(notif1h);
-    }
+    if (notif1h.getTime() > now.getTime()) dates.push(notif1h);
   }
 
   return dates;
 }
 
-/**
- * Obter configuração do localStorage
- */
 export function getGarbageReminderConfig(): GarbageReminderConfig {
   const saved = localStorage.getItem("kaza-garbage-reminder");
   if (saved) {
     try {
       return JSON.parse(saved);
     } catch {
-      return {
-        enabled: false,
-        selectedDays: [],
-        reminderTime: "20:00",
-        garbageLocation: "street"
-      };
+      return { enabled: false, selectedDays: [], reminderTime: "20:00", garbageLocation: "street" };
     }
   }
-
-  return {
-    enabled: false,
-    selectedDays: [],
-    reminderTime: "20:00",
-    garbageLocation: "street"
-  };
+  return { enabled: false, selectedDays: [], reminderTime: "20:00", garbageLocation: "street" };
 }
 
-/**
- * Sincroniza config do localStorage com a tabela public.garbage_reminders.
- * Best-effort: localStorage continua sendo a fonte primária offline.
- */
 export async function syncGarbageReminderToDb(homeId: string | null | undefined) {
   if (!homeId) return;
   try {
@@ -202,25 +225,20 @@ export async function syncGarbageReminderToDb(homeId: string | null | undefined)
       garbage_location: cfg.garbageLocation,
       building_floor: cfg.buildingFloor ?? null,
     }, { onConflict: "home_id,user_id" });
-  } catch (_e) { /* silent — DB sync optional */ }
+  } catch (_e) { /* silent */ }
 }
 
-/**
- * Monitor contínuo para verificar e agendar notificações
- * Deve ser chamado periodicamente (a cada 5 minutos)
- */
 export async function checkAndScheduleGarbageNotifications() {
   const config = getGarbageReminderConfig();
-  if (!config.enabled) {
-    return;
-  }
+  if (!config.enabled) return;
 
+  // Push to home members if a notification time just arrived
+  await fireGarbagePushIfDue(config);
+
+  // Schedule local device notifications
   await initGarbageReminderNotifications();
 }
 
-/**
- * Parar monitoramento de notificações de lixo
- */
 export function stopGarbageReminderMonitoring() {
   if ((window as any).__garbageMonitorInterval) {
     clearInterval((window as any).__garbageMonitorInterval);
@@ -228,17 +246,10 @@ export function stopGarbageReminderMonitoring() {
   }
 }
 
-/**
- * Iniciar monitoramento contínuo
- */
 export function startGarbageReminderMonitoring() {
   stopGarbageReminderMonitoring();
-
-  // Verificar a cada 5 minutos
   (window as any).__garbageMonitorInterval = setInterval(() => {
     checkAndScheduleGarbageNotifications();
   }, 5 * 60 * 1000);
-
-  // Verificar imediatamente na inicialização
   checkAndScheduleGarbageNotifications();
 }
