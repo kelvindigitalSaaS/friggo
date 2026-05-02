@@ -56,13 +56,26 @@ export function useGroupMembers() {
           // Master may not be a row in sub_account_members — inject a synthetic entry
           const hasMaster = allMembers.some(m => m.user_id === groupData.master_user_id);
           if (!hasMaster) {
+            // Fetch master name from sub_account_invites (accessible via RLS, already populated on invite creation)
+            let masterName: string | null = null;
+            try {
+              const { data: inviteData } = await supabase
+                .from("sub_account_invites")
+                .select("master_name")
+                .eq("group_id", groupId)
+                .eq("master_user_id", groupData.master_user_id)
+                .limit(1)
+                .maybeSingle();
+              masterName = (inviteData as any)?.master_name || null;
+            } catch { /* best-effort */ }
+
             allMembers = [
               {
                 id: `master-${groupData.master_user_id}`,
                 group_id: groupId,
                 user_id: groupData.master_user_id,
                 role: "master" as any,
-                display_name: null,
+                display_name: masterName,
                 avatar_url: null,
                 is_active: true,
                 invited_by: null,

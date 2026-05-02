@@ -461,6 +461,16 @@ export async function notifyHomeMembers(payload: {
       return { success: false, error: "home_id is missing" };
     }
 
+    // Save to local notification bell for the sender (receivers get it via SW message)
+    try {
+      const { saveNotification } = await import("./notificationStore");
+      saveNotification(payload.home_id, {
+        title: payload.title,
+        body: payload.body,
+        type: payload.type || "general",
+      });
+    } catch { /* best-effort */ }
+
     const { data, error } = await supabase.functions.invoke("send-push-notification", {
       body: payload
     });

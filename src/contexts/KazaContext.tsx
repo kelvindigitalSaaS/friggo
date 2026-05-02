@@ -232,6 +232,35 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     hasHydratedAlerts.current = false;
   }, [user?.id]);
 
+  // Save incoming push notifications (from other users) to local bell store
+  useEffect(() => {
+    if (!homeId) return;
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === "push-notification-received") {
+        import("../lib/notificationStore").then(({ saveNotification }) => {
+          saveNotification(homeId, {
+            title: event.data.title,
+            body: event.data.body,
+            type: event.data.notifType || "general",
+          });
+        });
+      }
+    };
+    navigator.serviceWorker?.addEventListener("message", handler);
+    return () => navigator.serviceWorker?.removeEventListener("message", handler);
+  }, [homeId]);
+
+  // Sync user's display name to sub_account_members so group members can read it (RLS workaround)
+  useEffect(() => {
+    if (!user || !onboardingData?.name) return;
+    supabase
+      .from("sub_account_members")
+      .update({ display_name: onboardingData.name })
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .then(() => {});
+  }, [user?.id, onboardingData?.name]);
+
   // ── Auto-Save to Local Cache ──────────────────────────────────────────────
   useEffect(() => {
     if (loading || !user) return;
@@ -572,6 +601,12 @@ export function KazaProvider({ children }: { children: ReactNode }) {
             itemName: item.name, message: `${item.name} vence em ${days} dias`,
             priority: "medium", createdAt: now
           });
+        } else if (days <= 7) {
+          newAlerts.push({
+            id: `exp-7d-${item.id}`, type: "expiring", itemId: item.id,
+            itemName: item.name, message: `${item.name} vence em ${days} dias`,
+            priority: "low", createdAt: now
+          });
         }
       }
       if (item.maturation === "very-ripe" || item.maturation === "overripe") {
@@ -614,6 +649,27 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       }
     });
 
+    // Consumables: min stock + 7-day running-out alert
+    consumables.forEach((c) => {
+      if (c.minStock > 0 && c.currentStock <= c.minStock) {
+        newAlerts.push({
+          id: `cons-min-${c.id}`, type: "low-stock", itemId: c.id,
+          itemName: c.name, message: `${c.name} está no estoque mínimo`,
+          priority: "medium", createdAt: now
+        });
+      } else if (c.dailyConsumption > 0) {
+        const daysLeft = c.currentStock / c.dailyConsumption;
+        if (daysLeft <= 7) {
+          newAlerts.push({
+            id: `cons-7d-${c.id}`, type: "low-stock", itemId: c.id,
+            itemName: c.name,
+            message: `${c.name} acaba em ${Math.floor(daysLeft)} dia${Math.floor(daysLeft) !== 1 ? "s" : ""}`,
+            priority: daysLeft <= 1 ? "high" : daysLeft <= 3 ? "medium" : "low", createdAt: now
+          });
+        }
+      }
+    });
+
     setAlerts(newAlerts);
 
     const prefs = onboardingData?.notificationPrefs ?? DEFAULT_NOTIFICATION_PREFS;
@@ -639,7 +695,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           : "📦 Kaza — Reposição Necessária";
       scheduleLocalNotification(title, alert.message, 0, alert.id, category);
     });
-  }, [items, onboardingData?.notificationPrefs, language, loading]);
+  }, [items, consumables, onboardingData?.notificationPrefs, language, loading]);
 
   // ── mappers ──────────────────────────────────────────────────────────────
   function toKazaItem(row: any): KazaItem {

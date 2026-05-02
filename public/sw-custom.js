@@ -16,7 +16,21 @@ self.addEventListener("push", (event) => {
     actions: payload.actions || [],
     vibrate: payload.vibrate,
   };
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    self.registration.showNotification(title, options).then(() => {
+      // Notify open app windows so they can persist the notification in the bell
+      return self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({
+            type: "push-notification-received",
+            title,
+            body: options.body,
+            notifType: payload.type || "general",
+          });
+        });
+      });
+    })
+  );
 });
 
 // ── Notification click handler ───────────────────────────────────────────────
