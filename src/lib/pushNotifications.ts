@@ -149,8 +149,17 @@ export async function requestWebNotificationPermission(): Promise<boolean> {
   return granted;
 }
 
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const output = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) output[i] = rawData.charCodeAt(i);
+  return output;
+}
+
 /**
- * Persiste a inscrição de push do navegador em public.push_subscriptions.
+ * Cria (ou recupera) a subscription de push e persiste em push_subscriptions.
  * Best-effort: não bloqueia o fluxo se falhar.
  */
 export async function saveWebPushSubscription(): Promise<void> {
@@ -160,10 +169,20 @@ export async function saveWebPushSubscription(): Promise<void> {
     const { supabase } = await import("@/integrations/supabase/client");
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+
     const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.getSubscription();
-    // Sem VAPID key aqui; grava inscrição existente se houver.
-    if (!sub) return;
+    let sub = await reg.pushManager.getSubscription();
+
+    // Se não há subscription, criar com VAPID key
+    if (!sub) {
+      const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
+      if (!vapidKey) return; // sem chave configurada, não conseguimos criar subscription
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      });
+    }
+
     const json = sub.toJSON() as any;
     await (supabase.from("push_subscriptions") as any).upsert({
       user_id: user.id,
@@ -605,7 +624,7 @@ async function ensureNotificationChannels() {
       name: "Kaza",
       description: "Atualizações da sua geladeira e despensa",
       importance: 4, // HIGH
-      sound: Kaza_SOUND,
+      sound: KAZA_SOUND,
       vibration: true,
       lights: true,
       lightColor: "#22c55e"
@@ -615,7 +634,7 @@ async function ensureNotificationChannels() {
       name: "Kaza — Urgente",
       description: "Itens vencendo hoje ou com urgência",
       importance: 5, // MAX
-      sound: Kaza_SOUND,
+      sound: KAZA_SOUND,
       vibration: true,
       lights: true,
       lightColor: "#ef4444"

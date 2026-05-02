@@ -485,6 +485,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       setOnboardingData(
         buildDefaultOnboarding({
           name: profile?.name ?? "",
+          homeName: home?.name ?? undefined,
           avatarUrl: profile?.avatar_url ?? undefined,
           cpf: profile?.cpf ?? undefined,
           autoUpdatePrompt: profile?.auto_update_prompt ?? true,

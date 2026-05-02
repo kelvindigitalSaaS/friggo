@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { PageTransition } from "@/components/PageTransition";
 import { ArrowLeft, Check, Eye, EyeOff, Mail, Loader2, RotateCw } from "lucide-react";
 import { toast } from "sonner";
@@ -187,6 +186,24 @@ export function SubAccountOnboarding({
   };
 
 
+  const handleGoogleSignIn = async () => {
+    // Save invite context to localStorage so KazaContext can complete setup after OAuth redirect
+    localStorage.setItem(PENDING_INVITE_KEY, JSON.stringify({
+      inviteToken,
+      groupId,
+      name: name.trim() || undefined,
+      cpf: cpf.trim() || undefined,
+    }));
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth` },
+    });
+    if (error) {
+      localStorage.removeItem(PENDING_INVITE_KEY);
+      toast.error(error.message || "Erro ao conectar com Google");
+    }
+  };
+
   const handleComplete = async () => {
     setLoading(true);
     try {
@@ -319,6 +336,26 @@ export function SubAccountOnboarding({
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Continuar
             </Button>
+
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-black/10 dark:bg-white/10" />
+              <span className="text-xs text-muted-foreground font-medium">ou</span>
+              <div className="flex-1 h-px bg-black/10 dark:bg-white/10" />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              className="w-full h-14 rounded-2xl border border-black/10 dark:border-white/10 bg-white dark:bg-white/5 flex items-center justify-center gap-3 font-bold text-sm text-foreground hover:bg-black/[0.02] dark:hover:bg-white/10 transition-colors"
+            >
+              <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
+                <path d="M43.6 20.5H42V20H24v8h11.3C33.6 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z" fill="#FFC107"/>
+                <path d="M6.3 14.7l6.6 4.8C14.5 16.1 18.9 13 24 13c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z" fill="#FF3D00"/>
+                <path d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.5 26.8 36 24 36c-5.2 0-9.6-3.3-11.3-8H6.3C9.7 39.5 16.3 44 24 44z" fill="#4CAF50"/>
+                <path d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.3 4.1-4.2 5.4l6.2 5.2C37 38.2 44 33 44 24c0-1.2-.1-2.3-.4-3.5z" fill="#1976D2"/>
+              </svg>
+              Continuar com Google
+            </button>
           </div>
         )}
 
@@ -501,6 +538,25 @@ export async function completeInviteSetup(userId: string, inviteToken: string) {
     p_user_id: userId,
   });
   if (inviteErr) throw inviteErr;
+
+  // Find which home the user was added to (master's home)
+  const { data: membership } = await supabase
+    .from("home_members")
+    .select("home_id")
+    .eq("user_id", userId)
+    .order("joined_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  // Update notification_preferences with the correct home_id (fixes 409 duplicate key)
+  if (membership?.home_id) {
+    await supabase
+      .from("notification_preferences")
+      .upsert(
+        { user_id: userId, home_id: membership.home_id },
+        { onConflict: "user_id" }
+      );
+  }
 
   const { error: profileErr } = await supabase
     .from("profiles")

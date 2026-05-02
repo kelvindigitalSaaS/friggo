@@ -158,7 +158,11 @@ export function SettingsTab() {
                 <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">Online</span>
               </div>
             </div>
-            {planTier === "premium" && trialDaysRemaining <= 0 ? (
+            {isSubAccount ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 text-blue-700 dark:text-blue-300 text-[11px] font-black uppercase tracking-wider w-fit">
+                <Users className="h-3 w-3" /> Conta Secundária
+              </span>
+            ) : planTier === "premium" && trialDaysRemaining <= 0 ? (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#3D6B55]/10 border border-[#3D6B55]/25 text-[#3D6B55] text-[11px] font-black uppercase tracking-wider w-fit">
                 <Crown className="h-3 w-3" /> Premium
               </span>
@@ -218,8 +222,8 @@ export function SettingsTab() {
           </div>
         </section>
 
-        {/* Subscription Section */}
-        <section className="space-y-3">
+        {/* Subscription Section — hidden for secondary (sub) accounts */}
+        {!isSubAccount && <section className="space-y-3">
           <h3 className="text-[11px] font-bold text-[#9A998F] dark:text-white/40 uppercase tracking-[1.5px] px-1 flex items-center gap-1.5">
             <Crown className="h-3.5 w-3.5" /> {l.subscription}
           </h3>
@@ -279,7 +283,7 @@ export function SettingsTab() {
 
           {/* Plan cards — always visible for upgrade/subscribe (hidden only if actively paid) */}
 
-        </section>
+        </section>}
 
         {/* Preferences */}
         <section className="space-y-3">
