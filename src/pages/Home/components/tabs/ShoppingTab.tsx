@@ -824,12 +824,8 @@ export function ShoppingTab() {
       </div>
 
       {shoppingList.length > 0 && (
-        <div className="grid grid-cols-[auto_1fr_auto_auto] gap-2">
-          {pendingCount > 0 && (
-            <button onClick={() => shoppingList.filter(i => !i.isCompleted).forEach(i => toggleShoppingItem(i.id))}
-              className="flex items-center justify-center h-[52px] w-[52px] rounded-2xl bg-white/80 dark:bg-white/5 border border-black/[0.04] text-primary transition-all active:scale-[0.95]" title={l.selectAll}><CheckSquare className="h-5 w-5" /></button>
-          )}
-          <button onClick={handleSaveList} className={cn("flex items-center justify-center gap-2 h-[52px] rounded-2xl text-white font-bold transition-all active:scale-[0.97]", !pendingCount && "col-span-1")} style={{ background: "#165A52" }}><Save className="h-5 w-5" /><span className="text-sm">{l.concluir}</span></button>
+        <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+          <button onClick={handleSaveList} className="flex items-center justify-center gap-2 h-[52px] rounded-2xl text-white font-bold transition-all active:scale-[0.97]" style={{ background: "#165A52" }}><Save className="h-5 w-5" /><span className="text-sm">{l.concluir}</span></button>
           <button onClick={handleShareWhatsApp} className="flex items-center justify-center h-[52px] w-[52px] rounded-2xl border border-black/[0.06] bg-white/80 dark:bg-white/5 transition-all active:scale-[0.95]" title={l.shareWhatsApp}><Share2 className="h-5 w-5 text-[#25D366]" /></button>
           <button onClick={handleNotifyGroup} disabled={isNotifying} className={cn("flex items-center justify-center h-[52px] w-[52px] rounded-2xl border border-black/[0.06] bg-white/80 dark:bg-white/5 transition-all active:scale-[0.95]", isNotifying && "opacity-50")} title={l.notificarCasa}><Bell className={cn("h-5 w-5 text-primary", isNotifying && "animate-pulse")} /></button>
         </div>
@@ -863,15 +859,25 @@ export function ShoppingTab() {
                 ? (batch.name || new Date(batch.date).toLocaleDateString(language === "pt-BR" ? "pt-BR" : "en-US"))
                 : `${batch.items.length} ${language === "pt-BR" ? "itens" : "items"} · ${new Date(batch.date).toLocaleDateString(language === "pt-BR" ? "pt-BR" : "en-US")}`;
               return (
-                <button
-                  key={batch.id}
-                  onClick={() => handleLoadSavedList(batch)}
-                  className="flex flex-col items-start shrink-0 min-w-[140px] max-w-[180px] rounded-2xl border border-black/[0.06] bg-white/80 dark:bg-white/5 p-3 text-left transition-all active:scale-95"
-                >
-                  <ShoppingCart className="h-4 w-4 text-primary mb-1.5" />
-                  <p className="text-xs font-bold text-foreground leading-tight line-clamp-2">{title}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1 truncate w-full">{subtitle}</p>
-                </button>
+                <div key={batch.id} className="flex flex-col items-start shrink-0 min-w-[140px] max-w-[180px] rounded-2xl border border-black/[0.06] bg-white/80 dark:bg-white/5 overflow-hidden">
+                  <button
+                    onClick={() => handleLoadSavedList(batch)}
+                    className="flex flex-col items-start w-full p-3 text-left transition-all active:scale-95"
+                  >
+                    <ShoppingCart className="h-4 w-4 text-primary mb-1.5" />
+                    <p className="text-xs font-bold text-foreground leading-tight line-clamp-2">{title}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1 truncate w-full">{subtitle}</p>
+                  </button>
+                  {!isSubAccount && (
+                    <button
+                      onClick={async (e) => { e.stopPropagation(); await handleDeleteSavedList(batch.id); setRecentBatches(prev => prev.filter(b => b.id !== batch.id)); }}
+                      className="flex w-full items-center justify-center gap-1 py-1.5 border-t border-black/[0.04] text-destructive text-[10px] font-semibold transition-all active:bg-destructive/10"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      {language === "pt-BR" ? "Excluir" : "Delete"}
+                    </button>
+                  )}
+                </div>
               );
             })}
             <button

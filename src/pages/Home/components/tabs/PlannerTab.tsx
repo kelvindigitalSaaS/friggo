@@ -192,14 +192,24 @@ export function PlannerTab() {
                 </div>
 
                 {activeDayObj.meals.length === 0 ? (
-                  <div
-                    className="rounded-3xl p-8 text-center border border-dashed flex flex-col items-center"
+                  <button
+                    onClick={() => !isSubAccount && openAddDialog(activeDayObj.dateStr)}
+                    className="w-full rounded-3xl p-8 text-center border border-dashed flex flex-col items-center transition-all active:scale-[0.98]"
                     style={{ borderColor: "rgba(22,90,82,0.15)", background: "rgba(22,90,82,0.02)" }}
+                    disabled={isSubAccount}
                   >
-                    <ChefHat className="h-10 w-10 mb-3 opacity-20" />
+                    {isSubAccount ? (
+                      <ChefHat className="h-10 w-10 mb-3 opacity-20" />
+                    ) : (
+                      <div className="h-12 w-12 mb-3 flex items-center justify-center rounded-2xl" style={{ background: "#165A52" }}>
+                        <Plus className="h-6 w-6 text-white" />
+                      </div>
+                    )}
                     <p className="text-[15px] font-bold text-foreground">Sem refeições</p>
-                    <p className="text-sm text-muted-foreground mt-1 max-w-[200px] leading-snug">Adicione uma receita para o plano deste dia.</p>
-                  </div>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-[200px] leading-snug">
+                      {isSubAccount ? "Nenhuma refeição planejada." : "Toque para adicionar uma refeição."}
+                    </p>
+                  </button>
                 ) : (
                   <div className="space-y-2.5">
                     {activeDayObj.meals.map((meal) => {
@@ -309,7 +319,7 @@ export function PlannerTab() {
                 return (
                   <button
                     key={dateStr}
-                    onClick={() => isSubAccount ? setSelectedDate(dateStr) : openAddDialog(dateStr)}
+                    onClick={() => setSelectedDate(dateStr)}
                     className={cn(
                       "aspect-square flex flex-col items-center justify-center rounded-xl text-xs font-bold transition-all active:scale-90 relative",
                       today ? "text-white shadow-md" : hasMeals ? "text-primary bg-primary/10" : "text-foreground bg-white/60 dark:bg-white/5 hover:bg-primary/5"

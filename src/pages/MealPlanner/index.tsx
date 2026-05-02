@@ -64,6 +64,8 @@ export default function MealPlannerPage() {
   const [repeatUntil, setRepeatUntil] = useState<"date" | "weeks">("weeks");
   const [repeatEndDate, setRepeatEndDate] = useState("");
   const [repeatWeeks, setRepeatWeeks] = useState(4);
+  // weekday indices 0=Sun…6=Sat; pre-populated from dateParam when repeat opens
+  const [repeatWeekdays, setRepeatWeekdays] = useState<Set<number>>(new Set());
 
   const dateLabel = (() => {
     try {
@@ -106,16 +108,24 @@ export default function MealPlannerPage() {
       const dates: string[] = [dateParam];
       if (repeatWeekly) {
         const start = parseISO(dateParam);
+        const weekdaysFilter = repeatWeekdays.size > 0 ? repeatWeekdays : new Set([start.getDay()]);
         if (repeatUntil === "weeks") {
-          for (let w = 1; w < repeatWeeks; w++) {
-            dates.push(format(addDays(start, w * 7), "yyyy-MM-dd"));
+          // Iterate day-by-day for repeatWeeks weeks, pick matching weekdays (skip start date itself)
+          const totalDays = repeatWeeks * 7;
+          for (let d = 1; d < totalDays; d++) {
+            const day = addDays(start, d);
+            if (weekdaysFilter.has(day.getDay())) {
+              dates.push(format(day, "yyyy-MM-dd"));
+            }
           }
         } else if (repeatEndDate) {
-          let cur = addDays(start, 7);
           const end = parseISO(repeatEndDate);
+          let cur = addDays(start, 1);
           while (cur <= end) {
-            dates.push(format(cur, "yyyy-MM-dd"));
-            cur = addDays(cur, 7);
+            if (weekdaysFilter.has(cur.getDay())) {
+              dates.push(format(cur, "yyyy-MM-dd"));
+            }
+            cur = addDays(cur, 1);
           }
         }
       }
@@ -135,6 +145,7 @@ export default function MealPlannerPage() {
       setShowSheet(false);
       setPendingMeal(null);
       setRepeatWeekly(false);
+      setRepeatWeekdays(new Set());
     } catch {
       toast.error("Erro ao salvar refeição. Tente novamente.");
     } finally {
@@ -388,7 +399,16 @@ export default function MealPlannerPage() {
                 {/* Repeat weekly */}
                 <div className="space-y-2">
                   <button
-                    onClick={() => setRepeatWeekly(v => !v)}
+                    onClick={() => {
+                      const next = !repeatWeekly;
+                      setRepeatWeekly(next);
+                      if (next) {
+                        // Pre-select the weekday of the chosen date
+                        setRepeatWeekdays(new Set([parseISO(dateParam).getDay()]));
+                      } else {
+                        setRepeatWeekdays(new Set());
+                      }
+                    }}
                     className={cn(
                       "w-full flex items-center gap-3 rounded-2xl px-4 py-3 transition-all border-2",
                       repeatWeekly ? "bg-primary/5 border-primary/20" : "bg-black/[0.03] dark:bg-white/[0.03] border-transparent"
@@ -400,43 +420,82 @@ export default function MealPlannerPage() {
                       {repeatWeekly && <Check className="h-3 w-3 text-white" />}
                     </div>
                     <span className={cn("text-sm font-bold flex-1 text-left", repeatWeekly ? "text-primary" : "text-muted-foreground")}>
-                      {`Repetir toda semana`}
+                      Repetir toda semana
                     </span>
                   </button>
-                  {repeatWeekly && (
-                    <div className="px-1 space-y-3">
-                      <div className="flex gap-2">
-                        <button onClick={() => setRepeatUntil("weeks")} className={cn("flex-1 py-2 rounded-xl text-xs font-bold transition-all border", repeatUntil === "weeks" ? "bg-primary text-white border-primary" : "bg-muted/30 text-muted-foreground border-transparent")}>
-                          Nº de semanas
-                        </button>
-                        <button onClick={() => setRepeatUntil("date")} className={cn("flex-1 py-2 rounded-xl text-xs font-bold transition-all border", repeatUntil === "date" ? "bg-primary text-white border-primary" : "bg-muted/30 text-muted-foreground border-transparent")}>
-                          Até uma data
-                        </button>
-                      </div>
-                      {repeatUntil === "weeks" ? (
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs text-muted-foreground font-semibold">Semanas:</span>
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => setRepeatWeeks(v => Math.max(2, v - 1))} className="h-8 w-8 flex items-center justify-center rounded-xl bg-muted/50 font-bold text-foreground">-</button>
-                            <span className="w-8 text-center text-sm font-black">{repeatWeeks}</span>
-                            <button onClick={() => setRepeatWeeks(v => Math.min(52, v + 1))} className="h-8 w-8 flex items-center justify-center rounded-xl bg-primary/10 text-primary font-bold">+</button>
+                  {repeatWeekly && (() => {
+                    const WEEKDAYS = [
+                      { idx: 0, label: "Dom" },
+                      { idx: 1, label: "Seg" },
+                      { idx: 2, label: "Ter" },
+                      { idx: 3, label: "Qua" },
+                      { idx: 4, label: "Qui" },
+                      { idx: 5, label: "Sex" },
+                      { idx: 6, label: "Sáb" },
+                    ];
+                    return (
+                      <div className="px-1 space-y-3">
+                        {/* Weekday picker */}
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mb-2">Dias da semana</p>
+                          <div className="flex gap-1.5">
+                            {WEEKDAYS.map(({ idx, label }) => {
+                              const active = repeatWeekdays.has(idx);
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => {
+                                    setRepeatWeekdays(prev => {
+                                      const next = new Set(prev);
+                                      if (active && next.size > 1) next.delete(idx);
+                                      else next.add(idx);
+                                      return next;
+                                    });
+                                  }}
+                                  className={cn(
+                                    "flex-1 py-2 rounded-xl text-[10px] font-black transition-all border",
+                                    active ? "bg-primary text-white border-primary" : "bg-muted/20 text-muted-foreground border-transparent"
+                                  )}
+                                >
+                                  {label}
+                                </button>
+                              );
+                            })}
                           </div>
-                          <span className="text-xs text-muted-foreground">({repeatWeeks}x)</span>
                         </div>
-                      ) : (
-                        <div className="space-y-1">
-                          <label className="text-xs text-muted-foreground font-semibold">Até quando:</label>
-                          <input
-                            type="date"
-                            value={repeatEndDate}
-                            min={dateParam}
-                            onChange={e => setRepeatEndDate(e.target.value)}
-                            className="w-full h-11 bg-black/[0.04] dark:bg-white/[0.06] border-none rounded-xl text-sm font-bold px-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
-                          />
+                        <div className="flex gap-2">
+                          <button onClick={() => setRepeatUntil("weeks")} className={cn("flex-1 py-2 rounded-xl text-xs font-bold transition-all border", repeatUntil === "weeks" ? "bg-primary text-white border-primary" : "bg-muted/30 text-muted-foreground border-transparent")}>
+                            Nº de semanas
+                          </button>
+                          <button onClick={() => setRepeatUntil("date")} className={cn("flex-1 py-2 rounded-xl text-xs font-bold transition-all border", repeatUntil === "date" ? "bg-primary text-white border-primary" : "bg-muted/30 text-muted-foreground border-transparent")}>
+                            Até uma data
+                          </button>
                         </div>
-                      )}
-                    </div>
-                  )}
+                        {repeatUntil === "weeks" ? (
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-muted-foreground font-semibold">Semanas:</span>
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => setRepeatWeeks(v => Math.max(2, v - 1))} className="h-8 w-8 flex items-center justify-center rounded-xl bg-muted/50 font-bold text-foreground">-</button>
+                              <span className="w-8 text-center text-sm font-black">{repeatWeeks}</span>
+                              <button onClick={() => setRepeatWeeks(v => Math.min(52, v + 1))} className="h-8 w-8 flex items-center justify-center rounded-xl bg-primary/10 text-primary font-bold">+</button>
+                            </div>
+                            <span className="text-xs text-muted-foreground">({repeatWeeks}x)</span>
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            <label className="text-xs text-muted-foreground font-semibold">Até quando:</label>
+                            <input
+                              type="date"
+                              value={repeatEndDate}
+                              min={dateParam}
+                              onChange={e => setRepeatEndDate(e.target.value)}
+                              className="w-full h-11 bg-black/[0.04] dark:bg-white/[0.06] border-none rounded-xl text-sm font-bold px-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Notify members toggle — only for multiPRO */}

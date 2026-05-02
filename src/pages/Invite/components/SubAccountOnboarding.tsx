@@ -570,4 +570,13 @@ export async function completeInviteSetup(userId: string, inviteToken: string) {
       { onConflict: "user_id" }
     );
   if (profileErr) throw profileErr;
+
+  // Sync display_name into sub_account_members so master can read it without profiles RLS
+  if (userName) {
+    await supabase
+      .from("sub_account_members")
+      .update({ display_name: userName })
+      .eq("user_id", userId)
+      .eq("is_active", true);
+  }
 }

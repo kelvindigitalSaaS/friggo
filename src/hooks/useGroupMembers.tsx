@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription, PLAN_DETAILS } from "@/contexts/SubscriptionContext";
 import { useKaza } from "@/contexts/KazaContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { SubAccountMember, SubAccountInvite } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 
@@ -22,6 +23,7 @@ export function useGroupMembers() {
   const { user } = useAuth();
   const { subscription } = useSubscription();
   const { isSubAccount } = useKaza();
+  const { language } = useLanguage();
   const [members, setMembers] = useState<GroupMemberWithStatus[]>([]);
   const [pendingInvites, setPendingInvites] = useState<SubAccountInvite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,7 +94,8 @@ export function useGroupMembers() {
         if (allMembers.length > 0) {
           const userIds = allMembers.map(m => m.user_id).filter(Boolean);
 
-          // Fetch real names and avatars from profiles
+          // Fetch profiles — RLS only returns own row for non-master users.
+          // After running the SQL policy, master gets all rows.
           const { data: profilesData } = await supabase
             .from("profiles")
             .select("user_id, name, avatar_url")
@@ -117,9 +120,11 @@ export function useGroupMembers() {
           setMembers(
             allMembers.map((m) => {
               const profile = profileMap.get(m.user_id);
+              // Priority: profiles.name (requires SQL policy) → display_name → fallback
+              const resolvedName = profile?.name || (m.display_name as string | null) || null;
               return {
                 ...m,
-                member_name: profile?.name || m.display_name || "Membro",
+                member_name: resolvedName || (language === "pt-BR" ? "Membro" : "Member"),
                 avatar_url: profile?.avatar_url || m.avatar_url,
                 isOnline: onlineMap.get(m.user_id) ?? false,
               };
