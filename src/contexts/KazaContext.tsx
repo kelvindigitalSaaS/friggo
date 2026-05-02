@@ -89,6 +89,10 @@ interface KazaContextType {
   mealPlan: MealPlanEntry[];
   addToMealPlan: (entry: Omit<MealPlanEntry, "id">) => Promise<void>;
   removeFromMealPlan: (id: string) => Promise<void>;
+  addRecipeIngredientsToShoppingList: (
+    ingredients: Array<{ name: string; unit?: string; category?: string; store?: string }>,
+    context: { recipeName: string; mealType?: string; date?: string }
+  ) => Promise<void>;
   saveOnboardingProgress: (data: Partial<OnboardingData>) => Promise<void>;
   checkCpf: (cpf: string) => Promise<boolean>;
   requestPasswordResetByCpf: (cpf: string) => Promise<boolean>;
@@ -163,6 +167,9 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   });
   const notifiedAlertIds = useRef<Set<string>>(new Set());
   const hasHydratedAlerts = useRef(false);
+  // Debounce refs for batch shopping notification
+  const shoppingNotifTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const shoppingNotifBatch = useRef<string[]>([]);
 
   const buildDefaultOnboarding = useCallback((
     overrides: Partial<OnboardingData> = {}
@@ -852,17 +859,20 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         .select().single();
       if (error) throw error;
       setShoppingList((prev) => [...prev, toShoppingItem(data)]);
-      // Notify other home members
+      // Debounced batch notification — accumulates items for 8s then sends one push
       if (homeId && user) {
-        supabase.functions.invoke("send-push-notification", {
-          body: {
-            home_id: homeId,
-            title: "🛒 Lista de Compras",
-            body: `${item.name} foi adicionado à lista`,
-            type: "shopping",
-            exclude_user_id: user.id,
-          }
-        }).catch(() => {});
+        shoppingNotifBatch.current.push(item.name);
+        if (shoppingNotifTimer.current) clearTimeout(shoppingNotifTimer.current);
+        shoppingNotifTimer.current = setTimeout(() => {
+          const batch = shoppingNotifBatch.current.splice(0);
+          if (!batch.length) return;
+          const body = batch.length === 1
+            ? `${batch[0]} foi adicionado à lista`
+            : `${batch.slice(0, 3).join(", ")}${batch.length > 3 ? ` e mais ${batch.length - 3}` : ""} adicionados à lista`;
+          supabase.functions.invoke("send-push-notification", {
+            body: { home_id: homeId, title: "🛒 Lista de Compras", body, type: "shopping", exclude_user_id: user.id }
+          }).catch(() => {});
+        }, 8000);
       }
     } catch (err) {
       // Offline fallback
@@ -1343,6 +1353,54 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addRecipeIngredientsToShoppingList = useCallback(async (
+    ingredients: Array<{ name: string; unit?: string; category?: string; store?: string }>,
+    context: { recipeName: string; mealType?: string; date?: string }
+  ) => {
+    if (!user || !homeId) return;
+    // Add all in parallel (silent — no per-item debounce)
+    await Promise.all(ingredients.map(ing =>
+      supabase.from("shopping_items").insert({
+        home_id: homeId, user_id: user.id,
+        name: ing.name, quantity: 1,
+        unit: ing.unit || "un",
+        category: ing.category || "pantry",
+        store: ing.store || "market",
+        checked: false,
+      }).then(({ data }) => {
+        if (data) setShoppingList(prev => [...prev, toShoppingItem((data as any)[0])]);
+      })
+    ));
+    // Refresh to ensure consistent state
+    const { data: fresh } = await supabase.from("shopping_items").select("*").eq("home_id", homeId).is("deleted_at", null).order("created_at", { ascending: false });
+    if (fresh) setShoppingList(fresh.map(toShoppingItem));
+
+    // Cancel pending generic debounce — recipe notification takes priority
+    if (shoppingNotifTimer.current) { clearTimeout(shoppingNotifTimer.current); shoppingNotifTimer.current = null; }
+    shoppingNotifBatch.current = [];
+
+    const mealEmoji: Record<string, string> = { breakfast: "☕", lunch: "🍽️", dinner: "🌙", snack: "🍪" };
+    const mealLabel: Record<string, string> = { breakfast: "Café", lunch: "Almoço", dinner: "Jantar", snack: "Lanche" };
+    const emoji = context.mealType ? (mealEmoji[context.mealType] || "🛒") : "🛒";
+    const meal = context.mealType ? (mealLabel[context.mealType] || "") : "";
+    let dateStr = "";
+    if (context.date) {
+      try {
+        const d = new Date(context.date + "T00:00:00");
+        dateStr = ` — ${d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}`;
+      } catch { /* ignore */ }
+    }
+    supabase.functions.invoke("send-push-notification", {
+      body: {
+        home_id: homeId,
+        title: `${emoji} Ingredientes Adicionados`,
+        body: `Itens para fazer ${context.recipeName}${meal ? ` (${meal})` : ""}${dateStr} foram adicionados à lista`,
+        type: "shopping",
+        exclude_user_id: user.id,
+      }
+    }).catch(() => {});
+  }, [user, homeId]);
+
   // ── onboarding / profile ─────────────────────────────────────────────────
   const saveOnboardingProgress = async (data: Partial<OnboardingData>) => {
     if (!user) return;
@@ -1756,7 +1814,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           onboardingData?.hiddenSections?.includes(id) || false,
         refreshData,
         favoriteRecipes, mealPlan,
-        toggleFavoriteRecipe, addToMealPlan, removeFromMealPlan,
+        toggleFavoriteRecipe, addToMealPlan, removeFromMealPlan, addRecipeIngredientsToShoppingList,
         isSubAccount,
         inviteWelcomePending,
         dismissInviteWelcome: () => setInviteWelcomePending(false),

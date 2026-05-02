@@ -222,8 +222,8 @@ export function SettingsTab() {
           </div>
         </section>
 
-        {/* Subscription Section — hidden for secondary (sub) accounts */}
-        {!isSubAccount && <section className="space-y-3">
+        {/* Subscription Section — read-only for secondary accounts */}
+        {<section className="space-y-3">
           <h3 className="text-[11px] font-bold text-[#9A998F] dark:text-white/40 uppercase tracking-[1.5px] px-1 flex items-center gap-1.5">
             <Crown className="h-3.5 w-3.5" /> {l.subscription}
           </h3>

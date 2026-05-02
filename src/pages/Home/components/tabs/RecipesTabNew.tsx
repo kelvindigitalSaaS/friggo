@@ -32,7 +32,7 @@ const DIFFICULTIES = [
 const VISIBLE_STEP = 50;
 
 function RecipeSheet({ recipe, onClose, onFilterByCategory }: { recipe: Recipe; onClose: () => void; onFilterByCategory?: (categoryIdx: number) => void }) {
-  const { items, addToShoppingList } = useKaza();
+  const { items, addRecipeIngredientsToShoppingList } = useKaza();
   const { language } = useLanguage();
   const pt = language === "pt-BR";
   const es = language === "es";
@@ -55,9 +55,10 @@ function RecipeSheet({ recipe, onClose, onFilterByCategory }: { recipe: Recipe; 
       toast.info(pt ? "Você já tem todos os ingredientes!" : es ? "¡Ya tienes todos!" : "You have all ingredients!");
       return;
     }
-    for (const ing of missingIngredients) {
-      await addToShoppingList({ name: ing, quantity: 1, unit: "un", category: "pantry", store: "market" });
-    }
+    await addRecipeIngredientsToShoppingList(
+      missingIngredients.map(name => ({ name, unit: "un", category: "pantry", store: "market" })),
+      { recipeName: recipe.name }
+    );
     toast.success(pt ? `${missingIngredients.length} ingredientes adicionados à lista!` : `${missingIngredients.length} ingredients added!`);
     onClose();
   };

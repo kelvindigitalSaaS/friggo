@@ -51,8 +51,28 @@ export function useGroupMembers() {
 
         let allMembers: GroupMemberWithStatus[] = membersData || [];
 
-        // Sub-accounts see everyone; master sees only dependents (not themselves)
-        if (!isSubAccount && groupData?.master_user_id) {
+        if (isSubAccount && groupData?.master_user_id) {
+          // Sub-accounts see everyone including master
+          // Master may not be a row in sub_account_members — inject a synthetic entry
+          const hasMaster = allMembers.some(m => m.user_id === groupData.master_user_id);
+          if (!hasMaster) {
+            allMembers = [
+              {
+                id: `master-${groupData.master_user_id}`,
+                group_id: groupId,
+                user_id: groupData.master_user_id,
+                role: "master" as any,
+                display_name: null,
+                avatar_url: null,
+                is_active: true,
+                invited_by: null,
+                joined_at: "",
+              } as GroupMemberWithStatus,
+              ...allMembers,
+            ];
+          }
+        } else if (!isSubAccount && groupData?.master_user_id) {
+          // Primary account only sees dependents (not themselves)
           allMembers = allMembers.filter(m => m.user_id !== groupData.master_user_id && m.role !== "master");
         }
 

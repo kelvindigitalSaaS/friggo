@@ -215,7 +215,7 @@ export function PlannerTab() {
                             className="flex-1 min-w-0 cursor-pointer"
                             onClick={() => {
                               if (recipeData)
-                                navigate(`/app/recipe/${meal.recipe_id}`, { state: { recipe: recipeData } });
+                                navigate(`/app/recipe/${meal.recipe_id}`, { state: { recipe: recipeData, mealContext: { recipeName: meal.recipe_name, mealType: meal.meal_type, date: meal.planned_date } } });
                             }}
                           >
                             <p className={cn("text-[10px] font-black uppercase tracking-wider mb-1", config.color)}>

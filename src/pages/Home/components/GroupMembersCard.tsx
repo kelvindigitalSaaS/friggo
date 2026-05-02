@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useGroupMembers } from "@/hooks/useGroupMembers";
+import { useKaza } from "@/contexts/KazaContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useNavigate } from "react-router-dom";
 import { SubAccountInvite } from "@/integrations/supabase/types";
@@ -26,6 +27,8 @@ export function GroupMembersCard({ readOnly = false }: { readOnly?: boolean }) {
     useGroupMembers();
   const { language } = useLanguage();
   const { isMultiPro } = useSubscription();
+  const { onboardingData, isSubAccount } = useKaza();
+  const homeName = onboardingData?.homeName;
   const navigate = useNavigate();
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -185,9 +188,13 @@ export function GroupMembersCard({ readOnly = false }: { readOnly?: boolean }) {
             <Users className="h-4 w-4 text-[#3D3D3A] dark:text-white/80" />
           </div>
           <div className="flex-1 text-left">
-            <p className="text-sm font-bold text-foreground">{t.title}</p>
+            <p className="text-sm font-bold text-foreground">
+              {homeName ? homeName : t.title}
+            </p>
             <p className="text-xs text-muted-foreground">
-              {filledSlots} de {maxSlots} {t.slots}
+              {isSubAccount
+                ? `${filledSlots} ${language === "pt-BR" ? "membros" : "members"}`
+                : `${filledSlots} de ${maxSlots} ${t.slots}`}
             </p>
           </div>
           <div className="h-8 w-8 rounded-lg bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0 transition-transform duration-200">

@@ -31,6 +31,7 @@ import {
   Calendar,
   Utensils,
   Zap,
+  AlignJustify,
 } from "lucide-react";
 import {
   Select,
@@ -104,6 +105,8 @@ export function ShoppingTab() {
   const [daysHorizon, setDaysHorizon] = useState<3 | 7 | 15>(7);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+  const [showBatchAdd, setShowBatchAdd] = useState(false);
+  const [batchText, setBatchText] = useState("");
 
   const itemCategories = [
     { label: "🍎 Frutas", value: "fruit", store: "fair" as const },
@@ -440,6 +443,17 @@ export function ShoppingTab() {
     toast.success(l.itemAdded);
   };
 
+  const handleBatchAdd = async () => {
+    const lines = batchText.split("\n").map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) return;
+    for (const name of lines) {
+      await addToShoppingList({ name, quantity: 1, unit: "un", category: "pantry", store: newItemStore });
+    }
+    setBatchText("");
+    setShowBatchAdd(false);
+    toast.success(language === "pt-BR" ? `${lines.length} itens adicionados!` : `${lines.length} items added!`);
+  };
+
   const handleGenerateSmartList = async () => {
     const rl = checkRateLimit(
       "shoppingList",
@@ -763,6 +777,36 @@ export function ShoppingTab() {
               ].map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
             </SelectContent>
           </Select>
+
+          {/* Batch add toggle */}
+          <button
+            onClick={() => { setShowBatchAdd(v => !v); setBatchText(""); }}
+            className={cn("flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-all self-start", showBatchAdd ? "bg-primary text-primary-foreground" : "bg-white/80 dark:bg-white/5 border border-black/[0.04] text-muted-foreground")}
+          >
+            <AlignJustify className="h-3.5 w-3.5" />
+            {language === "pt-BR" ? "Adicionar em lote" : "Batch add"}
+          </button>
+
+          {showBatchAdd && (
+            <div className="space-y-2">
+              <textarea
+                value={batchText}
+                onChange={e => setBatchText(e.target.value)}
+                placeholder={language === "pt-BR" ? "Um item por linha:\nLeite\nOvos\nPão" : "One item per line:\nMilk\nEggs\nBread"}
+                className="w-full rounded-2xl border border-black/[0.04] bg-white/80 dark:bg-white/5 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+                rows={5}
+              />
+              <Button
+                onClick={handleBatchAdd}
+                disabled={!batchText.trim()}
+                className="w-full rounded-2xl h-11"
+                style={{ background: "#165A52" }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {language === "pt-BR" ? "Adicionar Todos" : "Add All"}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

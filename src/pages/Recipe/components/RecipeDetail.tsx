@@ -36,7 +36,7 @@ export function RecipeDetail({ recipe, open, onClose }: RecipeDetailProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [cookingMode, setCookingMode] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  const { items, addToShoppingList } = useKaza();
+  const { items, addRecipeIngredientsToShoppingList } = useKaza();
   const { language } = useLanguage();
 
   if (!recipe) return null;
@@ -68,21 +68,23 @@ export function RecipeDetail({ recipe, open, onClose }: RecipeDetailProps) {
       toast.info(l.noMissing);
       return;
     }
-    for (const ingredient of missingIngredients) {
-      const metadata = getFoodMetadata(ingredient);
-      await addToShoppingList({
-        name: ingredient,
-        quantity: 1,
-        unit: metadata.unit === "un" ? "un" : metadata.unit,
-        category: (metadata.category as any) || "pantry",
-        store:
-          metadata.category === "hygiene"
-            ? "pharmacy"
-            : metadata.category === "vegetable" || metadata.category === "fruit"
-            ? "fair"
-            : "market"
-      });
-    }
+    await addRecipeIngredientsToShoppingList(
+      missingIngredients.map((ingredient) => {
+        const metadata = getFoodMetadata(ingredient);
+        return {
+          name: ingredient,
+          unit: metadata.unit === "un" ? "un" : metadata.unit,
+          category: (metadata.category as any) || "pantry",
+          store:
+            metadata.category === "hygiene"
+              ? "pharmacy"
+              : metadata.category === "vegetable" || metadata.category === "fruit"
+              ? "fair"
+              : "market"
+        };
+      }),
+      { recipeName: recipe.name }
+    );
     toast.success(l.added);
   };
 

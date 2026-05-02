@@ -109,13 +109,15 @@ export function useRecipeLogic() {
     const [showTimerSetup, setShowTimerSetup] = useState(false);
     const timer = useTimer();
     const { language } = useLanguage();
-    const { 
-      items, 
-      addToShoppingList, 
-      favoriteRecipes, 
+    const {
+      items,
+      addRecipeIngredientsToShoppingList,
+      favoriteRecipes,
       toggleFavoriteRecipe,
-      addToMealPlan 
+      addToMealPlan
     } = useKaza();
+
+    const mealContext = location.state?.mealContext as { recipeName: string; mealType?: string; date?: string } | undefined;
 
     const [servings, setServings] = useState(recipe?.servings || 2);
     const [plannerOpen, setPlannerOpen] = useState(false);
@@ -163,9 +165,10 @@ export function useRecipeLogic() {
             toast.info(l.noMissing);
             return;
         }
-        for (const ingredient of missingIngredients) {
-            await addToShoppingList({ name: ingredient, quantity: 1, unit: 'un', category: 'pantry', store: 'market' });
-        }
+        await addRecipeIngredientsToShoppingList(
+            missingIngredients.map(name => ({ name, unit: 'un', category: 'pantry', store: 'market' })),
+            mealContext ?? { recipeName: recipe?.name ?? '' }
+        );
         toast.success(l.added);
     };
 
