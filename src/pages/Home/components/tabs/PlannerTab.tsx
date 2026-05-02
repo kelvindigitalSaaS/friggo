@@ -141,8 +141,9 @@ export function PlannerTab() {
             >
               {/* Horizontal Days Row */}
               <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                {weekDays.map((day) => {
+                {weekDays.map((day, dayIdx) => {
                   const isActive = day.dateStr === selectedWeeklyDate;
+                  const isToday = dayIdx === 0;
                   const recipeCount = day.meals.length;
 
                   return (
@@ -157,7 +158,9 @@ export function PlannerTab() {
                       )}
                       style={isActive ? { background: "#165A52" } : {}}
                     >
-                      <span className="text-[10px] font-black uppercase leading-none mb-1 opacity-80">{day.label}</span>
+                      <span className="text-[10px] font-black uppercase leading-none mb-1 opacity-80">
+                        {isToday ? "HOJE" : day.label}
+                      </span>
                       <span className="text-2xl font-bold leading-none mb-2">{day.dayNum}</span>
                       {recipeCount > 0 ? (
                         <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full", isActive ? "bg-white/20 text-white" : "bg-primary/20 text-primary")}>

@@ -107,6 +107,24 @@ export function ShoppingTab() {
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const [showBatchAdd, setShowBatchAdd] = useState(false);
   const [batchText, setBatchText] = useState("");
+  const [recentBatches, setRecentBatches] = useState<Array<{ id: string; name?: string; date: string; items: any[] }>>([]);
+
+  type BatchRow = { name: string; qty: string; unit: string };
+  const BATCH_CATEGORIES = [
+    { key: "pantry",    emoji: "🥫", label: language === "pt-BR" ? "Mercearia"       : "Pantry",     store: "market"   as const },
+    { key: "fruit",     emoji: "🍎", label: language === "pt-BR" ? "Frutas"          : "Fruit",      store: "fair"     as const },
+    { key: "vegetable", emoji: "🥦", label: language === "pt-BR" ? "Verduras/Legumes": "Vegetables",  store: "fair"     as const },
+    { key: "meat",      emoji: "🥩", label: language === "pt-BR" ? "Carnes"          : "Meat",       store: "market"   as const },
+    { key: "dairy",     emoji: "🧀", label: language === "pt-BR" ? "Laticínios"      : "Dairy",      store: "market"   as const },
+    { key: "beverage",  emoji: "🧃", label: language === "pt-BR" ? "Bebidas"         : "Beverages",  store: "market"   as const },
+    { key: "frozen",    emoji: "🧊", label: language === "pt-BR" ? "Congelados"      : "Frozen",     store: "market"   as const },
+    { key: "hygiene",   emoji: "🧴", label: language === "pt-BR" ? "Higiene"         : "Hygiene",    store: "pharmacy" as const },
+    { key: "cleaning",  emoji: "🧹", label: language === "pt-BR" ? "Limpeza"         : "Cleaning",   store: "market"   as const },
+  ] as const;
+  const emptyRow = (): BatchRow => ({ name: "", qty: "1", unit: "un" });
+  const [batchRows, setBatchRows] = useState<Record<string, BatchRow[]>>(
+    () => Object.fromEntries(BATCH_CATEGORIES.map(c => [c.key, [emptyRow()]]))
+  );
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showCreateBatchDialog, setShowCreateBatchDialog] = useState(false);
@@ -331,6 +349,19 @@ export function ShoppingTab() {
     setCollapsedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const loadRecentBatches = async () => {
+    if (!user || !homeId) return;
+    const { data } = await supabase
+      .from("saved_shopping_lists")
+      .select("id, name, items, created_at")
+      .eq("home_id", homeId)
+      .order("created_at", { ascending: false })
+      .limit(5);
+    setRecentBatches((data || []).map((r: any) => ({ id: r.id, name: r.name, date: r.created_at, items: Array.isArray(r.items) ? r.items : [] })));
+  };
+
+  useEffect(() => { loadRecentBatches(); }, [homeId, user?.id]);
+
   const loadSavedLists = async () => {
     if (!user || !homeId) { setSavedLists([]); return; }
     const { data } = await supabase
@@ -371,6 +402,7 @@ export function ShoppingTab() {
     await clearAllShoppingList();
     recordShoppingCompletion();
     toast.success(l.allBought);
+    loadRecentBatches();
     setStockCandidates(candidates);
     setSelectedForStock(new Set(candidates.map(c => c.id)));
     setShowAddToStockDialog(true);
@@ -458,14 +490,26 @@ export function ShoppingTab() {
   };
 
   const handleBatchAdd = async () => {
-    const lines = batchText.split("\n").map(l => l.trim()).filter(Boolean);
-    if (lines.length === 0) return;
-    for (const name of lines) {
-      await addToShoppingList({ name, quantity: 1, unit: "un", category: "pantry", store: newItemStore });
+    const entries: Array<{ name: string; qty: string; unit: string; catKey: string }> = [];
+    BATCH_CATEGORIES.forEach(cat => {
+      (batchRows[cat.key] || []).forEach(row => {
+        if (row.name.trim()) entries.push({ ...row, catKey: cat.key });
+      });
+    });
+    if (entries.length === 0) return;
+    for (const e of entries) {
+      const cat = BATCH_CATEGORIES.find(c => c.key === e.catKey)!;
+      await addToShoppingList({
+        name: e.name.trim(),
+        quantity: parseFloat(e.qty.replace(",", ".")) || 1,
+        unit: e.unit || "un",
+        category: cat.key as any,
+        store: cat.store,
+      });
     }
-    setBatchText("");
+    setBatchRows(Object.fromEntries(BATCH_CATEGORIES.map(c => [c.key, [emptyRow()]])));
     setShowBatchAdd(false);
-    toast.success(language === "pt-BR" ? `${lines.length} itens adicionados!` : `${lines.length} items added!`);
+    toast.success(language === "pt-BR" ? `${entries.length} itens adicionados!` : `${entries.length} items added!`);
   };
 
   const toggleSelectItem = (id: string) => {
@@ -503,6 +547,7 @@ export function ShoppingTab() {
     setBatchName("");
     setSelectedIds(new Set());
     setSelectionMode(false);
+    loadRecentBatches();
   };
 
   const handleGenerateSmartList = async () => {
@@ -584,7 +629,7 @@ export function ShoppingTab() {
           unit: item.unit,
           category: item.store === "pharmacy" ? "hygiene" : "pantry",
           store: item.store as any
-        });
+        }, { silent: true });
         addedCount++;
       }
     });
@@ -803,6 +848,43 @@ export function ShoppingTab() {
         </div>
       )}
 
+      {/* Recent Batches — always visible */}
+      {recentBatches.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-[11px] font-black uppercase tracking-wider text-muted-foreground px-1 flex items-center gap-1.5">
+            <Save className="h-3.5 w-3.5" />
+            {language === "pt-BR" ? "Lotes Salvos" : "Saved Batches"}
+          </p>
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {recentBatches.map(batch => {
+              const isSingle = batch.items.length === 1;
+              const title = isSingle ? batch.items[0]?.name : (batch.name || (language === "pt-BR" ? "Lista de compras" : "Shopping list"));
+              const subtitle = isSingle
+                ? (batch.name || new Date(batch.date).toLocaleDateString(language === "pt-BR" ? "pt-BR" : "en-US"))
+                : `${batch.items.length} ${language === "pt-BR" ? "itens" : "items"} · ${new Date(batch.date).toLocaleDateString(language === "pt-BR" ? "pt-BR" : "en-US")}`;
+              return (
+                <button
+                  key={batch.id}
+                  onClick={() => handleLoadSavedList(batch)}
+                  className="flex flex-col items-start shrink-0 min-w-[140px] max-w-[180px] rounded-2xl border border-black/[0.06] bg-white/80 dark:bg-white/5 p-3 text-left transition-all active:scale-95"
+                >
+                  <ShoppingCart className="h-4 w-4 text-primary mb-1.5" />
+                  <p className="text-xs font-bold text-foreground leading-tight line-clamp-2">{title}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1 truncate w-full">{subtitle}</p>
+                </button>
+              );
+            })}
+            <button
+              onClick={() => { loadSavedLists(); setShowSavedLists(true); }}
+              className="flex flex-col items-center justify-center shrink-0 min-w-[80px] rounded-2xl border border-dashed border-black/[0.08] bg-transparent text-muted-foreground p-3 transition-all active:scale-95 text-xs font-semibold gap-1"
+            >
+              <Plus className="h-4 w-4" />
+              {language === "pt-BR" ? "Ver todos" : "See all"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Saved Lists Modal & Delete Dialog */}
       {showSavedLists && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40" onClick={() => setShowSavedLists(false)}>
@@ -885,7 +967,7 @@ export function ShoppingTab() {
 
           {/* Batch add toggle */}
           <button
-            onClick={() => { setShowBatchAdd(v => !v); setBatchText(""); }}
+            onClick={() => { setShowBatchAdd(v => !v); setBatchRows(Object.fromEntries(BATCH_CATEGORIES.map(c => [c.key, [emptyRow()]]))); }}
             className={cn("flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-all self-start", showBatchAdd ? "bg-primary text-primary-foreground" : "bg-white/80 dark:bg-white/5 border border-black/[0.04] text-muted-foreground")}
           >
             <AlignJustify className="h-3.5 w-3.5" />
@@ -893,18 +975,71 @@ export function ShoppingTab() {
           </button>
 
           {showBatchAdd && (
-            <div className="space-y-2">
-              <textarea
-                value={batchText}
-                onChange={e => setBatchText(e.target.value)}
-                placeholder={language === "pt-BR" ? "Um item por linha:\nLeite\nOvos\nPão" : "One item per line:\nMilk\nEggs\nBread"}
-                className="w-full rounded-2xl border border-black/[0.04] bg-white/80 dark:bg-white/5 px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-primary"
-                rows={5}
-              />
+            <div className="space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-3">
+              <p className="text-[11px] font-bold text-primary uppercase tracking-wider px-1">
+                {language === "pt-BR" ? "Escreva os itens em cada categoria:" : "Write items in each category:"}
+              </p>
+              {BATCH_CATEGORIES.map(cat => (
+                <div key={cat.key} className="space-y-1.5">
+                  <p className="text-xs font-black text-foreground/70 flex items-center gap-1.5 px-1">
+                    <span>{cat.emoji}</span> {cat.label}
+                  </p>
+                  {(batchRows[cat.key] || [emptyRow()]).map((row, idx) => (
+                    <div key={idx} className="flex gap-1.5 items-center">
+                      <Input
+                        placeholder={language === "pt-BR" ? "Nome do item" : "Item name"}
+                        value={row.name}
+                        onChange={e => setBatchRows(prev => {
+                          const rows = [...(prev[cat.key] || [emptyRow()])];
+                          rows[idx] = { ...rows[idx], name: e.target.value };
+                          return { ...prev, [cat.key]: rows };
+                        })}
+                        className="flex-1 h-9 text-xs rounded-xl border-black/[0.04] bg-white/80 dark:bg-white/5"
+                      />
+                      <Input
+                        inputMode="decimal"
+                        placeholder="Qtd"
+                        value={row.qty}
+                        onChange={e => setBatchRows(prev => {
+                          const rows = [...(prev[cat.key] || [emptyRow()])];
+                          rows[idx] = { ...rows[idx], qty: e.target.value };
+                          return { ...prev, [cat.key]: rows };
+                        })}
+                        className="w-12 h-9 text-center text-xs rounded-xl border-black/[0.04] bg-white/80 dark:bg-white/5"
+                      />
+                      <select
+                        value={row.unit}
+                        onChange={e => setBatchRows(prev => {
+                          const rows = [...(prev[cat.key] || [emptyRow()])];
+                          rows[idx] = { ...rows[idx], unit: e.target.value };
+                          return { ...prev, [cat.key]: rows };
+                        })}
+                        className="h-9 rounded-xl border border-black/[0.04] bg-white/80 dark:bg-white/10 text-xs font-bold px-1 text-foreground"
+                      >
+                        {["un","kg","g","L","ml","pct"].map(u => <option key={u} value={u}>{u}</option>)}
+                      </select>
+                      {idx === (batchRows[cat.key] || []).length - 1 ? (
+                        <button
+                          onClick={() => setBatchRows(prev => ({ ...prev, [cat.key]: [...(prev[cat.key] || []), emptyRow()] }))}
+                          className="h-9 w-9 flex items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0"
+                        ><Plus className="h-3.5 w-3.5" /></button>
+                      ) : (
+                        <button
+                          onClick={() => setBatchRows(prev => {
+                            const rows = [...(prev[cat.key] || [])];
+                            rows.splice(idx, 1);
+                            return { ...prev, [cat.key]: rows };
+                          })}
+                          className="h-9 w-9 flex items-center justify-center rounded-xl bg-destructive/10 text-destructive shrink-0"
+                        ><X className="h-3.5 w-3.5" /></button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))}
               <Button
                 onClick={handleBatchAdd}
-                disabled={!batchText.trim()}
-                className="w-full rounded-2xl h-11"
+                className="w-full rounded-2xl h-11 mt-1"
                 style={{ background: "#165A52" }}
               >
                 <Plus className="h-4 w-4 mr-2" />

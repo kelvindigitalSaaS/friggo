@@ -289,14 +289,17 @@ export function SubscriptionProvider({
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("created_at")
+        .select("created_at, is_tester")
         .eq("user_id", targetUserId)
         .maybeSingle();
 
+      // Testers get permanent multiPRO access regardless of payment
+      const isTester = !!(profile as any)?.is_tester;
+
       const trialStart = profile?.created_at ? new Date(profile.created_at) : new Date();
       const daysPassed = Math.floor((new Date().getTime() - trialStart.getTime()) / (1000 * 3600 * 24));
-      let remaining = Math.max(0, 7 - daysPassed);
-      let locked = remaining === 0;
+      let remaining = isTester ? 999 : Math.max(0, 7 - daysPassed);
+      let locked = isTester ? false : remaining === 0;
 
       // Fonte canônica: view v_user_access
       try {
@@ -306,9 +309,9 @@ export function SubscriptionProvider({
           .eq("user_id", targetUserId)
           .maybeSingle();
         if (access) {
-          remaining = (access as any).trial_days_left ?? remaining;
-          locked = !((access as any).has_access);
-          const soon = !!((access as any).billing_soon);
+          remaining = isTester ? 999 : ((access as any).trial_days_left ?? remaining);
+          locked = isTester ? false : !((access as any).has_access);
+          const soon = isTester ? false : !!((access as any).billing_soon);
           setBillingSoon(soon);
 
           // Notifica uma vez por sessão quando o trial está acabando ou billing_soon

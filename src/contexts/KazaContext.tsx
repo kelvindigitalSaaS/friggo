@@ -56,7 +56,8 @@ interface KazaContextType {
   updateItem: (id: string, item: Partial<KazaItem>) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   addToShoppingList: (
-    item: Omit<ShoppingItem, "id" | "isCompleted">
+    item: Omit<ShoppingItem, "id" | "isCompleted">,
+    options?: { silent?: boolean }
   ) => Promise<void>;
   toggleShoppingItem: (id: string) => Promise<void>;
   removeFromShoppingList: (id: string) => Promise<void>;
@@ -891,7 +892,8 @@ export function KazaProvider({ children }: { children: ReactNode }) {
 
   // ── shopping ─────────────────────────────────────────────────────────────
   const addToShoppingList = async (
-    item: Omit<ShoppingItem, "id" | "isCompleted">
+    item: Omit<ShoppingItem, "id" | "isCompleted">,
+    options?: { silent?: boolean }
   ) => {
     if (!user || !homeId) {
       setShoppingList((prev) => [
@@ -916,7 +918,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       setShoppingList((prev) => [...prev, toShoppingItem(data)]);
       // Debounced batch notification — accumulates items for 8s then sends one push
-      if (homeId && user) {
+      if (homeId && user && !options?.silent) {
         shoppingNotifBatch.current.push(item.name);
         if (shoppingNotifTimer.current) clearTimeout(shoppingNotifTimer.current);
         shoppingNotifTimer.current = setTimeout(() => {
