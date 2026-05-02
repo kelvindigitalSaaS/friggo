@@ -404,7 +404,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("homes").select("*").eq("id", hid).maybeSingle(),
         supabase.from("home_settings").select("*").eq("home_id", hid).maybeSingle(),
-        supabase.from("notification_preferences").select("*").eq("home_id", hid).maybeSingle()
+        supabase.from("notification_preferences").select("*").eq("user_id", user.id).eq("home_id", hid).maybeSingle()
       ]);
 
       const firstError =
