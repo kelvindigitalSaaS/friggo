@@ -109,6 +109,9 @@ export default function FeedbackSurvey() {
       setError("Por favor, selecione uma nota");
       return;
     }
+    if (step === 6) {
+      // Step 6 é opcional (preço justo), permite seguir sem validação
+    }
     if (step === 7 && mainObjective === "") {
       setError("Por favor, selecione pelo menos um objetivo");
       return;
@@ -546,7 +549,7 @@ export default function FeedbackSurvey() {
           >
             Pular
           </Button>
-          {step < 4 ? (
+          {step < 9 ? (
             <Button
               onClick={handleNext}
               disabled={loading}
@@ -557,7 +560,7 @@ export default function FeedbackSurvey() {
           ) : (
             <Button
               onClick={handleSubmit}
-              disabled={loading || noPurchaseReason === ""}
+              disabled={loading}
               className="flex-1 bg-kaza-500 hover:bg-kaza-600"
             >
               {loading ? "Enviando..." : "Enviar feedback"}

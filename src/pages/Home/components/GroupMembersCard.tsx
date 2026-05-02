@@ -215,12 +215,12 @@ export function GroupMembersCard() {
                       <Avatar className="h-10 w-10 rounded-lg shadow-sm">
                         <AvatarImage src={slot.member.avatar_url || ""} />
                         <AvatarFallback className="rounded-lg bg-primary/10 text-sm font-bold text-primary uppercase">
-                          {(slot.member.display_name || "?")[0]}
+                          {(slot.member.member_name || "?")[0]}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-foreground truncate">
-                          {slot.member.display_name || "Membro da Casa"}
+                          {slot.member.member_name || "Membro da Casa"}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {slot.member.isOnline ? (
@@ -238,7 +238,7 @@ export function GroupMembersCard() {
                         onClick={() =>
                           setRemoveConfirm({
                             memberId: slot.member!.id,
-                            memberName: slot.member!.display_name || "Membro",
+                            memberName: slot.member!.member_name || "Membro",
                             userId: slot.member!.user_id,
                           })
                         }

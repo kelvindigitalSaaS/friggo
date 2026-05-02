@@ -145,7 +145,7 @@ export interface DefrostTimer {
   estimatedMinutes: number;
 }
 
-export type AchievementCategory = "economy" | "usage" | "shopping" | "share" | "mealplan" | "register" | "garbage" | "subscription";
+export type AchievementCategory = "economy" | "usage" | "shopping" | "share" | "mealplan" | "register" | "garbage" | "subscription" | "special";
 
 export interface Achievement {
   id: string;

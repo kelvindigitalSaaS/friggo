@@ -342,12 +342,12 @@ const steps = [
   "welcome",
   "personalize",
   "cpf",
-  "planSelection",
+  "homeType",
+  "residents",
   "consumables",
   "habits",
   "notifications",
-  "homeType",
-  "residents",
+  "planSelection",
   "complete"
 ];
 
@@ -863,12 +863,12 @@ function OnboardingForm() {
               Sem cartão. Cancele quando quiser.
             </motion.p>
             
-            <motion.div variants={staggerItem} className="mt-4 flex justify-center">
-              <button 
+            <motion.div variants={staggerItem} className="mt-6">
+              <button
                 onClick={handleNext}
-                className="text-[13px] font-bold text-muted-foreground hover:text-primary transition-colors underline underline-offset-4"
+                className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors"
               >
-                Continuar para teste grátis
+                {language === "pt-BR" ? "Começar Teste Grátis" : language === "es" ? "Empezar Prueba Gratuita" : "Start Free Trial"}
               </button>
             </motion.div>
           </motion.div>
@@ -1757,7 +1757,11 @@ function OnboardingForm() {
                 className="w-full h-14 rounded-2xl text-base font-bold shadow-lg shadow-primary/25 transition-all"
                 size="lg"
               >
-                {currentStep === 0 ? l.startSetup : l.continue}
+                {currentStep === 0
+                  ? l.startSetup
+                  : steps[currentStep] === "notifications"
+                  ? language === "pt-BR" ? "Começar Teste Grátis" : language === "es" ? "Empezar Prueba Gratuita" : "Start Free Trial"
+                  : l.continue}
                 <ChevronRight className="ml-2 h-5 w-5" />
               </Button>
             </motion.div>

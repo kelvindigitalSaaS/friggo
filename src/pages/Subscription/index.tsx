@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useKaza } from "@/contexts/KazaContext";
 import { motion } from "framer-motion";
 import {
   ChevronLeft,
@@ -117,7 +118,30 @@ export default function SubscriptionPage() {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { subscription, trialDaysRemaining, registrationDate, planTier } = useSubscription();
+  const { isSubAccount } = useKaza();
   const l = labels[language as keyof typeof labels] || labels["pt-BR"];
+
+  if (isSubAccount) {
+    return (
+      <div className="min-h-screen bg-[#FAF8F4] dark:bg-[#091f1c] flex flex-col items-center justify-center p-4">
+        <div className="max-w-sm text-center space-y-4">
+          <Lock className="h-12 w-12 text-muted-foreground mx-auto" />
+          <h2 className="text-xl font-bold">{language === "pt-BR" ? "Acesso Restrito" : "Restricted Access"}</h2>
+          <p className="text-muted-foreground">
+            {language === "pt-BR"
+              ? "Apenas a conta principal pode gerenciar pagamentos."
+              : "Only the primary account can manage payments."}
+          </p>
+          <button
+            onClick={() => navigate("/app/home")}
+            className="mt-6 w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold"
+          >
+            {language === "pt-BR" ? "Voltar para Home" : "Back to Home"}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const isTrial = trialDaysRemaining > 0 && !subscription?.isActive;
   const isActive = !!subscription?.isActive;

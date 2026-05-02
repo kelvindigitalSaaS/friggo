@@ -76,6 +76,40 @@ export default function CheckoutSuccessPage() {
         // Atualizar subscription do usuário
         await refreshSubscription();
 
+        // Record Courage achievement for first-time subscribers
+        try {
+          const { data: subscription } = await supabase
+            .from("subscriptions")
+            .select("created_at")
+            .eq("user_id", user?.id)
+            .single();
+
+          if (subscription) {
+            const subDate = new Date(subscription.created_at);
+            const now = new Date();
+            const hoursDiff = (now.getTime() - subDate.getTime()) / (1000 * 60 * 60);
+
+            if (hoursDiff < 24) {
+              const { data: achievements } = await supabase
+                .from("user_achievements")
+                .select("unlocked")
+                .eq("user_id", user?.id)
+                .single();
+
+              if (achievements) {
+                const unlocked = (achievements.unlocked || {}) as Record<string, string>;
+                if (!unlocked["courage"]) {
+                  await supabase
+                    .from("user_achievements")
+                    .update({ unlocked: { ...unlocked, courage: new Date().toISOString() } })
+                    .eq("user_id", user?.id);
+                  toast.success("🦁 Conquista desbloqueada: Coragem!");
+                }
+              }
+            }
+          }
+        } catch (_achievementError) { /* silent */ }
+
         // Send invites to trio members (if any)
         try {
           const trioMembersStr = localStorage.getItem("trio_members");

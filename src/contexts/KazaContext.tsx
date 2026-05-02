@@ -243,8 +243,46 @@ export function KazaProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('online', handleOnline);
   }, []);
 
+  const formatDatabaseError = (err: unknown): string => {
+    if (typeof err === "object" && err !== null) {
+      const dbErr = err as any;
+
+      // Handle PostgreSQL unique constraint errors (23505)
+      if (dbErr.code === "23505" || dbErr.message?.includes("duplicate key")) {
+        if (dbErr.message?.includes("meal_plans")) {
+          return "Já existe um plano alimentar para esta categoria nesta data. Edite o existente ou escolha outra data.";
+        }
+        if (dbErr.message?.includes("profiles_cpf")) {
+          return "Este CPF já está cadastrado em outra conta.";
+        }
+        return "Este registro já existe. Verifique os dados e tente novamente.";
+      }
+
+      // Handle NOT NULL constraint errors (23502)
+      if (dbErr.code === "23502") {
+        return "Dados incompletos. Preencha todos os campos obrigatórios.";
+      }
+
+      // Handle foreign key errors (23503)
+      if (dbErr.code === "23503") {
+        return "Não foi possível processar esta ação. Verifique se os dados ainda existem.";
+      }
+
+      // Use custom message if available
+      if (dbErr.message && typeof dbErr.message === "string") {
+        return dbErr.message;
+      }
+    }
+
+    if (err instanceof Error) {
+      return err.message;
+    }
+
+    return "Erro ao processar a solicitação. Tente novamente.";
+  };
+
   const showError = useCallback((title: string, err: unknown) => {
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = formatDatabaseError(err);
     console.error("[KAZA]", title, err);
     toast({ title, description: msg, variant: "destructive" });
   }, [toast]);
@@ -752,6 +790,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         table: "items",
         payload: patch
       });
+      if (navigator.onLine) showError("Erro ao atualizar item", err);
     }
   };
 
@@ -776,6 +815,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         table: "items",
         payload: { id, deleted_at: new Date().toISOString() }
       });
+      if (navigator.onLine) showError("Erro ao deletar item", err);
     }
   };
 
@@ -901,6 +941,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         table: "shopping_items",
         payload: { id, deleted_at: new Date().toISOString() }
       });
+      if (navigator.onLine) showError("Erro ao remover de lista de compras", err);
     }
   };
 
@@ -987,7 +1028,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       // Offline fallback
       const localId = crypto.randomUUID();
       setConsumables((prev) => [...prev, { ...item, id: localId }]);
-      
+
       addToSyncQueue({
         method: "INSERT",
         table: "consumables",
@@ -1003,6 +1044,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           usage_interval: item.usageInterval || "daily"
         }
       });
+      if (navigator.onLine) showError("Erro ao adicionar consumível", err);
     }
   };
 
@@ -1104,6 +1146,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         table: "consumables",
         payload: { id, deleted_at: new Date().toISOString() }
       });
+      if (navigator.onLine) showError("Erro ao remover consumível", err);
     }
   };
 
@@ -1201,7 +1244,19 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           created_by: user.id
         })
         .select().single();
-      if (error) throw error;
+
+      if (error) {
+        // Treat UNIQUE constraint error with friendly message
+        if (error.code === "23505" && error.message?.includes("meal_plans")) {
+          toast({
+            title: "Plano já existe",
+            description: "Já existe um plano alimentar para esta categoria nesta data. Edite o existente ou escolha outra data.",
+            variant: "destructive"
+          });
+          return;
+        }
+        throw error;
+      }
       if (data) {
         setMealPlan((prev) => [...prev, {
           id: data.id,
@@ -1417,15 +1472,18 @@ export function KazaProvider({ children }: { children: ReactNode }) {
   };
 
   async function updateNotificationPreferences(
-    hid: string, prefs?: string[], nightCheckupTime?: string
+    hid?: string, prefs?: string[], nightCheckupTime?: string
   ): Promise<{ error?: any }> {
     if (!user) return { error: "User not authenticated" };
-    if (!hid) return { error: "Home ID is required" };
+
+    // home_id é obrigatório na tabela notification_preferences (NOT NULL constraint)
+    const notificationHomeId = hid || homeId;
+    if (!notificationHomeId) return { error: "Home ID is required" };
 
     const list = prefs ?? DEFAULT_NOTIFICATION_PREFS;
     const patch: Record<string, unknown> = {
       user_id: user.id,
-      home_id: hid,
+      home_id: notificationHomeId,
       expiring_items: list.includes("expiry"),
       shopping_list_updates: list.includes("shopping"),
       low_stock_consumables: list.includes("consumables"),
@@ -1442,7 +1500,6 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         .from("notification_preferences")
         .select("id")
         .eq("user_id", user.id)
-        .eq("home_id", hid)
         .maybeSingle();
 
       if (selectError && selectError.code !== "PGRST116") {
@@ -1450,7 +1507,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       }
 
       const { error } = existing
-        ? await (supabase as any).from("notification_preferences").update(patch).eq("user_id", user.id).eq("home_id", hid)
+        ? await (supabase as any).from("notification_preferences").update(patch).eq("user_id", user.id)
         : await (supabase as any).from("notification_preferences").insert(patch);
 
       return { error };
