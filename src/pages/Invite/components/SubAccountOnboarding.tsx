@@ -491,13 +491,14 @@ export async function completeInviteSetup(userId: string, inviteToken: string) {
   const progress = progressRows?.[0];
   const saved = (progress?.step_data ?? {}) as Record<string, any>;
 
-  // Detect fallback from user_metadata if progress RPC fails
   const { data: { user } } = await supabase.auth.getUser();
   const userName = saved.name || user?.user_metadata?.name || "";
   const userCpf = saved.cpf || user?.user_metadata?.cpf || null;
 
+  // Pass p_user_id explicitly — the RPC is idempotent and handles retries safely
   const { error: inviteErr } = await supabase.rpc("accept_invite", {
     invite_token: inviteToken,
+    p_user_id: userId,
   });
   if (inviteErr) throw inviteErr;
 
@@ -513,6 +514,4 @@ export async function completeInviteSetup(userId: string, inviteToken: string) {
       { onConflict: "user_id" }
     );
   if (profileErr) throw profileErr;
-
-  // Removed consumable creation for invited accounts, they inherit the home.
 }

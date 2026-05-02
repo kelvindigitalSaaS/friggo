@@ -38,12 +38,11 @@ serve(async (req) => {
 
     if (!inviteToken) return json({ error: "Missing invite token" }, 400);
 
-    // Validate invite exists and is not expired
+    // Validate invite exists (allow 'accepted' too for idempotency)
     const { data: invite, error: inviteError } = await supabase
       .from("sub_account_invites")
       .select("*")
       .eq("token", inviteToken)
-      .eq("status", "pending")
       .single();
 
     if (inviteError || !invite) {
@@ -65,9 +64,11 @@ serve(async (req) => {
       return json({ error: "Group not found" }, 404);
     }
 
-    // Call the RPC to accept invite (creates home_members entry etc.)
+    // Pass p_user_id explicitly so auth.uid() inside the RPC works correctly
+    // when called from a service-role client (which has no user JWT context).
     const { error: rpcError } = await supabase.rpc("accept_invite", {
       invite_token: inviteToken,
+      p_user_id: user.id,
     });
 
     if (rpcError) {
