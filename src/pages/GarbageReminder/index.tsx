@@ -89,12 +89,13 @@ export default function GarbageReminderPage() {
       .from("garbage_reminders")
       .select("*")
       .eq("home_id", homeId)
-      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle()
       .then(async ({ data }: { data: any }) => {
         if (!data) return;
         applyConfig(data);
-        
+
         // Se houver alguém que fez por último, buscar o nome
         if (data.last_done_by_user_id) {
           const { data: profile } = await supabase
