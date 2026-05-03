@@ -91,7 +91,7 @@ export default function GarbageReminderPage() {
       .select("*")
       .eq("home_id", homeId)
       .eq("enabled", true)
-      .order("created_at", { ascending: true })
+      .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle()
       .then(async ({ data }: { data: any }) => {
@@ -343,11 +343,12 @@ export default function GarbageReminderPage() {
       if (result.success) {
         toast.success(language === "pt-BR" ? "Lixo marcado como retirado e casa notificada!" : "Garbage marked as done and home notified!");
       } else if (result.error) {
+        const errorMsg = typeof result.error === 'string' ? result.error : (result.error?.message || JSON.stringify(result.error));
         // Se o erro for apenas que não há membros, mostramos um aviso informativo
-        if (result.error.includes("membros")) {
-          toast(result.error);
+        if (errorMsg.includes("membros")) {
+          toast(errorMsg);
         } else {
-          toast.error(result.error);
+          toast.error(errorMsg);
         }
       }
     } catch (error) {
@@ -559,7 +560,15 @@ export default function GarbageReminderPage() {
                       : `${lastDoneByName || 'Someone'} took out the trash`}
                   </p>
                   <p className="text-[10px] text-muted-foreground">
-                    {format(new Date(lastDoneAt), "PPp", { locale: language === "pt-BR" ? ptBR : undefined })}
+                    {(() => {
+                      try {
+                        const date = new Date(lastDoneAt);
+                        if (isNaN(date.getTime())) return lastDoneAt;
+                        return format(date, "PPp", { locale: language === "pt-BR" ? ptBR : undefined });
+                      } catch {
+                        return lastDoneAt;
+                      }
+                    })()}
                   </p>
                 </div>
               </div>
