@@ -285,7 +285,6 @@ const App = () => {
                 <ThemeProvider>
                   <TooltipProvider>
                     <OfflineOverlay />
-                    <GlobalRefreshButton />
                     <AccountSessionTracker />
                     <Toaster />
                     <Sonner />
@@ -293,6 +292,7 @@ const App = () => {
                     {!isNative && <SpeedInsights />}
                     <BrowserRouter future={{ v7_relativeSplatPath: true }}>
                       <UpdatePrompt />
+                      <GlobalRefreshButton />
                       <AppPWAInstallGuide />
                       <MobileFrame>
                         <AuthGuard>
