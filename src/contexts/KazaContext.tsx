@@ -467,6 +467,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         consumablesRes,
         recipesRes,
         mealPlansRes,
+        historyRes,
         profileRes,
         homeRes,
         homeSettingsRes,
@@ -477,6 +478,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         supabase.from("consumables").select("*").eq("home_id", hid).is("deleted_at", null),
         supabase.from("user_recipe_favorites").select("recipe_id").eq("user_id", user.id),
         supabase.from("meal_plans").select("*").eq("home_id", hid).order("planned_date", { ascending: true }),
+        supabase.from("item_history").select("*").eq("home_id", hid).is("deleted_at", null).order("timestamp", { ascending: false }),
         supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("homes").select("*").eq("id", hid).maybeSingle(),
         supabase.from("home_settings").select("*").eq("home_id", hid).maybeSingle(),
@@ -485,7 +487,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
 
       const firstError =
         itemsRes.error || shoppingRes.error || consumablesRes.error ||
-        recipesRes.error || mealPlansRes.error || profileRes.error ||
+        recipesRes.error || mealPlansRes.error || historyRes.error || profileRes.error ||
         homeRes.error || homeSettingsRes.error || notifPrefsRes.error;
       if (firstError) throw firstError;
 
@@ -500,6 +502,18 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           recipe_name: p.recipe_name,
           planned_date: p.planned_date,
           meal_type: p.meal_type
+        }))
+      );
+      setItemHistory(
+        (historyRes.data || []).map((h: any) => ({
+          id: h.id,
+          home_id: h.home_id,
+          user_id: h.user_id,
+          itemId: h.item_id,
+          itemName: h.item_name,
+          action: h.action,
+          quantity: h.quantity,
+          timestamp: h.timestamp
         }))
       );
 

@@ -64,16 +64,17 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingRef = useRef<Partial<DbCounters>>({});
 
-  // Counts from DB item_history filtered by this user — cross-device persistent
+  // Counts from DB item_history filtered by home — shared across all household members
   const [historyCounters, setHistoryCounters] = useState({ consumed: 0, cooked: 0, added: 0 });
 
-  // Load per-user item_history counts from DB (not the shared in-memory state)
+  // Load home item_history counts from DB (entire household, not per-user)
   useEffect(() => {
-    if (!user || isSubAccount) return;
+    if (!user || !homeId) return;
     (supabase as any)
       .from("item_history")
       .select("action")
-      .eq("user_id", user.id)
+      .eq("home_id", homeId)
+      .is("deleted_at", null)
       .then(({ data }: { data: { action: string }[] | null }) => {
         if (!data) return;
         setHistoryCounters({
@@ -82,7 +83,7 @@ export function AchievementsProvider({ children }: { children: React.ReactNode }
           added:    data.filter(r => r.action === "added").length,
         });
       });
-  }, [user, isSubAccount]);
+  }, [user, homeId]);
 
   // Load achievement row from DB
   useEffect(() => {
