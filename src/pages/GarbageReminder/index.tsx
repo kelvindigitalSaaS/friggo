@@ -282,15 +282,26 @@ export default function GarbageReminderPage() {
 
     try {
       const now = new Date().toISOString();
-      
-      // 1. Update DB
+
+      // 1. Get the most recent garbage reminder for this home
+      const { data: records } = await supabase
+        .from("garbage_reminders")
+        .select("id")
+        .eq("home_id", homeId)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (!records || records.length === 0) return;
+      const recordId = records[0].id;
+
+      // 2. Update that specific record
       const { error } = await supabase
         .from("garbage_reminders")
         .update({
           last_done_at: now,
           last_done_by_user_id: user.id
         })
-        .eq("home_id", homeId);
+        .eq("id", recordId);
 
       if (error) throw error;
 
