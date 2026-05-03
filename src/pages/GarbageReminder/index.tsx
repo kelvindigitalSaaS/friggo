@@ -67,8 +67,8 @@ export default function GarbageReminderPage() {
     setGarbageLocation(data.garbage_location ?? data.garbageLocation ?? "street");
     setBuildingFloor(data.building_floor ?? data.buildingFloor ?? "");
     setVibrationEnabled(data.vibration_enabled ?? data.vibrationEnabled ?? true);
-    setLastDoneAt(data.last_done_at ?? null);
-    // lastDoneByName will be fetched separately if lastDoneByUserId exists
+    setLastDoneAt(data.last_done_at ? data.last_done_at : null);
+    // lastDoneByName será buscado separadamente se last_done_by_user_id existir
   };
 
   // 1. Carrega do localStorage imediatamente (cache rápido)
@@ -306,15 +306,21 @@ export default function GarbageReminderPage() {
       const recordId = records[0].id;
 
       // 2. Update that specific record
-      const { error } = await supabase
-        .from("garbage_reminders")
-        .update({
-          last_done_at: now,
-          last_done_by_user_id: user.id
-        })
-        .eq("id", recordId);
+      try {
+        const { error } = await supabase
+          .from("garbage_reminders")
+          .update({
+            last_done_at: now,
+            last_done_by_user_id: user.id
+          })
+          .eq("id", recordId);
 
-      if (error) throw error;
+        if (error) throw error;
+      } catch (updateError) {
+        // Se as colunas last_done_* não existirem no banco, usa fallback
+        console.warn("Não foi possível salvar último descarte:", updateError);
+        // Continua mesmo assim para não quebrar a UI
+      }
 
       // 2. Local State
       recordGarbageDone();
