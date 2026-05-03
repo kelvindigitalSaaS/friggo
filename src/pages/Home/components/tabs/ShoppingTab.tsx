@@ -786,7 +786,7 @@ export function ShoppingTab() {
   );
 
   return (
-    <div className="space-y-4 pb-nav-safe">
+    <div className={cn("space-y-4", selectionMode ? "pb-[14rem]" : "pb-nav-safe")}>
       <div className="mb-4 p-4 rounded-3xl bg-[#F7F6F3] dark:bg-white/5 border border-[#E2E1DC] dark:border-white/10">
         <div className="flex items-center justify-between mb-3 px-1">
           <div className="flex items-center gap-2">
@@ -835,7 +835,7 @@ export function ShoppingTab() {
         <div className="flex gap-2">
           {!isSubAccount && <button onClick={() => setShowDeleteDialog(true)} className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-destructive/10 text-destructive transition-all active:scale-[0.97]"><Trash2 className="h-4 w-4" /></button>}
           <button
-            onClick={() => { setSelectionMode(v => !v); setSelectedIds(new Set()); }}
+            onClick={() => { setSelectionMode(v => { if (!v) setShowBatchAdd(false); return !v; }); setSelectedIds(new Set()); }}
             className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border transition-all active:scale-[0.97]",
               selectionMode ? "bg-primary text-white border-primary" : "bg-white/80 dark:bg-white/5 border-black/[0.06] text-foreground")}
             title={language === "pt-BR" ? "Selecionar itens" : "Select items"}
@@ -1178,7 +1178,10 @@ export function ShoppingTab() {
 
       {/* Floating Selection Bar */}
       {selectionMode && (
-        <div className="fixed bottom-[80px] left-4 right-4 z-50 rounded-2xl bg-[#165A52] text-white shadow-2xl p-3">
+        <div
+          className="fixed left-4 right-4 z-50 rounded-2xl bg-[#165A52] text-white shadow-2xl p-3"
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)" }}
+        >
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-xs font-bold">
               {selectedIds.size > 0

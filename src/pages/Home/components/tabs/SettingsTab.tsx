@@ -205,7 +205,7 @@ export function SettingsTab() {
               { label: l.history, desc: l.historyDesc, icon: History, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/activity-history"), subAllowed: true },
               { label: l.installGuide || "Como Instalar", desc: l.installGuideDesc || "Android, iOS e PC", icon: Download, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/settings/install"), subAllowed: true },
               { label: l.report, desc: l.reportDesc, icon: Package, color: "text-[#3D6B55] dark:text-emerald-400", bg: "bg-[#3D6B55]/10 dark:bg-emerald-500/20", onClick: () => navigate("/app/monthly-report"), subAllowed: true },
-              { label: l.subscription, desc: l.subscriptionDesc, icon: isSubAccount ? Home : Crown, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => isSubAccount ? navigate("/app/home") : navigate("/app/settings/subscription/manage"), subAllowed: true },
+              { label: l.subscription, desc: l.subscriptionDesc, icon: Crown, color: "text-[#3D3D3A] dark:text-white/80", bg: "bg-[#EDECEA] dark:bg-white/10", onClick: () => navigate("/app/settings/subscription/manage"), subAllowed: false },
               { label: t.reconfigure, desc: t.reconfigureDesc, icon: RotateCcw, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-500/20", onClick: () => setConfirmReconfigureOpen(true), subAllowed: false },
               { label: l.garbage, desc: l.garbageDesc, icon: Trash2, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-500/20", onClick: () => navigate("/app/garbage-reminder"), subAllowed: true },
             ] as const).filter(s => !isSubAccount || s.subAllowed).map(({ label, desc, icon: Icon, color, bg, onClick }) => (
@@ -226,8 +226,8 @@ export function SettingsTab() {
           </div>
         </section>
 
-        {/* Subscription Section — read-only for secondary accounts */}
-        {<section className="space-y-3">
+        {/* Subscription Section — hidden for sub-accounts */}
+        {!isSubAccount && <section className="space-y-3">
           <h3 className="text-[11px] font-bold text-[#9A998F] dark:text-white/40 uppercase tracking-[1.5px] px-1 flex items-center gap-1.5">
             <Crown className="h-3.5 w-3.5" /> {l.subscription}
           </h3>

@@ -181,55 +181,53 @@
   }
 }
 
-/* Safe area utilities for mobile — notch / Dynamic Island / home bar */
-@supports (padding-top: env(safe-area-inset-top)) {
-  .pt-safe {
-    padding-top: env(safe-area-inset-top);
-  }
+/* Safe area utilities for mobile — notch / Dynamic Island / home bar
+   Aplicadas diretamente sem @supports para garantir funcionamento em todos
+   os navegadores modernos (iOS Safari, Android Chrome, Samsung Internet, Capacitor). */
 
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
+/* Top safe area — status bar / notch / Dynamic Island */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.mt-safe {
+  margin-top: env(safe-area-inset-top, 0px);
+}
 
-  .pl-safe {
-    padding-left: env(safe-area-inset-left);
-  }
+/* Bottom safe area — home indicator iOS / barra de navegação Android */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
 
-  .pr-safe {
-    padding-right: env(safe-area-inset-right);
-  }
+/* Lateral safe areas */
+.pl-safe { padding-left:  env(safe-area-inset-left,  0px); }
+.pr-safe { padding-right: env(safe-area-inset-right, 0px); }
 
-  .mt-safe {
-    margin-top: env(safe-area-inset-top);
-  }
+.h-safe-area-inset-bottom {
+  height: env(safe-area-inset-bottom, 0px);
+}
 
-  .mb-safe {
-    margin-bottom: env(safe-area-inset-bottom);
-  }
+/* Sticky headers dentro de PageTransition (sem pt-safe no wrapper) */
+header.sticky {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 1rem) !important;
+}
 
-  .h-safe-area-inset-bottom {
-    height: env(safe-area-inset-bottom);
-  }
+/* Bottom nav fica acima da home bar */
+nav.bottom-nav-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
 
-  /* Sticky headers respeitam o notch */
-  header.sticky {
-    padding-top: calc(env(safe-area-inset-top) + 1rem) !important;
-  }
+/* BottomNav flutuante: fica acima do indicador home do iOS/Android.
+   Garantia mínima de 1rem para dispositivos sem safe area. */
+.bottom-nav-float {
+  bottom: max(calc(env(safe-area-inset-bottom, 0px) + 1rem), 1rem);
+}
 
-  /* Bottom nav fica acima da home bar */
-  nav.bottom-nav-safe {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  /* BottomNav flutuante: posiciona acima do indicador home do iOS/Android */
-  .bottom-nav-float {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
-  }
-
-  /* Padding do conteúdo principal considerando nav + safe area */
-  .pb-nav-safe {
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
-  }
+/* Padding do conteúdo principal considerando nav + safe area */
+.pb-nav-safe {
+  padding-bottom: max(calc(env(safe-area-inset-bottom, 0px) + 5.5rem), 5.5rem);
 }
 
 /* Viewport height correta no iOS (evita o bug da barra do Safari) */

@@ -11,12 +11,14 @@ import { isNative, isAndroid } from "./capacitor";
 export async function initNativeUI() {
   if (!isNative) return;
 
-  // Status bar
+  // Status bar — edge-to-edge: conteúdo web se estende sob a barra de status
+  // em ambas as plataformas, com env(safe-area-inset-top) reportando o valor correto.
   try {
-    await StatusBar.setStyle({ style: Style.Light });
     if (isAndroid) {
-      await StatusBar.setBackgroundColor({ color: "#22c55e" });
+      await StatusBar.setOverlaysWebView({ overlay: true });
+      await StatusBar.setBackgroundColor({ color: "#00000000" }); // transparente
     }
+    await StatusBar.setStyle({ style: Style.Light });
   } catch (_e) { /* StatusBar unavailable */ }
 
   // Hide splash screen after the app is rendered
