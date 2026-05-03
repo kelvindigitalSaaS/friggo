@@ -506,14 +506,13 @@ export function KazaProvider({ children }: { children: ReactNode }) {
       );
       setItemHistory(
         (historyRes.data || []).map((h: any) => ({
-          id: h.id,
-          home_id: h.home_id,
-          user_id: h.user_id,
           itemId: h.item_id,
           itemName: h.item_name,
           action: h.action,
           quantity: h.quantity,
-          timestamp: h.timestamp
+          unit: h.unit,
+          user: h.user_name,
+          timestamp: new Date(h.timestamp)
         }))
       );
 

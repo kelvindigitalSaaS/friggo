@@ -67,8 +67,8 @@ export default function GarbageReminderPage() {
     setGarbageLocation(data.garbage_location ?? data.garbageLocation ?? "street");
     setBuildingFloor(data.building_floor ?? data.buildingFloor ?? "");
     setVibrationEnabled(data.vibration_enabled ?? data.vibrationEnabled ?? true);
-    setLastDoneAt(data.last_done_at ?? null);
-    // lastDoneByName will be fetched separately if lastDoneByUserId exists
+    setLastDoneAt(data.last_done_at ? data.last_done_at : null);
+    // lastDoneByName será buscado separadamente se last_done_by_user_id existir
   };
 
   // 1. Carrega do localStorage imediatamente (cache rápido)
@@ -97,7 +97,7 @@ export default function GarbageReminderPage() {
       .then(async ({ data }: { data: any }) => {
         if (!data) return;
         applyConfig(data);
-        
+
         // Se houver alguém que fez por último, buscar o nome
         if (data.last_done_by_user_id) {
           const { data: profile } = await supabase
@@ -204,13 +204,20 @@ export default function GarbageReminderPage() {
   const handleSave = async () => {
     const cfg = { enabled, selectedDays, reminderTime, garbageLocation, buildingFloor, vibrationEnabled };
 
-    // DB é a fonte de verdade — grava primeiro
+    // DB é a fonte de verdade — grava primeiro (compartilhado por toda a casa)
     if (homeId && user) {
       try {
+        // Desabilitar todas as configs antigas da casa
+        await (supabase as any)
+          .from("garbage_reminders")
+          .update({ enabled: false })
+          .eq("home_id", homeId);
+
+        // Salvar nova config da casa (upsert para evitar conflitos)
         await (supabase as any).from("garbage_reminders").upsert({
           home_id: homeId,
           user_id: user.id,
-          enabled,
+          enabled: true,
           selected_days: selectedDays,
           reminder_time: reminderTime,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Sao_Paulo",
@@ -218,7 +225,10 @@ export default function GarbageReminderPage() {
           building_floor: buildingFloor || null,
           vibration_enabled: vibrationEnabled,
         }, { onConflict: "home_id,user_id" });
-      } catch (_e) { /* silent — DB save optional */ }
+      } catch (_e) {
+        console.error("[KAZA] Garbage config save failed:", _e);
+        /* silent — DB save optional */
+      }
     }
 
     // Atualiza cache local para o scheduler de notificações (lê do localStorage)
@@ -284,17 +294,34 @@ export default function GarbageReminderPage() {
 
     try {
       const now = new Date().toISOString();
-      
-      // 1. Update DB
-      const { error } = await supabase
-        .from("garbage_reminders")
-        .update({
-          last_done_at: now,
-          last_done_by_user_id: user.id
-        })
-        .eq("home_id", homeId);
 
-      if (error) throw error;
+      // 1. Get the most recent garbage reminder for this home
+      const { data: records } = await supabase
+        .from("garbage_reminders")
+        .select("id")
+        .eq("home_id", homeId)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (!records || records.length === 0) return;
+      const recordId = records[0].id;
+
+      // 2. Update that specific record
+      try {
+        const { error } = await supabase
+          .from("garbage_reminders")
+          .update({
+            last_done_at: now,
+            last_done_by_user_id: user.id
+          })
+          .eq("id", recordId);
+
+        if (error) throw error;
+      } catch (updateError) {
+        // Se as colunas last_done_* não existirem no banco, usa fallback
+        console.warn("Não foi possível salvar último descarte:", updateError);
+        // Continua mesmo assim para não quebrar a UI
+      }
 
       // 2. Local State
       recordGarbageDone();
