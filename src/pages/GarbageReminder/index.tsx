@@ -82,14 +82,17 @@ export default function GarbageReminderPage() {
     }
   }, []);
 
-  // 2. Sincroniza do banco (fonte de verdade) quando homeId e user estiverem prontos
+  // 2. Sincroniza do banco (fonte de verdade) quando homeId estiver pronto
+  // Lixo é compartilhado por TODA A CASA - usa a primeira config habilitada
   useEffect(() => {
     if (!homeId || !user) return;
     (supabase as any)
       .from("garbage_reminders")
       .select("*")
       .eq("home_id", homeId)
-      .eq("user_id", user.id)
+      .eq("enabled", true)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle()
       .then(async ({ data }: { data: any }) => {
         if (!data) return;
@@ -201,10 +204,17 @@ export default function GarbageReminderPage() {
   const handleSave = async () => {
     const cfg = { enabled, selectedDays, reminderTime, garbageLocation, buildingFloor, vibrationEnabled };
 
-    // DB é a fonte de verdade — grava primeiro
+    // DB é a fonte de verdade — grava primeiro (compartilhado por toda a casa)
     if (homeId && user) {
       try {
-        await (supabase as any).from("garbage_reminders").upsert({
+        // Desabilitar configs antigas da casa
+        await (supabase as any)
+          .from("garbage_reminders")
+          .update({ enabled: false })
+          .eq("home_id", homeId);
+
+        // Salvar nova config (compartilhada)
+        await (supabase as any).from("garbage_reminders").insert({
           home_id: homeId,
           user_id: user.id,
           enabled,
@@ -214,7 +224,7 @@ export default function GarbageReminderPage() {
           garbage_location: garbageLocation,
           building_floor: buildingFloor || null,
           vibration_enabled: vibrationEnabled,
-        }, { onConflict: "home_id,user_id" });
+        });
       } catch (_e) { /* silent — DB save optional */ }
     }
 
