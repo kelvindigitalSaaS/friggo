@@ -441,8 +441,15 @@ export function SettingsTab() {
               ))}
             </select>
             <button
-              onClick={() => {
+              onClick={async () => {
                 updateOnboardingData({ nightCheckupTime, notificationPrefs: onboardingData?.notificationPrefs || ["expiry", "shopping", "nightCheckup"] });
+                // Salvar configuração de checkup noturno no localStorage para notificações
+                if (onboardingData?.notificationPrefs?.includes("nightCheckup")) {
+                  localStorage.setItem("kaza-night-checkup-config", JSON.stringify({ enabled: true, checkupTime: nightCheckupTime }));
+                  // Reiniciar monitoring para pegar a nova hora
+                  const { startNightCheckupMonitoring } = await import("@/lib/nightCheckupNotifications");
+                  startNightCheckupMonitoring();
+                }
                 toast.success(t.save); // Or "Saved"
               }}
               className="flex items-center justify-center gap-2 rounded-xl bg-[#F5F5F5] dark:bg-white/10 border border-[#E2E1DC] dark:border-white/10 py-3 px-4 text-[#3D6B55] dark:text-emerald-400 font-semibold text-sm transition-all active:scale-[0.97] shadow-sm"

@@ -55,15 +55,15 @@ function RefreshButton() {
     <button
       onClick={handleRefresh}
       className={cn(
-        "fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] right-3 z-40",
-        "h-9 w-9 flex items-center justify-center rounded-full",
-        "bg-white/80 dark:bg-white/10 backdrop-blur-md",
-        "border border-black/[0.06] dark:border-white/[0.10]",
-        "shadow-md text-muted-foreground transition-all active:scale-90"
+        "fixed bottom-[calc(env(safe-area-inset-bottom,0px)+7rem)] right-4 z-50",
+        "h-10 w-10 flex items-center justify-center rounded-full",
+        "bg-primary/90 dark:bg-primary/80 backdrop-blur-md hover:bg-primary",
+        "border border-primary/30 dark:border-primary/50",
+        "shadow-lg shadow-primary/30 text-white transition-all active:scale-90"
       )}
       title="Atualizar"
     >
-      <RefreshCw className={cn("h-4 w-4", spinning && "animate-spin")} />
+      <RefreshCw className={cn("h-5 w-5", spinning && "animate-spin")} />
     </button>
   );
 }

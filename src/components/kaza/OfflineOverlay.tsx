@@ -1,18 +1,24 @@
 import { useState, useEffect } from "react";
-import { WifiOff } from "lucide-react";
+import { WifiOff, AlertCircle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const offlineMessages = {
   "pt-BR": {
-    message: "Você está offline. Conecte-se para usar o Kaza completo.",
+    title: "🛰️ Voa solo!",
+    message: "Você está voando sem rede! Alguns recursos podem estar obsoletos.",
+    hint: "Conecte-se à internet para usar 100% do Kaza",
     retry: "Reconectar"
   },
   en: {
-    message: "You are offline. Connect for full Kaza experience.",
+    title: "✈️ Going offline!",
+    message: "Flying without network! Some features may be outdated.",
+    hint: "Connect to internet for full Kaza experience",
     retry: "Reconnect"
   },
   es: {
-    message: "Estás desconectado. Conéctate para usar Kaza completo.",
+    title: "🛫 ¡Modo offline!",
+    message: "¡Volando sin red! Algunos recursos pueden estar desactua lizados.",
+    hint: "Conecta a internet para 100% de Kaza",
     retry: "Reconectar"
   }
 };
@@ -23,11 +29,22 @@ export function OfflineOverlay() {
   const t = offlineMessages[language] || offlineMessages["pt-BR"];
 
   useEffect(() => {
-    const handleOffline = () => setIsOffline(true);
-    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => {
+      setIsOffline(true);
+      // Guardar estado offline no localStorage para não perder configurações
+      localStorage.setItem("kaza-offline-mode", "true");
+    };
+
+    const handleOnline = () => {
+      setIsOffline(false);
+      localStorage.removeItem("kaza-offline-mode");
+    };
 
     // Suporte para disparar o modo offline manualmente (Ex: timeout ou fetch fail)
-    const handleForceOffline = () => setIsOffline(true);
+    const handleForceOffline = () => {
+      setIsOffline(true);
+      localStorage.setItem("kaza-offline-mode", "true");
+    };
 
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
@@ -43,24 +60,29 @@ export function OfflineOverlay() {
   if (!isOffline) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[99999] flex items-center justify-between gap-3 px-4 py-2.5 bg-amber-500 text-white animate-in slide-in-from-top duration-300 shadow-md">
-      <div className="flex items-center gap-2 min-w-0">
-        <WifiOff className="h-4 w-4 shrink-0" />
-        <p className="text-xs font-semibold leading-tight truncate">
-          {t.message}
-        </p>
+    <div className="fixed top-0 left-0 right-0 z-[99999] animate-in slide-in-from-top duration-300">
+      <div className="flex items-start gap-3 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg">
+        <div className="flex-shrink-0 pt-0.5">
+          <AlertCircle className="h-5 w-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold leading-tight">{t.title}</p>
+          <p className="text-xs leading-snug mt-0.5 opacity-95">{t.message}</p>
+          <p className="text-[10px] leading-snug mt-1 opacity-80 italic">{t.hint}</p>
+        </div>
+        <button
+          onClick={() => {
+            if (navigator.onLine) {
+              setIsOffline(false);
+              localStorage.removeItem("kaza-offline-mode");
+              window.location.reload();
+            }
+          }}
+          className="shrink-0 rounded-lg bg-white/25 hover:bg-white/35 px-3 py-1.5 text-xs font-bold active:scale-95 transition-all whitespace-nowrap"
+        >
+          {t.retry}
+        </button>
       </div>
-      <button
-        onClick={() => {
-          if (navigator.onLine) {
-            setIsOffline(false);
-            window.location.reload();
-          }
-        }}
-        className="shrink-0 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-bold active:scale-95 transition-all"
-      >
-        {t.retry}
-      </button>
     </div>
   );
 }

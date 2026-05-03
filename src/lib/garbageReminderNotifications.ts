@@ -39,11 +39,16 @@ export async function initGarbageReminderNotifications() {
         : "🗑️ Kaza — Coleta de Lixo";
 
     let body: string;
-    if (hoursUntil <= 1) {
+    if (hoursUntil === 0) {
       body =
         config.garbageLocation === "building"
-          ? `Agora! Desça o lixo${config.buildingFloor ? ` do ${config.buildingFloor}` : ""} antes que o caminhão passe 🚛`
-          : "Agora! Coloque o lixo para fora antes que o caminhão passe 🚛";
+          ? `⏰ É AGORA! Desça o lixo${config.buildingFloor ? ` do ${config.buildingFloor}` : ""} rápido! 🚛`
+          : "⏰ É AGORA! Coloque o lixo para fora! 🚛";
+    } else if (hoursUntil <= 1) {
+      body =
+        config.garbageLocation === "building"
+          ? `Menos de 1h! Desça o lixo${config.buildingFloor ? ` do ${config.buildingFloor}` : ""} antes do caminhão 🚛`
+          : "Menos de 1h! Coloque o lixo para fora 🚛";
     } else if (hoursUntil <= 12) {
       body =
         config.garbageLocation === "building"
@@ -130,6 +135,9 @@ async function fireGarbagePushIfDue(config: GarbageReminderConfig) {
     const diff = now - date.getTime();
     if (diff < 0 || diff > FIRE_WINDOW_MS) continue;
 
+    // Verificar especificamente para a notificação de horário exato
+    if (hoursUntilCollection === 0 && Math.abs(diff) > FIRE_WINDOW_MS) continue;
+
     // Local dedup (fast path — same device)
     const key = `kaza-garbage-pushed-${date.getTime()}`;
     if (localStorage.getItem(key)) continue;
@@ -146,11 +154,16 @@ async function fireGarbagePushIfDue(config: GarbageReminderConfig) {
         : "🗑️ Kaza — Coleta de Lixo";
 
     let body: string;
-    if (hoursUntilCollection <= 1) {
+    if (hoursUntilCollection === 0) {
       body =
         config.garbageLocation === "building"
-          ? `Agora! Desça o lixo${config.buildingFloor ? ` do ${config.buildingFloor}` : ""} antes que o caminhão passe 🚛`
-          : "Agora! Coloque o lixo para fora antes que o caminhão passe 🚛";
+          ? `⏰ É AGORA! Desça o lixo${config.buildingFloor ? ` do ${config.buildingFloor}` : ""} rápido! O caminhão está passando 🚛`
+          : "⏰ É AGORA! Coloque o lixo para fora! O caminhão está passando 🚛";
+    } else if (hoursUntilCollection <= 1) {
+      body =
+        config.garbageLocation === "building"
+          ? `Em menos de 1 hora! Desça o lixo${config.buildingFloor ? ` do ${config.buildingFloor}` : ""} antes que o caminhão passe 🚛`
+          : "Em menos de 1 hora! Coloque o lixo para fora antes que o caminhão passe 🚛";
     } else if (hoursUntilCollection <= 12) {
       body =
         config.garbageLocation === "building"
@@ -196,6 +209,7 @@ function getNotificationTimesForCheck(
       { date: new Date(d.getTime() - 24 * 60 * 60 * 1000), hoursUntilCollection: 24 },
       { date: new Date(d.getTime() - 12 * 60 * 60 * 1000), hoursUntilCollection: 12 },
       { date: new Date(d.getTime() - 1 * 60 * 60 * 1000), hoursUntilCollection: 1 },
+      { date: d, hoursUntilCollection: 0 },
     ];
   }
 

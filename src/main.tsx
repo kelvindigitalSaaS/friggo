@@ -9,6 +9,7 @@ import {
   registerNotificationHandlers
 } from "./lib/pushNotifications";
 import { startGarbageReminderMonitoring } from "./lib/garbageReminderNotifications";
+import { startNightCheckupMonitoring } from "./lib/nightCheckupNotifications";
 import { initSentry } from "./lib/sentry";
 import { isNative } from "./lib/capacitor";
 import { registerSW } from "virtual:pwa-register";
@@ -54,3 +55,6 @@ if (isNative) {
 
 // Iniciar monitoramento de notificações de coleta de lixo
 startGarbageReminderMonitoring();
+
+// Iniciar monitoramento de check-up noturno
+startNightCheckupMonitoring();
