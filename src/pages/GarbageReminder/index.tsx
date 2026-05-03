@@ -82,14 +82,17 @@ export default function GarbageReminderPage() {
     }
   }, []);
 
-  // 2. Sincroniza do banco (fonte de verdade) quando homeId e user estiverem prontos
+  // 2. Sincroniza do banco (fonte de verdade) quando homeId estiver pronto
+  // Lixo é compartilhado por TODA A CASA - pega a primeira config habilitada
   useEffect(() => {
     if (!homeId || !user) return;
     (supabase as any)
       .from("garbage_reminders")
       .select("*")
       .eq("home_id", homeId)
-      .eq("user_id", user.id)
+      .eq("enabled", true)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle()
       .then(async ({ data }: { data: any }) => {
         if (!data) return;
