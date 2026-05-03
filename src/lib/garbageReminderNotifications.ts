@@ -83,6 +83,7 @@ async function syncConfigFromDb(homeId: string): Promise<GarbageReminderConfig |
       .select("enabled, selected_days, reminder_time, garbage_location, building_floor")
       .eq("home_id", homeId)
       .eq("enabled", true)
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     if (!data) return null;
@@ -318,8 +319,9 @@ export function stopGarbageReminderMonitoring() {
 
 export function startGarbageReminderMonitoring() {
   stopGarbageReminderMonitoring();
+  // Check every 1 minute to ensure timely notification at exact time
   (window as any).__garbageMonitorInterval = setInterval(() => {
     checkAndScheduleGarbageNotifications();
-  }, 5 * 60 * 1000);
+  }, 1 * 60 * 1000);
   checkAndScheduleGarbageNotifications();
 }

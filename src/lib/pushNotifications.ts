@@ -5,8 +5,8 @@ import { isAndroid, isNative } from "./capacitor";
 import { supabase } from "@/integrations/supabase/client";
 
 // ── Notification icon & badge paths — use unified app icon
-const ICON_192 = "/icons/100.png";
-const ICON_512 = "/icons/100.png";
+const ICON_192 = "/icons/192.png";
+const ICON_512 = "/icons/512.png";
 const BADGE_ICON = "/icons/badge-96.svg";
 const KAZA_SOUND = "default";
 

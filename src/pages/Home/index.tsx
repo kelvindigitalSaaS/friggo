@@ -1,6 +1,5 @@
 import { Navigate } from "react-router-dom";
 import { BottomNav } from "./components/BottomNav";
-import { FabAddButton } from "./components/FabAddButton";
 import { HomeTab } from "./components/tabs/HomeTab";
 import { FridgeTab } from "./components/tabs/FridgeTab";
 import { RecipesTabNew as RecipesTab } from "./components/tabs/RecipesTabNew";
@@ -14,8 +13,6 @@ import { useAccountSession } from "@/hooks/useAccountSession";
 import { SessionConflictModal } from "./components/SessionConflictModal";
 import { useKaza } from "@/contexts/KazaContext";
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
-import { RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function LoadingScreen() {
@@ -42,31 +39,7 @@ function LoadingScreen() {
 
 const tabSpring = { type: "spring" as const, stiffness: 350, damping: 30, mass: 0.8 };
 
-function RefreshButton() {
-  const [spinning, setSpinning] = useState(false);
 
-  const handleRefresh = () => {
-    if (spinning) return;
-    setSpinning(true);
-    setTimeout(() => window.location.reload(), 400);
-  };
-
-  return (
-    <button
-      onClick={handleRefresh}
-      className={cn(
-        "fixed bottom-[calc(env(safe-area-inset-bottom,0px)+7rem)] right-4 z-50",
-        "h-10 w-10 flex items-center justify-center rounded-full",
-        "bg-primary/90 dark:bg-primary/80 backdrop-blur-md hover:bg-primary",
-        "border border-primary/30 dark:border-primary/50",
-        "shadow-lg shadow-primary/30 text-white transition-all active:scale-90"
-      )}
-      title="Atualizar"
-    >
-      <RefreshCw className={cn("h-5 w-5", spinning && "animate-spin")} />
-    </button>
-  );
-}
 
 function KazaApp() {
   const {
@@ -116,8 +89,7 @@ function KazaApp() {
           </motion.div>
         </AnimatePresence>
       </main>
-      <RefreshButton />
-      <FabAddButton activeTab={activeTab} />
+
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
 
       <SessionConflictModal

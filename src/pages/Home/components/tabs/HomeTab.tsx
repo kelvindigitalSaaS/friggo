@@ -315,15 +315,15 @@ export function HomeTab() {
                         </button>
 
                         <button
-                            onClick={() => navigate('/app/add-item')}
+                            onClick={() => navigate('/app/activity-history')}
                             className="group relative overflow-hidden rounded-2xl bg-white/[0.08] backdrop-blur-xl border border-white/[0.08] p-3.5 text-left transition-all duration-200 active:scale-[0.97] hover:bg-white/[0.12]"
                         >
-                            <div className="absolute top-0 right-0 w-12 h-12 rounded-full -translate-y-3 translate-x-3 blur-2xl pointer-events-none" style={{ background: "rgba(22,90,82,0.25)" }} />
+                            <div className="absolute top-0 right-0 w-12 h-12 rounded-full -translate-y-3 translate-x-3 blur-2xl pointer-events-none" style={{ background: "rgba(52,199,89,0.15)" }} />
                             <div className="relative">
-                                <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-xl" style={{ background: "rgba(22,90,82,0.30)" }}>
-                                    <Plus className="h-4 w-4 text-white" />
+                                <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-xl" style={{ background: "rgba(52,199,89,0.25)" }}>
+                                    <Clock className="h-4 w-4 text-white" />
                                 </div>
-                                <p className="text-[11px] font-semibold text-white leading-snug">{l.addItem}</p>
+                                <p className="text-[11px] font-semibold text-white leading-snug">{language === 'pt-BR' ? 'Histórico' : language === 'es' ? 'Historial' : 'History'}</p>
                             </div>
                         </button>
                     </div>

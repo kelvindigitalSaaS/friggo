@@ -20,6 +20,7 @@ import { isNative } from "@/lib/capacitor";
 import { supabase } from "@/integrations/supabase/client";
 import { Sentry } from "@/lib/sentry";
 import { OfflineOverlay } from "@/components/kaza/OfflineOverlay";
+import { GlobalRefreshButton } from "@/components/kaza/GlobalRefreshButton";
 import PWAInstallGuide from "@/components/kaza/PWAInstallGuide";
 import { AccountSessionTracker } from "@/components/kaza/AccountSessionTracker";
 import { UpdatePrompt } from "@/components/UpdatePrompt";
@@ -284,6 +285,7 @@ const App = () => {
                 <ThemeProvider>
                   <TooltipProvider>
                     <OfflineOverlay />
+                    <GlobalRefreshButton />
                     <AccountSessionTracker />
                     <Toaster />
                     <Sonner />

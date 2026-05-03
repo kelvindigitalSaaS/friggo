@@ -222,12 +222,12 @@ nav.bottom-nav-safe {
 /* BottomNav flutuante: fica acima do indicador home do iOS/Android.
    Garantia mínima de 1rem para dispositivos sem safe area. */
 .bottom-nav-float {
-  bottom: max(calc(env(safe-area-inset-bottom, 0px) + 1rem), 1rem);
+  bottom: max(calc(env(safe-area-inset-bottom, 0px) + 0.4rem), 0.4rem);
 }
 
 /* Padding do conteúdo principal considerando nav + safe area */
 .pb-nav-safe {
-  padding-bottom: max(calc(env(safe-area-inset-bottom, 0px) + 5.5rem), 5.5rem);
+  padding-bottom: max(calc(env(safe-area-inset-bottom, 0px) + 5rem), 5rem);
 }
 
 /* Viewport height correta no iOS (evita o bug da barra do Safari) */

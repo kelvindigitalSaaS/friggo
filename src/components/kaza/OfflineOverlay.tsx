@@ -60,8 +60,8 @@ export function OfflineOverlay() {
   if (!isOffline) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[99999] animate-in slide-in-from-top duration-300">
-      <div className="flex items-start gap-3 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg">
+    <div className="fixed top-0 left-0 right-0 z-[99999] animate-in slide-in-from-top duration-300 pt-safe">
+      <div className="mx-4 mt-3 flex items-start gap-3 px-4 py-3 bg-gradient-to-r from-amber-500/90 to-orange-500/90 text-white shadow-lg backdrop-blur-md rounded-2xl border border-white/20">
         <div className="flex-shrink-0 pt-0.5">
           <AlertCircle className="h-5 w-5" />
         </div>
@@ -78,7 +78,7 @@ export function OfflineOverlay() {
               window.location.reload();
             }
           }}
-          className="shrink-0 rounded-lg bg-white/25 hover:bg-white/35 px-3 py-1.5 text-xs font-bold active:scale-95 transition-all whitespace-nowrap"
+          className="shrink-0 rounded-xl bg-white/25 hover:bg-white/35 px-3 py-1.5 text-xs font-bold active:scale-95 transition-all whitespace-nowrap"
         >
           {t.retry}
         </button>
