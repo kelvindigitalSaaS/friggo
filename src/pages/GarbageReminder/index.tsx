@@ -82,7 +82,8 @@ export default function GarbageReminderPage() {
     }
   }, []);
 
-  // 2. Sincroniza do banco (fonte de verdade) quando homeId e user estiverem prontos
+  // 2. Sincroniza do banco (fonte de verdade) quando homeId estiver pronto
+  // Lixo é compartilhado por TODA A CASA - usa a config mais recente
   useEffect(() => {
     if (!homeId || !user) return;
     (supabase as any)
@@ -202,13 +203,20 @@ export default function GarbageReminderPage() {
   const handleSave = async () => {
     const cfg = { enabled, selectedDays, reminderTime, garbageLocation, buildingFloor, vibrationEnabled };
 
-    // DB é a fonte de verdade — grava primeiro
+    // DB é a fonte de verdade — grava primeiro (compartilhado por toda a casa)
     if (homeId && user) {
       try {
+        // Desabilitar todas as configs antigas da casa
+        await (supabase as any)
+          .from("garbage_reminders")
+          .update({ enabled: false })
+          .eq("home_id", homeId);
+
+        // Salvar nova config da casa (upsert para evitar conflitos)
         await (supabase as any).from("garbage_reminders").upsert({
           home_id: homeId,
           user_id: user.id,
-          enabled,
+          enabled: true,
           selected_days: selectedDays,
           reminder_time: reminderTime,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Sao_Paulo",
@@ -216,7 +224,10 @@ export default function GarbageReminderPage() {
           building_floor: buildingFloor || null,
           vibration_enabled: vibrationEnabled,
         }, { onConflict: "home_id,user_id" });
-      } catch (_e) { /* silent — DB save optional */ }
+      } catch (_e) {
+        console.error("[KAZA] Garbage config save failed:", _e);
+        /* silent — DB save optional */
+      }
     }
 
     // Atualiza cache local para o scheduler de notificações (lê do localStorage)
