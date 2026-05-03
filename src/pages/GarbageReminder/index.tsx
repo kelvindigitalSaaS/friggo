@@ -207,25 +207,28 @@ export default function GarbageReminderPage() {
     // DB é a fonte de verdade — grava primeiro (compartilhado por toda a casa)
     if (homeId && user) {
       try {
-        // Desabilitar configs antigas da casa
+        // Desabilitar todas as configs antigas da casa
         await (supabase as any)
           .from("garbage_reminders")
           .update({ enabled: false })
           .eq("home_id", homeId);
 
-        // Salvar nova config (compartilhada)
-        await (supabase as any).from("garbage_reminders").insert({
+        // Salvar nova config da casa (upsert para evitar conflitos)
+        await (supabase as any).from("garbage_reminders").upsert({
           home_id: homeId,
           user_id: user.id,
-          enabled,
+          enabled: true,
           selected_days: selectedDays,
           reminder_time: reminderTime,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Sao_Paulo",
           garbage_location: garbageLocation,
           building_floor: buildingFloor || null,
           vibration_enabled: vibrationEnabled,
-        });
-      } catch (_e) { /* silent — DB save optional */ }
+        }, { onConflict: "home_id,user_id" });
+      } catch (_e) {
+        console.error("[KAZA] Garbage config save failed:", _e);
+        /* silent — DB save optional */
+      }
     }
 
     // Atualiza cache local para o scheduler de notificações (lê do localStorage)
