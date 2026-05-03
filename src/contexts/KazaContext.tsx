@@ -478,7 +478,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
         supabase.from("consumables").select("*").eq("home_id", hid).is("deleted_at", null),
         supabase.from("user_recipe_favorites").select("recipe_id").eq("user_id", user.id),
         supabase.from("meal_plans").select("*").eq("home_id", hid).order("planned_date", { ascending: true }),
-        supabase.from("item_history").select("*").eq("home_id", hid).is("deleted_at", null).order("timestamp", { ascending: false }),
+        supabase.from("item_history").select("*").eq("home_id", hid).is("deleted_at", null).order("created_at", { ascending: false }),
         supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("homes").select("*").eq("id", hid).maybeSingle(),
         supabase.from("home_settings").select("*").eq("home_id", hid).maybeSingle(),
@@ -512,7 +512,7 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           quantity: h.quantity,
           unit: h.unit,
           user: h.user_name,
-          timestamp: new Date(h.timestamp)
+          timestamp: new Date(h.created_at || h.timestamp || Date.now())
         }))
       );
 
