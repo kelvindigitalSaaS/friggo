@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, Plus, Mail, Trash2, Loader2, RefreshCw, X, ChevronUp, ChevronDown } from "lucide-react";
+import { Users, Plus, Mail, Trash2, Loader2, RefreshCw, X, ChevronUp, ChevronDown, Crown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -219,16 +219,30 @@ export function GroupMembersCard({ readOnly = false }: { readOnly?: boolean }) {
                 {slot.type === "filled" && slot.member && (
                   <>
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <Avatar className="h-10 w-10 rounded-lg shadow-sm">
-                        <AvatarImage src={slot.member.avatar_url || ""} />
-                        <AvatarFallback className="rounded-lg bg-primary/10 text-sm font-bold text-primary uppercase">
-                          {(slot.member.member_name || "?")[0]}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="relative shrink-0">
+                        <Avatar className="h-10 w-10 rounded-lg shadow-sm">
+                          <AvatarImage src={slot.member.avatar_url || ""} />
+                          <AvatarFallback className={cn("rounded-lg text-sm font-bold uppercase", slot.member.role === "master" ? "bg-amber-500/20 text-amber-600" : "bg-primary/10 text-primary")}>
+                            {(slot.member.member_name || "?")[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        {slot.member.role === "master" && (
+                          <div className="absolute -top-1.5 -right-1.5 h-5 w-5 flex items-center justify-center rounded-full bg-amber-400 shadow-sm border border-white dark:border-[#11302c]">
+                            <Crown className="h-2.5 w-2.5 text-white" fill="white" />
+                          </div>
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-foreground truncate">
-                          {slot.member.member_name || "Membro da Casa"}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-bold text-foreground truncate">
+                            {slot.member.member_name || "Membro da Casa"}
+                          </p>
+                          {slot.member.role === "master" && (
+                            <span className="shrink-0 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-600 dark:text-amber-400">
+                              {language === "pt-BR" ? "Principal" : "Owner"}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           {slot.member.isOnline ? (
                             <span className="text-green-600 dark:text-green-400 font-semibold">

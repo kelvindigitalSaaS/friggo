@@ -67,9 +67,55 @@ export async function initGarbageReminderNotifications() {
 }
 
 /**
+ * Syncs the garbage reminder config from DB to localStorage so any device
+ * (not just the one that configured it) can fire notifications.
+ */
+async function syncConfigFromDb(homeId: string): Promise<GarbageReminderConfig | null> {
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data } = await supabase
+      .from("garbage_reminders")
+      .select("enabled, selected_days, reminder_time, garbage_location, building_floor")
+      .eq("home_id", homeId)
+      .eq("enabled", true)
+      .limit(1)
+      .maybeSingle();
+    if (!data) return null;
+    const cfg: GarbageReminderConfig = {
+      enabled: data.enabled,
+      selectedDays: data.selected_days ?? [],
+      reminderTime: data.reminder_time ?? "20:00",
+      garbageLocation: data.garbage_location ?? "street",
+      buildingFloor: data.building_floor ?? undefined,
+    };
+    localStorage.setItem("kaza-garbage-reminder", JSON.stringify(cfg));
+    return cfg;
+  } catch { return null; }
+}
+
+/**
+ * Checks DB to see if a garbage notification was already sent in the last FIRE_WINDOW_MS.
+ * Prevents multiple devices from firing the same notification.
+ */
+async function wasGarbageRecentlySent(homeId: string, sinceMs: number): Promise<boolean> {
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const since = new Date(Date.now() - sinceMs).toISOString();
+    const { data } = await supabase
+      .from("home_notifications")
+      .select("id")
+      .eq("home_id", homeId)
+      .eq("type", "garbage")
+      .gte("created_at", since)
+      .limit(1)
+      .maybeSingle();
+    return !!data;
+  } catch { return false; }
+}
+
+/**
  * Fire-now check: called every 5 minutes by the monitoring loop.
- * If a garbage notification time has arrived (within the last 6 minutes)
- * and hasn't been sent yet (per localStorage dedup), push to all home members.
+ * All devices run this — DB dedup prevents duplicate fires.
  */
 async function fireGarbagePushIfDue(config: GarbageReminderConfig) {
   const homeId = localStorage.getItem("kaza-home-id");
@@ -84,8 +130,14 @@ async function fireGarbagePushIfDue(config: GarbageReminderConfig) {
     const diff = now - date.getTime();
     if (diff < 0 || diff > FIRE_WINDOW_MS) continue;
 
+    // Local dedup (fast path — same device)
     const key = `kaza-garbage-pushed-${date.getTime()}`;
     if (localStorage.getItem(key)) continue;
+
+    // DB dedup — check if any device already sent this notification
+    const alreadySent = await wasGarbageRecentlySent(homeId, FIRE_WINDOW_MS);
+    if (alreadySent) { localStorage.setItem(key, "1"); continue; }
+
     localStorage.setItem(key, "1");
 
     const title =
@@ -229,10 +281,14 @@ export async function syncGarbageReminderToDb(homeId: string | null | undefined)
 }
 
 export async function checkAndScheduleGarbageNotifications() {
+  // Sync config from DB so any device (not just the one that configured it) runs the check
+  const homeId = localStorage.getItem("kaza-home-id");
+  if (homeId) await syncConfigFromDb(homeId);
+
   const config = getGarbageReminderConfig();
   if (!config.enabled) return;
 
-  // Push to home members if a notification time just arrived
+  // Push to home members if a notification time just arrived (DB dedup prevents duplicates)
   await fireGarbagePushIfDue(config);
 
   // Schedule local device notifications

@@ -262,7 +262,7 @@ export default function MealPlannerPage() {
             {displayedRecipes.map((recipe) => (
               <div
                 key={recipe.id}
-                className="rounded-[1.5rem] bg-white dark:bg-[#11302c]/40 border border-black/[0.04] dark:border-white/[0.05] overflow-hidden shadow-[0_4px_20px_-8px_rgba(0,0,0,0.06)] transition-all hover:scale-[1.01] cursor-pointer group"
+                className="relative rounded-[1.5rem] bg-white dark:bg-[#11302c]/40 border border-black/[0.04] dark:border-white/[0.05] overflow-hidden shadow-[0_4px_20px_-8px_rgba(0,0,0,0.06)] transition-all hover:scale-[1.01] hover:z-10 cursor-pointer group"
                 onClick={() => handleAddMeal(recipe.id, recipe.name, selectedMealType || undefined)}
               >
                 {/* Recipe header */}

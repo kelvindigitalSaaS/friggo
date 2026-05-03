@@ -14,6 +14,9 @@ import { useAccountSession } from "@/hooks/useAccountSession";
 import { SessionConflictModal } from "./components/SessionConflictModal";
 import { useKaza } from "@/contexts/KazaContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
+import { RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 function LoadingScreen() {
   return (
@@ -38,6 +41,32 @@ function LoadingScreen() {
 }
 
 const tabSpring = { type: "spring" as const, stiffness: 350, damping: 30, mass: 0.8 };
+
+function RefreshButton() {
+  const [spinning, setSpinning] = useState(false);
+
+  const handleRefresh = () => {
+    if (spinning) return;
+    setSpinning(true);
+    setTimeout(() => window.location.reload(), 400);
+  };
+
+  return (
+    <button
+      onClick={handleRefresh}
+      className={cn(
+        "fixed bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] right-3 z-40",
+        "h-9 w-9 flex items-center justify-center rounded-full",
+        "bg-white/80 dark:bg-white/10 backdrop-blur-md",
+        "border border-black/[0.06] dark:border-white/[0.10]",
+        "shadow-md text-muted-foreground transition-all active:scale-90"
+      )}
+      title="Atualizar"
+    >
+      <RefreshCw className={cn("h-4 w-4", spinning && "animate-spin")} />
+    </button>
+  );
+}
 
 function KazaApp() {
   const {
@@ -87,6 +116,7 @@ function KazaApp() {
           </motion.div>
         </AnimatePresence>
       </main>
+      <RefreshButton />
       <FabAddButton activeTab={activeTab} />
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
 
