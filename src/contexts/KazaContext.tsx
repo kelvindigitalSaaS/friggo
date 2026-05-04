@@ -549,7 +549,8 @@ export function KazaProvider({ children }: { children: ReactNode }) {
           forceNotifications: hs?.force_notifications ?? false,
           habits: hs?.habits ?? [],
           hiddenSections: hs?.hidden_sections ?? [],
-          notificationPrefs: notifPrefs.length ? notifPrefs : DEFAULT_NOTIFICATION_PREFS
+          notificationPrefs: notifPrefs.length ? notifPrefs : DEFAULT_NOTIFICATION_PREFS,
+          nightCheckupTime: np?.nightly_checkup_time ?? undefined
         })
       );
     } catch (err: any) {

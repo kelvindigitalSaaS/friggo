@@ -99,6 +99,7 @@ export interface OnboardingData {
   notificationPrefs?: string[];
   homeName?: string;
   hiddenSections?: string[];
+  nightCheckupTime?: string;
 }
 
 export interface ItemHistoryEntry {

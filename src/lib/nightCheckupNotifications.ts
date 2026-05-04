@@ -104,26 +104,20 @@ export async function checkAndScheduleNightCheckupNotifications() {
   const homeId = localStorage.getItem("kaza-home-id");
   if (!homeId) return;
 
-  // Sync config from onboarding data
+  // Sync config from notification_preferences
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const { data: prefs } = await supabase
+      .from("notification_preferences")
+      .select("night_checkup, nightly_checkup_time")
+      .eq("home_id", homeId)
+      .maybeSingle();
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("onboarding_data")
-      .eq("user_id", user.id)
-      .single();
-
-    if (profile?.onboarding_data) {
-      const onboardingData = profile.onboarding_data as any;
-      if (onboardingData.nightCheckupTime || onboardingData.notificationPrefs?.includes("nightCheckup")) {
-        const config: NightCheckupConfig = {
-          enabled: onboardingData.notificationPrefs?.includes("nightCheckup") ?? true,
-          checkupTime: onboardingData.nightCheckupTime || "21:00"
-        };
-        localStorage.setItem("kaza-night-checkup-config", JSON.stringify(config));
-      }
+    if (prefs) {
+      const config: NightCheckupConfig = {
+        enabled: prefs.night_checkup ?? true,
+        checkupTime: prefs.nightly_checkup_time || "21:00"
+      };
+      localStorage.setItem("kaza-night-checkup-config", JSON.stringify(config));
     }
   } catch {
     // continue with cached config
