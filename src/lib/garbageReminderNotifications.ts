@@ -247,6 +247,9 @@ function getNextCollectionDates(
   if (notificationCount === 1) {
     dates.push(nextCollectionDate);
   } else if (notificationCount === 3) {
+    // Sempre adicionar a hora exata
+    dates.push(nextCollectionDate);
+
     const notif24h = new Date(nextCollectionDate);
     notif24h.setDate(notif24h.getDate() - 1);
     if (notif24h.getTime() > now.getTime()) dates.push(notif24h);

@@ -91,8 +91,8 @@ async function fireNightCheckupIfDue(config: NightCheckupConfig) {
     // best-effort
   }
 
-  // Agendar notificação local também
-  await scheduleLocalNotification(title, body, diff, `night-checkup-${checkupDate.getTime()}`, "general");
+  // Agendar notificação local também (delay 0 pois a hora já chegou)
+  await scheduleLocalNotification(title, body, 0, `night-checkup-${checkupDate.getTime()}`, "general");
 }
 
 export function getNightCheckupTime(): string {
