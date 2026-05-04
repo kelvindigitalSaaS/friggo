@@ -5,9 +5,9 @@ import { isAndroid, isNative } from "./capacitor";
 import { supabase } from "@/integrations/supabase/client";
 
 // ── Notification icon & badge paths — use unified app icon
-const ICON_192 = "/icons/192.png";
-const ICON_512 = "/icons/512.png";
-const BADGE_ICON = "/icons/badge-96.svg";
+const ICON_192 = "/favicon-app.png";
+const ICON_512 = "/favicon-app.png";
+const BADGE_ICON = "/favicon-app.png";
 const KAZA_SOUND = "default";
 
 interface NotificationAction {
@@ -58,6 +58,9 @@ type NotifCategory =
   | "low-stock"
   | "garbage"
   | "meal-plan"
+  | "checkup"
+  | "shopping"
+  | "recipes"
   | "general"
   | "test";
 
@@ -104,16 +107,40 @@ const CATEGORY_CONFIGS: Record<NotifCategory, NotifCategoryConfig> = {
     vibrate: VIBRATE_GARBAGE,
     requireInteraction: true,
     actions: [
-      { action: "done", title: "✅ Já coloquei!" },
-      { action: "snooze", title: "⏰ Lembrar em 30min" }
+      { action: "garbage", title: "🗑️ Ir para Lixo" },
+      { action: "dismiss", title: "Depois" }
     ]
   },
   "meal-plan": {
     vibrate: VIBRATE_GENTLE,
     requireInteraction: false,
     actions: [
-      { action: "open", title: "🍽️ Ver plano" },
+      { action: "planner", title: "🍽️ Ver plano" },
       { action: "dismiss", title: "Ok" }
+    ]
+  },
+  "checkup": {
+    vibrate: VIBRATE_GENTLE,
+    requireInteraction: false,
+    actions: [
+      { action: "checkup", title: "✅ Responder checkup" },
+      { action: "dismiss", title: "Depois" }
+    ]
+  },
+  "shopping": {
+    vibrate: VIBRATE_GENTLE,
+    requireInteraction: false,
+    actions: [
+      { action: "shopping", title: "🛒 Abrir compras" },
+      { action: "dismiss", title: "Depois" }
+    ]
+  },
+  "recipes": {
+    vibrate: VIBRATE_GENTLE,
+    requireInteraction: false,
+    actions: [
+      { action: "recipes", title: "🍳 Ver receitas" },
+      { action: "dismiss", title: "Depois" }
     ]
   },
   "general": {
@@ -395,7 +422,22 @@ export function registerNotificationHandlers() {
       // Focus or open the app
       window.focus();
 
-      if (action === "recipe") {
+      if (action === "garbage") {
+        // Direcionar para aba de Lixo
+        window.location.href = "/app/home?tab=home";
+      } else if (action === "checkup") {
+        // Direcionar para aba de Home (checkup)
+        window.location.href = "/app/home?tab=home";
+      } else if (action === "shopping") {
+        // Direcionar para aba de Compras
+        window.location.href = "/app/home?tab=shopping";
+      } else if (action === "recipes") {
+        // Direcionar para aba de Receitas
+        window.location.href = "/app/home?tab=recipes";
+      } else if (action === "planner") {
+        // Direcionar para aba de Plano
+        window.location.href = "/app/home?tab=planner";
+      } else if (action === "recipe") {
         window.location.href = "/settings";
       } else if (action === "open" && data?.url) {
         window.location.href = data.url;

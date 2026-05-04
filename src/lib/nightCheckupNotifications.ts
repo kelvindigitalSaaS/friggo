@@ -85,14 +85,14 @@ async function fireNightCheckupIfDue(config: NightCheckupConfig) {
       home_id: homeId,
       title,
       body,
-      type: "nightCheckup"
+      type: "checkup"
     });
   } catch {
     // best-effort
   }
 
   // Agendar notificação local também (delay 0 pois a hora já chegou)
-  await scheduleLocalNotification(title, body, 0, `night-checkup-${checkupDate.getTime()}`, "general");
+  await scheduleLocalNotification(title, body, 0, `night-checkup-${checkupDate.getTime()}`, "checkup");
 }
 
 export function getNightCheckupTime(): string {
