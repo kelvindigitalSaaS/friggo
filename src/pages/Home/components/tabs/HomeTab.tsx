@@ -660,6 +660,18 @@ export function HomeTab() {
                         ))}
                 </div>
             </motion.section>
+
+            {/* ── APPLE STYLE ADD BUTTON (FAB) ── */}
+            <div className="fixed bottom-[110px] right-6 z-[60]">
+                <motion.button
+                    onClick={() => navigate('/app/add-item')}
+                    whileTap={{ scale: 0.9 }}
+                    whileHover={{ scale: 1.05 }}
+                    className="flex h-14 w-14 items-center justify-center rounded-2xl bg-black/40 dark:bg-black/60 backdrop-blur-xl border border-white/10 text-white shadow-[0_15px_30px_rgba(0,0,0,0.3)] transition-all"
+                >
+                    <Plus className="h-7 w-7" />
+                </motion.button>
+            </div>
         </div>
     );
 }
