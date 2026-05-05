@@ -285,6 +285,16 @@ export async function syncGarbageReminderToDb(homeId: string | null | undefined)
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const cfg = getGarbageReminderConfig();
+
+    // Calcular próximo next_fire_at (será sobrescrito pelo trigger SQL, mas é bom ter um valor)
+    let nextFireAt: string | null = null;
+    if (cfg.enabled && cfg.selectedDays.length > 0) {
+      const nextDates = getNextCollectionDates(cfg.selectedDays, cfg.reminderTime, 1);
+      if (nextDates.length > 0) {
+        nextFireAt = nextDates[0].toISOString();
+      }
+    }
+
     await supabase.from("garbage_reminders").upsert({
       home_id: homeId,
       user_id: user.id,
@@ -294,6 +304,7 @@ export async function syncGarbageReminderToDb(homeId: string | null | undefined)
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Sao_Paulo",
       garbage_location: cfg.garbageLocation,
       building_floor: cfg.buildingFloor ?? null,
+      next_fire_at: nextFireAt,
     }, { onConflict: "home_id,user_id" });
   } catch (_e) { /* silent */ }
 }
